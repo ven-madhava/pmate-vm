@@ -2371,4 +2371,4 @@ api.add_resource(externalAPI_generate_ideas, '/generateideas') # Route
 api.add_resource(externalAPI_get_progress, '/getprogress') # Route
 
 if __name__ == '__main__':
-     app.run(host='0.0.0.0')
+     app.run()
