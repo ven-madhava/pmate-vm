@@ -2205,6 +2205,10 @@ class externalAPI_create_new_patterns(Resource):
         # This function really just starts the create new pattern thread class and assigns it to a global dict
         # ----------------------------------------------------------------------------------------------------
         global new_pattern_threads
+        try:
+            del new_pattern_threads[p_task_id]
+        except:
+            'do nothing'
         new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_task_id,p_selected_style_names)
         new_pattern_threads[p_task_id].start()
 
@@ -2254,6 +2258,10 @@ class externalAPI_create_textures(Resource):
         # This function really just starts the create new pattern thread class and assigns it to a global dict
         # ----------------------------------------------------------------------------------------------------
         global create_texture_threads
+        try:
+            del create_texture_threads[p_task_id]
+        except:
+            'do nothing'
         create_texture_threads[p_task_id] = create_textures_threaded_task(p_task_id,p_picked_ind_string)
         create_texture_threads[p_task_id].start()
 
@@ -2308,6 +2316,10 @@ class externalAPI_generate_ideas(Resource):
         # This function really just starts the create new pattern thread class and assigns it to a global dict
         # ----------------------------------------------------------------------------------------------------
         global generate_ideas_threads
+        try:
+            del generate_ideas_threads[p_task_id]
+        except:
+            'do nothing'
         generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_no_images)
         generate_ideas_threads[p_task_id].start()
 
@@ -2371,4 +2383,4 @@ api.add_resource(externalAPI_generate_ideas, '/generateideas') # Route
 api.add_resource(externalAPI_get_progress, '/getprogress') # Route
 
 if __name__ == '__main__':
-     app.run()
+     app.run(host='0.0.0.0', port=8000)
