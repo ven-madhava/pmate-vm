@@ -2333,12 +2333,6 @@ class externalAPI_get_progress(Resource):
 
     def put(self):
 
-        # Initiating global params
-        # ------------------------
-        global create_texture_threads
-        global new_pattern_threads
-        global generate_ideas_threads
-
         # Setting up key values to accept
         # -------------------------------
         parser = reqparse.RequestParser()
@@ -2353,14 +2347,17 @@ class externalAPI_get_progress(Resource):
         # ---------------------------------
         try:
             if p_progress_for == 'new_patterns':
+                global new_pattern_threads
                 new_pattern_threads[p_task_id].progress['thread_status'] = new_pattern_threads[p_task_id].isAlive()
                 return jsonify(new_pattern_threads[p_task_id].progress)
 
             elif p_progress_for == 'create_textures':
+                global create_texture_threads
                 create_texture_threads[p_task_id].progress['thread_status'] = create_texture_threads[p_task_id].isAlive()
                 return jsonify(create_texture_threads[p_task_id].progress)
 
             elif p_progress_for == 'generate_ideas':
+                global generate_ideas_threads
                 generate_ideas_threads[p_task_id].progress['thread_status'] = generate_ideas_threads[p_task_id].isAlive()
                 return jsonify(generate_ideas_threads[p_task_id].progress)
             else:
