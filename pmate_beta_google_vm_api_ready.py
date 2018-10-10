@@ -1,7 +1,8 @@
-# 10 Oct 2018
+# 10 Oct
+########
 
 # Imports
-# -------
+
 import numpy as np
 import cv2
 import random
@@ -19,12 +20,14 @@ from io import BytesIO
 import threading
 import time
 
+
 # Necessary Flask imports
 # -----------------------
 from flask import Flask, request
 from flask_restful import Resource, Api, reqparse
 from json import dumps
 from flask_jsonpify import jsonify
+
 
 # # GCS functions
 
@@ -459,8 +462,8 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
         # ----------
         print('2. Applying recurring kmeans to segemnt..')
         kmimg,cen,dv,labels = protomatebeta_recurr_kmeans_v1(img,start_k_c,end_k_c,localisation_factor)
-        #plt.imshow(kmimg)
-        #plt.show()
+        plt.imshow(kmimg)
+        plt.show()
 
         # Updating progress
         # -----------------
@@ -2243,7 +2246,7 @@ def api_generate(task_id,gen_id,no_images,progress):
 
 #    try:
     progress['curr_step'] = 0
-    progress['total_step'] = 9
+    progress['total_step'] = 11
     progress['master_message'] = 'Inside function..'
     progress['curr_message'] = 'Inside function..'
 
@@ -2253,7 +2256,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting linemarkings
     # -----------------------
     progress['curr_step'] = 1
-    progress['total_step'] = 9
+    progress['total_step'] = 11
     progress['master_message'] = 'Loading stylings..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_linemarkings.npy'
@@ -2264,7 +2267,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting segments
     # -------------------
     progress['curr_step'] = 2
-    progress['total_step'] = 9
+    progress['total_step'] = 11
     progress['master_message'] = 'Loading segments..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_segments.npy'
@@ -2275,7 +2278,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting all pats
     # -------------------
     progress['curr_step'] = 3
-    progress['total_step'] = 9
+    progress['total_step'] = 11
     progress['master_message'] = 'Loading patterns..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
@@ -2293,7 +2296,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting colors
     # ---------------------
     progress['curr_step'] = 4
-    progress['total_step'] = 9
+    progress['total_step'] = 11
     progress['master_message'] = 'Loading colors..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
@@ -2304,7 +2307,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting Checks
     # -----------------
     progress['curr_step'] = 5
-    progress['total_step'] = 9
+    progress['total_step'] = 11
     progress['master_message'] = 'Loading checks..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
@@ -2315,13 +2318,35 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting Stripes
     # -----------------
     progress['curr_step'] = 6
-    progress['total_step'] = 9
+    progress['total_step'] = 11
     progress['master_message'] = 'Loading stripes..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
     f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
     stripes = np.load(f)
     print('Got stripes..')
+
+    # Collecting Melange
+    # -----------------
+    progress['curr_step'] = 7
+    progress['total_step'] = 11
+    progress['master_message'] = 'Loading melange..'
+    progress['curr_message'] = progress['master_message']
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
+    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+    melange = np.load(f)
+    print('Got melange..')
+
+    # Collecting Grainy
+    # -----------------
+    progress['curr_step'] = 8
+    progress['total_step'] = 11
+    progress['master_message'] = 'Loading grainy..'
+    progress['curr_message'] = progress['master_message']
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
+    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+    grainy = np.load(f)
+    print('Got grainy..')
 
     # Collecting Catagories
     # ----------------------
@@ -2336,24 +2361,24 @@ def api_generate(task_id,gen_id,no_images,progress):
 
     # 3. Actual generation
     # --------------------
-    progress['curr_step'] = 7
-    progress['total_step'] = 9
+    progress['curr_step'] = 9
+    progress['total_step'] = 11
     progress['master_message'] = 'Generating ideas..'
     progress['curr_message'] = progress['master_message']
-    ideas = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,colors,no_images,progress,task_id,gen_id,True)
+    ideas = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,True)
 
     # 4. Saving generated images under /task_id/ideas/gen_id/
     # -------------------------------------------------------
-    progress['curr_step'] = 8
-    progress['total_step'] = 9
+    progress['curr_step'] = 10
+    progress['total_step'] = 11
     progress['master_message'] = 'Saving ideas..'
     progress['curr_message'] = progress['master_message']
     storage_dir = task_id + '/ideas/' + str(gen_id)
     image_prefix = str(task_id) + '_' + str(gen_id) + '_ideas'
     save_to_storage_from_array_list(ideas,storage_dir,image_prefix,True,progress)
 
-    progress['curr_step'] = 9
-    progress['total_step'] = 9
+    progress['curr_step'] = 11
+    progress['total_step'] = 11
     progress['master_message'] = 'Done.'
     progress['curr_message'] = progress['master_message']
 
@@ -2362,8 +2387,6 @@ def api_generate(task_id,gen_id,no_images,progress):
 #    except:
 #
 #        return 500
-
-
 
 
 # # Actual Ven API endpoints
@@ -2647,4 +2670,5 @@ api.add_resource(externalAPI_get_progress, '/getprogress') # Route
 
 
 if __name__ == '__main__':
-     app.run(host='0.0.0.0', port=8000)
+    #app.run(port='5002') # For local
+    app.run(host='0.0.0.0', port=8000) # VM
