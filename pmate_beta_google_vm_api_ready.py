@@ -1,9 +1,7 @@
-# 4 Oct, 2018
-# For VM pmate-beta
+# 10 Oct 2018
 
 # Imports
 # -------
-
 import numpy as np
 import cv2
 import random
@@ -28,11 +26,15 @@ from flask_restful import Resource, Api, reqparse
 from json import dumps
 from flask_jsonpify import jsonify
 
-
 # # GCS functions
+
+# In[2]:
+
+
 # Getting images from a "folder" in storage and returning that as a numpy array
 # API ready ##
 # -----------------------------------------------------------------------------
+
 def get_images_from_storage(parent_dir,output_mode):
 
     """"For example, given these blobs:
@@ -84,9 +86,14 @@ def get_images_from_storage(parent_dir,output_mode):
 
     return xout
 
+
+# In[3]:
+
+
 # Function to saving a list or numpy array of images to storage folder
 # API ready ##
 # --------------------------------------------------------------------
+
 def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,progress):
 
     # Create a storage client to use with bucket
@@ -130,9 +137,15 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
         print('Done saving image ' + str(i) + '..')
 
+
+
+# In[4]:
+
+
 # Getting images from a "folder" in storage and returning that as a numpy array
 # API ready ##
 # -----------------------------------------------------------------------------
+
 def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
     """"For example, given these blobs:
@@ -199,9 +212,14 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 
 # # Protomate supportive functions
+
+# In[5]:
+
+
 # protomate function to get block images
 # API ready ##
 # --------------------------------------
+
 def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
 
     # Getting the pixel locations for these labels
@@ -234,9 +252,14 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
 
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
+
+# In[6]:
+
+
 # protomate kmeans function
 # API ready ##
 # -------------------------
+
 def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
     # 1. Initialisations
@@ -287,9 +310,16 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
     return dataVector,label,res2,center
 
+
+
+
+# In[7]:
+
+
 # protomate recurring kmeans function
 # API ready ##
 # -----------------------------------
+
 def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
     # Initialisations
@@ -310,10 +340,15 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 
 # # Protomate main functions
+
+# In[8]:
+
+
 # 1
 # API ready ##
 # Stitch images together for blocks extraction
 # --------------------------------------------
+
 def protomatebeta_stitch_incoming_images_v1(inlist):
 
     # Some initialisations
@@ -378,10 +413,15 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
 
     return xout
 
+
+# In[9]:
+
+
 # 2
 # API ready ##
 # Extracts blocks for building patterns
 # ------------------------------------
+
 def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
 
     # Early initialisations
@@ -419,8 +459,8 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
         # ----------
         print('2. Applying recurring kmeans to segemnt..')
         kmimg,cen,dv,labels = protomatebeta_recurr_kmeans_v1(img,start_k_c,end_k_c,localisation_factor)
-        plt.imshow(kmimg)
-        plt.show()
+        #plt.imshow(kmimg)
+        #plt.show()
 
         # Updating progress
         # -----------------
@@ -445,10 +485,16 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
 
     return fullon_blocks_main,fullon_blocks_map
 
+
+
+# In[10]:
+
+
 # 2.1
 # API ready ##
 # Function to cut out block images from clustered mood board image for block extraction
 # -------------------------------------------------------------------------------------
+
 def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
     # Initialistations
@@ -528,10 +574,18 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
     return xout,xout_sqr_map,full_on_blocks,full_on_blocks_map
 
+
+
+
+
+# In[11]:
+
+
 # 3
 # API ready ##
 # Main function to build AOP patterns including height wise shift
 # ---------------------------------------------------------------
+
 def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
 
     # Getting into direct iter
@@ -621,10 +675,15 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
 
     return xout
 
+
+# In[12]:
+
+
 # 3.1
 # API ready ##
 # Function to make full images using extracted blocks for height wise shift
 # --------------------------------------------------------------------------
+
 def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
 
     # Initialisations
@@ -665,10 +724,15 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
 
     return mout[:,0:h,0:w,:]
 
+
+# In[13]:
+
+
 # 4
 # API ready ##
 # Main function that picks core colors from images
 # ------------------------------------------------
+
 def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
     # Iterating through images
@@ -719,10 +783,16 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
     return xout
 
+
+
+# In[14]:
+
+
 # 4.1
 # API ready ##
 # Main function that clusters similar colors for theme images
 # -----------------------------------------------------------
+
 def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors):
 
     # Some initial master settings
@@ -783,10 +853,17 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
     return color_set_dict
 
+
+
+
+# In[15]:
+
+
 # 4.2
 # API ready ##
 # Main function that takes in clustered dict to return final colors
 # -----------------------------------------------------------------
+
 def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
 
     # Some initialisations
@@ -858,10 +935,15 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
 
     return xout
 
+
+# In[16]:
+
+
 # 5
 # API ready ##
 # Main function that returns textures
 # -----------------------------------
+
 def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id):
 
 
@@ -916,16 +998,21 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id)
 
         # 4. Code to cluster similar colors & get out stripes and checks
         # ---------------------------------------------------------------
-        oim_stripes,oim_checks = protomatebeta_cluster_colors_products_v1(tu,cluster_threshold,hin,win)
+        oim_stripes,oim_checks,oim_melange,oim_grainy = protomatebeta_cluster_colors_products_v1(tu,cluster_threshold,hin,win)
         oim_stripes = oim_stripes.reshape(1,oim_stripes.shape[0],oim_stripes.shape[1],3)
         oim_checks = oim_checks.reshape(1,oim_checks.shape[0],oim_checks.shape[1],3)
         if i == 0:
             out_stripes_final = oim_stripes
             out_checks_final = oim_checks
+            out_mel_final = oim_melange
+            out_grainy_final = oim_grainy
 
         else:
             out_stripes_final = np.concatenate((out_stripes_final,oim_stripes), axis = 0)
             out_checks_final = np.concatenate((out_checks_final,oim_checks), axis = 0)
+            out_mel_final = np.concatenate((out_mel_final,oim_melange), axis = 0)
+            out_grainy_final = np.concatenate((out_grainy_final,oim_grainy), axis = 0)
+
 
         # Updating progress
         # -----------------
@@ -955,90 +1042,18 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id)
             plt.imshow(oim_checks[0])
             plt.show()
 
-    return out_stripes_final, out_checks_final
+    return out_stripes_final.astype('uint8'), out_checks_final.astype('uint8'), out_mel_final.astype('uint8'), out_grainy_final.astype('uint8')
+
+
+
+# In[17]:
+
 
 # 5.1
 # API ready ##
-# Actual function to create stripes, checks, other textures
-# ---------------------------------------------------------
-def protomatebeta_create_stripes_checks_v1(tokd,wkd,repeat_h,hout,wout):
-
-    # Here input dicts represent color scales from a single processed image
-    # ---------------------------------------------------------------------
-
-    # 1. Getting total weight
-    # -----------------------
-    tot_weight = 0
-    for k in wkd:
-        tot_weight += wkd[k]
-
-    # 2. Some initialisations
-    # -----------------------
-    stripe_block = np.zeros((repeat_h,wout,3))
-    verticle_stripe_block = np.zeros((repeat_h,hout,3))
-    st_h = 0
-
-
-
-    # 3. Spliting the block row wise
-    # ------------------------------
-    for k in wkd:
-
-        # As we process the incoming colors and its weights,
-        # there is randomness implicit here as we dont process,
-        # in any particular order.
-        # -----------------------------------------------------
-        weight_percent = (wkd[k] / tot_weight)
-        num_rows = math.ceil(weight_percent * repeat_h)
-
-        # Initialising col pal for curr color
-        # -----------------------------------
-        col_pal = np.zeros((1,1,3))
-        col_pal[:,:,0],col_pal[:,:,1],col_pal[:,:,2] = tokd[k]
-
-        # Setting strip_block values
-        # --------------------------
-        try:
-            # Incase we are still within height bounds
-            # ----------------------------------------
-            stripe_block[st_h:st_h+num_rows,:,:] = col_pal
-            verticle_stripe_block[st_h:st_h+num_rows,:,:] = col_pal
-
-        except:
-            # Incase we are outside height bounds
-            # -----------------------------------
-            stripe_block[st_h:,:,:] = col_pal
-            verticle_stripe_block[st_h:,:,:] = col_pal
-
-        st_h = st_h+num_rows
-
-    # 4. Building a full on repeat for stripes
-    # ----------------------------------------
-    no_rows_for_repeat = math.ceil(hout / repeat_h) + 1
-    built_repeat = np.concatenate((stripe_block,stripe_block), axis = 0)
-    for _ in range(no_rows_for_repeat - 2):
-        built_repeat = np.concatenate((built_repeat,stripe_block), axis = 0)
-    built_repeat_stripes = built_repeat[0:hout,0:wout,:].astype('uint8')
-
-    # 5. Building a full on repeat for checks
-    # ---------------------------------------
-    no_rows_for_repeat_checks = math.ceil(wout / repeat_h) + 1
-    built_repeat_horz = np.concatenate((verticle_stripe_block,verticle_stripe_block), axis = 0)
-    for _ in range(no_rows_for_repeat_checks - 2):
-        built_repeat_horz = np.concatenate((built_repeat_horz,verticle_stripe_block), axis = 0)
-    built_repeat_horz = built_repeat_horz[0:wout,0:hout,:]
-    built_repeat_horz = np.rot90(built_repeat_horz)
-    stripe_horz = copy.deepcopy(built_repeat_horz).astype(float)
-    stripe_vert = copy.deepcopy(built_repeat_stripes).astype(float)
-    built_repeat_checks = ((stripe_horz + stripe_vert)/2).astype('uint8')
-
-
-    return built_repeat_stripes, built_repeat_checks
-
-# 5.2
-# API ready ##
 # Main funtion that is used to cluster similar colors returned from smaller product/pattern images
 # -------------------------------------------------------------------------------------------------
+
 def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
 
     # Some initial master settings
@@ -1114,16 +1129,228 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
         m = len(all_ind_for_trav)
         #print('At set ' + str(set_num) + ', curr m size is ' + str(m))
 
+    outimage_stripes,outimage_checks,outimage_mel,outimage_grain = protomatebeta_create_textures_v1(to_keep_dict,weight_keep_dict,30,hout,wout)
+
+    return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-    outimage_stripes,outimage_checks = protomatebeta_create_stripes_checks_v1(to_keep_dict,weight_keep_dict,30,hout,wout)
+# In[18]:
 
-    return outimage_stripes,outimage_checks
+
+# 5.2
+# API ready ##
+# Actual function to create stripes, checks, other textures
+# ---------------------------------------------------------
+
+def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
+
+    # Here input dicts represent color scales from a single processed image
+    # ---------------------------------------------------------------------
+
+    # 1. Getting total weight
+    # -----------------------
+    tot_weight = 0
+    for k in wkd:
+        tot_weight += wkd[k]
+
+    # 1.1 Some initialisations for melange and grain
+    # ----------------------------------------------
+    mean_weight = tot_weight / (len(wkd.keys()))
+    mel_grain = []
+
+    # 2. Some initialisations
+    # -----------------------
+    stripe_block = np.zeros((repeat_h,wout,3))
+    verticle_stripe_block = np.zeros((repeat_h,hout,3))
+    st_h = 0
+
+
+    # 3. Spliting the block row wise
+    # ------------------------------
+    for k in wkd:
+
+        # Building a list of colors to pass to melange and grainy function
+        # ----------------------------------------------------------------
+        if wkd[k] >= mean_weight:
+            mel_grain.append(tokd[k])
+
+
+        # As we process the incoming colors and its weights,
+        # there is randomness implicit here as we dont process,
+        # in any particular order.
+        # -----------------------------------------------------
+        weight_percent = (wkd[k] / tot_weight)
+        num_rows = math.ceil(weight_percent * repeat_h)
+
+        # Initialising col pal for curr color
+        # -----------------------------------
+        col_pal = np.zeros((1,1,3))
+        col_pal[:,:,0],col_pal[:,:,1],col_pal[:,:,2] = tokd[k]
+
+        # Setting strip_block values
+        # --------------------------
+        try:
+            # Incase we are still within height bounds
+            # ----------------------------------------
+            stripe_block[st_h:st_h+num_rows,:,:] = col_pal
+            verticle_stripe_block[st_h:st_h+num_rows,:,:] = col_pal
+
+        except:
+            # Incase we are outside height bounds
+            # -----------------------------------
+            stripe_block[st_h:,:,:] = col_pal
+            verticle_stripe_block[st_h:,:,:] = col_pal
+
+        st_h = st_h+num_rows
+
+    # 4. Building a full on repeat for stripes
+    # ----------------------------------------
+    no_rows_for_repeat = math.ceil(hout / repeat_h) + 1
+    built_repeat = np.concatenate((stripe_block,stripe_block), axis = 0)
+    for _ in range(no_rows_for_repeat - 2):
+        built_repeat = np.concatenate((built_repeat,stripe_block), axis = 0)
+    built_repeat_stripes = built_repeat[0:hout,0:wout,:].astype('uint8')
+
+    # 5. Building a full on repeat for checks
+    # ---------------------------------------
+    no_rows_for_repeat_checks = math.ceil(wout / repeat_h) + 1
+    built_repeat_horz = np.concatenate((verticle_stripe_block,verticle_stripe_block), axis = 0)
+    for _ in range(no_rows_for_repeat_checks - 2):
+        built_repeat_horz = np.concatenate((built_repeat_horz,verticle_stripe_block), axis = 0)
+    built_repeat_horz = built_repeat_horz[0:wout,0:hout,:]
+    built_repeat_horz = np.rot90(built_repeat_horz)
+    stripe_horz = copy.deepcopy(built_repeat_horz).astype(float)
+    stripe_vert = copy.deepcopy(built_repeat_stripes).astype(float)
+    built_repeat_checks = ((stripe_horz + stripe_vert)/2).astype('uint8')
+
+    # 6. Building Melange
+    # -------------------
+    mel_tex,grain_tex = protomatebeta_create_mel_grainy_v1(mel_grain,hout,wout)
+
+
+    return built_repeat_stripes, built_repeat_checks, mel_tex, grain_tex
+
+
+
+
+# In[19]:
+
+
+# 5.3
+# API ready ##
+# Function that builds melange and grainy accepting a list of colors as tuple
+# ---------------------------------------------------------------------------
+
+def protomatebeta_create_mel_grainy_v1(inlist,h,w):
+
+    # Accepts a list of color values as tuple and outputs full size melange and grainy blocks
+    # ---------------------------------------------------------------------------------------
+    counter = 0
+
+    for l in inlist:
+
+        counter += 1
+        print('At image ' + str(counter) + '..')
+
+        # l of format (R,G,B). Example (202,123,34). Initialising colors
+        # --------------------------------------------------------------
+        orig = l
+        dkthresh = 30
+        dark = tuple([x-dkthresh if x-dkthresh > 0 else 0 for x in orig])
+
+        # Building melange
+        # ----------------
+        mel = np.ones((h,w,3))
+        spot = np.ones((h,w,3))
+        mj = 0.6
+        mn = 1 - mj
+        width_ind = list(range(w))
+        orig_count = int(mj * w)
+
+        # Line wise melange
+        # -----------------
+        no_pos = orig_count
+        min_len = int(0.02*mj*w)
+        max_len = int(0.10*mj*w)
+        len_list = list(range(min_len,max_len+1))
+
+        # Itering through the rows and randomly setting pixels
+        # ----------------------------------------------------
+        for i in range(h):
+
+            # Building occurances lengths
+            # ---------------------------
+            no_occurance_len = []
+            no_occurance_counter = 0
+            while True:
+                #print('At 1st while..')
+                oc = random.choice(len_list)
+                if no_occurance_counter + oc < no_pos:
+                    no_occurance_counter += oc
+                    no_occurance_len.append(oc)
+                else:
+                    oc = no_pos - no_occurance_counter
+                    no_occurance_counter += oc
+                    no_occurance_len.append(oc)
+                    break
+
+            # Determining orig color positions
+            # --------------------------------
+            len_list_current = copy.deepcopy(width_ind)
+            sub_lists = []
+            for j in no_occurance_len:
+
+                # Looping to randomly find a position
+                # -----------------------------------
+                while True:
+                    #print('At 2nd while..')
+                    start_postion = random.choice(len_list_current)
+                    if start_postion + j > max(len_list_current):
+                        'do nothing and repeat loop'
+                    else:
+                        break
+
+                # We now have a start position that occupies legitimate indices
+                # -------------------------------------------------------------
+                curr_sub_list = list(range(start_postion,start_postion+j))
+                sub_lists += curr_sub_list
+                len_list_current = [x for x in len_list_current if x not in curr_sub_list]
+
+            #print('Out of loops')
+            # 'Set'ing the lists
+            # -------------------
+            orig_positions_mel = list(set(sub_lists))
+            dark_positions_mel = list(set(len_list_current))
+            mel[i,[orig_positions_mel]] = orig
+            mel[i,[dark_positions_mel]] = dark
+
+            # Spot texture
+            # -------------
+            mj_spot = 0.85
+            orig_count_spot = int(mj_spot * w)
+            orig_positions_spot = list(random.sample(width_ind,orig_count_spot))
+            dark_positions_spot = [x for x in width_ind if x not in orig_positions_spot]
+            spot[i,[orig_positions_spot]] = orig
+            spot[i,[dark_positions_spot]] = dark
+
+        if counter == 1:
+            melout = mel.reshape(1,mel.shape[0],mel.shape[1],mel.shape[2])
+            spotout = spot.reshape(1,spot.shape[0],spot.shape[1],spot.shape[2])
+        else:
+            melout = np.concatenate((melout,mel.reshape(1,mel.shape[0],mel.shape[1],mel.shape[2])), axis = 0)
+            spotout = np.concatenate((spotout,spot.reshape(1,spot.shape[0],spot.shape[1],spot.shape[2])), axis = 0)
+
+    return melout.astype('uint8'), spotout.astype('uint8')
+
+
+# In[20]:
+
 
 # 6
 # Getting lines,segments & categories from storage and returning them as a numpy array and list
 # API ready ##
 # ---------------------------------------------------------------------------------------------
+
 def get_stylings_from_storage(in_names):
 
     """"For example, given these blobs:
@@ -1219,10 +1446,15 @@ def get_stylings_from_storage(in_names):
 
     return xout_lines,xout_seg,categories
 
+
+# In[21]:
+
+
 # 6.1
 # API ready ##
 # Function to correct segments and linemarkings
 # ----------------------------------------------
+
 def protomatebeta_correct_segments_linemarkings(lines,seg):
 
     # Initialisations
@@ -1277,29 +1509,34 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
 
     return xout_lines,xout_seg
 
+
+# In[61]:
+
+
 # 7
 # API read ##
 # Main function that generates ideas
 # ----------------------------------
-###########################################
-# To include more textures and categories #
-###########################################
-def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stripes,checks,colors,no_images,progress,task_id,gen_id):
+
+def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,save_preview):
 
     # Initialisations
     # ---------------
     seg_index = list(range(segments.shape[0]))
-    patterns_index = list(range(patterns.shape[0]))
-    stripes_index = list(range(stripes.shape[0]))
-    checks_index = list(range(checks.shape[0]))
-    colors_index = list(range(colors.shape[0]))
+    #patterns_index = list(range(patterns.shape[0]))
+    #stripes_index = list(range(stripes.shape[0]))
+    #checks_index = list(range(checks.shape[0]))
+    #melange_index = list(range(melange.shape[0]))
+    #grainy_index = list(range(grainy.shape[0]))
+    #colors_index = list(range(colors.shape[0]))
+
     m = segments.shape[0]
 
     inh_r = segments.shape[1]
     inw_r = segments.shape[2]
     list_combos = []
 
-    # tup will be always of form (seg_index,pattern_index,color_index,stripes_index,check_index)
+    # tup will be always of form (seg_index,pattern_index,color_index,stripes_index,check_index,melange_index,grainy_index)
     # Will use 0 in case of specific categories or single segments
 
     # Iterating for number of required output
@@ -1307,7 +1544,6 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
     for i in range(no_images):
 
         print('Generating image..' + str(i+1))
-
 
         # First getting the seg_index to use for evenly displaying generations
         # --------------------------------------------------------------------
@@ -1319,6 +1555,8 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
         # Picking segments & patterns
         # ---------------------------
         if i == 0:
+
+            tup = None
 
             # Setting segment
             # ---------------
@@ -1336,207 +1574,36 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
             black_fac = black_prop / total_prop
             porp_threshold = 0.15
 
+            # Using external function to return combos
+            # ----------------------------------------
+            if np.sum(temp_grey_pos) == 0 or np.sum(temp_black_pos) == 0: ## Single segment ##
 
-            # Figuring if the segment is a single or double
-            # ---------------------------------------------
-            if np.sum(temp_grey_pos) == 0:
-
-                # No gray segments in the seg image
-                # Having category rule here --
-                # ---------------------------------
-                if category_curr_seg == 0: # Girls dress
-
-                    # Making a legitimate choice
-                    # --------------------------
-                    choice = random.choice([0,1])
-
-                    if choice == 0: # Use patterns
-                        b_index = random.choice(patterns_index)
-                        #tup -- (seg_index,pattern_index,color_index,stripes_index,check_index)
-                        tup = (s_index,b_index,0,0,0)
-                        gblock = patterns[b_index]
-                        bblock = patterns[b_index]
-
-                    else: # Using Checks
-                        b_index = random.choice(checks_index)
-                        #tup -- (seg_index,pattern_index,color_index,stripes_index,check_index)
-                        tup = (s_index,0,0,0,b_index)
-                        gblock = checks[b_index]
-                        bblock = checks[b_index]
-
-                elif category_curr_seg == 1: # Girls top
-                    'code'
-                elif category_curr_seg == 2: # Girls Jeans
-                    'code'
-                elif category_curr_seg == 3: # Girls
-                    'code'
-                elif category_curr_seg == 4: # Girls top
-                    'code'
-
-            elif np.sum(temp_black_pos) == 0:
-
-                # No black segments in the seg image
-                # Having category rule here --
-                # ---------------------------------
-                if category_curr_seg == 0: # Girls dress
-
-                    # Making a legitimate choice
-                    # --------------------------
-                    choice = random.choice([0,1])
-
-                    if choice == 0: # Use patterns
-                        g_index = random.choice(patterns_index)
-                        #tup -- (seg_index,pattern_index,color_index,stripes_index,check_index)
-                        tup = (s_index,g_index,0,0,0)
-                        gblock = patterns[g_index]
-                        bblock = patterns[g_index]
-
-                    else: # Using Checks
-                        g_index = random.choice(checks_index)
-                        #tup -- (seg_index,pattern_index,color_index,stripes_index,check_index)
-                        tup = (s_index,0,0,0,g_index)
-                        gblock = checks[g_index]
-                        bblock = checks[g_index]
-
-                elif category_curr_seg == 1: # Girls top
-                    'code'
-                elif category_curr_seg == 2: # Girls Jeans
-                    'code'
-                elif category_curr_seg == 3: # Girls
-                    'code'
-                elif category_curr_seg == 4: # Girls top
-                    'code'
-
+                # return combo function
+                # ----------------------
+                gblock,bblock,tup = returncombo(True,False,None,category_curr_seg,s_index,patterns,stripes,checks,melange,grainy,colors)
 
             else:
 
-                # Both segments are available
-                # Having category rule here --
-                # ---------------------------------
-                if category_curr_seg == 0: # Girls dress
+                if grey_fac < porp_threshold: ## Minority segment - gray ##
+                    gblock,bblock,tup = returncombo(False,True,'gray',category_curr_seg,s_index,patterns,stripes,checks,melange,grainy,colors)
 
-                    # Making a legitimate choice
-                    # --------------------------
-                    choice = random.choice([0,1])
+                elif black_fac < porp_threshold: ## Minority segment - black ##
+                    gblock,bblock,tup = returncombo(False,True,'black',category_curr_seg,s_index,patterns,stripes,checks,melange,grainy,colors)
 
-                    if choice == 0: # Use patterns
-
-                        # Checking to see if either of the segments is very tiny in proportion
-                        # so that we dont end up assigning plain color to major portion
-                        # --------------------------------------------------------------------
-                        if grey_fac < porp_threshold:
-
-                            # Grey seg is less
-                            # ----------------
-                            g_index = random.choice(colors_index)
-                            b_index = random.choice(patterns_index)
-                            #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                            tup = (s_index,b_index,g_index,0,0)
-                            gblock = colors[g_index]
-                            bblock = patterns[b_index]
-
-                        elif black_fac < porp_threshold:
-
-                            # Black seg is less
-                            # ----------------
-                            g_index = random.choice(patterns_index)
-                            b_index = random.choice(colors_index)
-                            #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                            tup = (s_index,g_index,b_index,0,0)
-                            gblock = patterns[g_index]
-                            bblock = colors[b_index]
-
-                        else:
-                            # Both grey and black available in good proportions
-                            # -------------------------------------------------
-                            seg_choice = random.choice([1,2])
-                            if seg_choice == 1: # Make grey segment as color
-                                g_index = random.choice(colors_index)
-                                gblock = colors[g_index]
-
-                                b_index = random.choice(patterns_index)
-                                bblock = patterns[b_index]
-
-                                #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                tup = (s_index,b_index,g_index,0,0)
-
-                            else: # Make black segment as color
-                                b_index = random.choice(colors_index)
-                                bblock = colors[b_index]
-
-                                g_index = random.choice(patterns_index)
-                                gblock = patterns[g_index]
-
-                                #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                tup = (s_index,g_index,b_index,0,0)
-
-                    else: # Using Checks
-
-                        # Checking to see if either of the segments is very tiny in proportion
-                        # so that we dont end up assigning plain color to major portion
-                        # --------------------------------------------------------------------
-                        if grey_fac < porp_threshold:
-
-                            # Grey seg is less
-                            # ----------------
-                            g_index = random.choice(colors_index)
-                            b_index = random.choice(checks_index)
-                            #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                            tup = (s_index,0,g_index,0,b_index)
-                            gblock = colors[g_index]
-                            bblock = checks[b_index]
-
-                        elif black_fac < porp_threshold:
-
-                            # Black seg is less
-                            # ----------------
-                            g_index = random.choice(checks_index)
-                            b_index = random.choice(colors_index)
-                            #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                            tup = (s_index,0,b_index,0,g_index)
-                            gblock = checks[g_index]
-                            bblock = colors[b_index]
-
-                        else:
-                            # Both grey and black available in good proportions
-                            # -------------------------------------------------
-                            seg_choice = random.choice([1,2])
-                            if seg_choice == 1: # Make grey segment as color
-                                g_index = random.choice(colors_index)
-                                gblock = colors[g_index]
-
-                                b_index = random.choice(checks_index)
-                                bblock = checks[b_index]
-
-                                #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                tup = (s_index,0,g_index,0,b_index)
-
-                            else: # Make black segment as color
-                                b_index = random.choice(colors_index)
-                                bblock = colors[b_index]
-
-                                g_index = random.choice(checks_index)
-                                gblock = checks[g_index]
-
-                                #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                tup = (s_index,0,b_index,0,g_index)
-
-                elif category_curr_seg == 1: # Girls top
-                    'code'
-                elif category_curr_seg == 2: # Girls Jeans
-                    'code'
-                elif category_curr_seg == 3: # Girls
-                    'code'
-                elif category_curr_seg == 4: # Girls top
-                    'code'
+                else: ## Equal segments ##
+                    gblock,bblock,tup = returncombo(False,False,None,category_curr_seg,s_index,patterns,stripes,checks,melange,grainy,colors)
 
 
+            # Appending to list tup
+            # ---------------------
             list_combos.append(tup)
 
         else:
             start_time = time.time()
 
             while True:
+
+                tup = None
 
                 # Setting segment
                 # ---------------
@@ -1554,198 +1621,24 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
                 black_fac = black_prop / total_prop
                 porp_threshold = 0.15
 
+                # Using external function to return combos
+                # ----------------------------------------
+                if np.sum(temp_grey_pos) == 0 or np.sum(temp_black_pos) == 0: ## Single segment ##
 
-                # Figuring if the segment is a single or double
-                # ---------------------------------------------
-                if np.sum(temp_grey_pos) == 0:
-
-                    # No gray segments in the seg image
-                    # Having category rule here --
-                    # ---------------------------------
-                    if category_curr_seg == 0: # Girls dress
-
-                        # Making a legitimate choice
-                        # --------------------------
-                        choice = random.choice([0,1])
-
-                        if choice == 0: # Use patterns
-                            b_index = random.choice(patterns_index)
-                            #tup -- (seg_index,pattern_index,color_index,stripes_index,check_index)
-                            tup = (s_index,b_index,0,0,0)
-                            gblock = patterns[b_index]
-                            bblock = patterns[b_index]
-
-                        else: # Using Checks
-                            b_index = random.choice(checks_index)
-                            #tup -- (seg_index,pattern_index,color_index,stripes_index,check_index)
-                            tup = (s_index,0,0,0,b_index)
-                            gblock = checks[b_index]
-                            bblock = checks[b_index]
-
-                    elif category_curr_seg == 1: # Girls top
-                        'code'
-                    elif category_curr_seg == 2: # Girls Jeans
-                        'code'
-                    elif category_curr_seg == 3: # Girls
-                        'code'
-                    elif category_curr_seg == 4: # Girls top
-                        'code'
-
-                elif np.sum(temp_black_pos) == 0:
-
-                    # No black segments in the seg image
-                    # Having category rule here --
-                    # ---------------------------------
-                    if category_curr_seg == 0: # Girls dress
-
-                        # Making a legitimate choice
-                        # --------------------------
-                        choice = random.choice([0,1])
-
-                        if choice == 0: # Use patterns
-                            g_index = random.choice(patterns_index)
-                            #tup -- (seg_index,pattern_index,color_index,stripes_index,check_index)
-                            tup = (s_index,g_index,0,0,0)
-                            gblock = patterns[g_index]
-                            bblock = patterns[g_index]
-
-                        else: # Using Checks
-                            g_index = random.choice(checks_index)
-                            #tup -- (seg_index,pattern_index,color_index,stripes_index,check_index)
-                            tup = (s_index,0,0,0,g_index)
-                            gblock = checks[g_index]
-                            bblock = checks[g_index]
-
-                    elif category_curr_seg == 1: # Girls top
-                        'code'
-                    elif category_curr_seg == 2: # Girls Jeans
-                        'code'
-                    elif category_curr_seg == 3: # Girls
-                        'code'
-                    elif category_curr_seg == 4: # Girls top
-                        'code'
+                    # return combo function
+                    # ----------------------
+                    gblock,bblock,tup = returncombo(True,False,None,category_curr_seg,s_index,patterns,stripes,checks,melange,grainy,colors)
 
                 else:
 
-                    # Both segments are available
-                    # Having category rule here --
-                    # ---------------------------------
-                    if category_curr_seg == 0: # Girls dress
+                    if grey_fac < porp_threshold: ## Minority segment - gray ##
+                        gblock,bblock,tup = returncombo(False,True,'gray',category_curr_seg,s_index,patterns,stripes,checks,melange,grainy,colors)
 
-                        # Making a legitimate choice
-                        # --------------------------
-                        choice = random.choice([0,1])
+                    elif black_fac < porp_threshold: ## Minority segment - black ##
+                        gblock,bblock,tup = returncombo(False,True,'black',category_curr_seg,s_index,patterns,stripes,checks,melange,grainy,colors)
 
-                        if choice == 0: # Use patterns
-
-                            # Checking to see if either of the segments is very tiny in proportion
-                            # so that we dont end up assigning plain color to major portion
-                            # --------------------------------------------------------------------
-                            if grey_fac < porp_threshold:
-
-                                # Grey seg is less
-                                # ----------------
-                                g_index = random.choice(colors_index)
-                                b_index = random.choice(patterns_index)
-                                #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                tup = (s_index,b_index,g_index,0,0)
-                                gblock = colors[g_index]
-                                bblock = patterns[b_index]
-
-                            elif black_fac < porp_threshold:
-
-                                # Black seg is less
-                                # ----------------
-                                g_index = random.choice(patterns_index)
-                                b_index = random.choice(colors_index)
-                                #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                tup = (s_index,g_index,b_index,0,0)
-                                gblock = patterns[g_index]
-                                bblock = colors[b_index]
-
-                            else:
-                                # Both grey and black available in good proportions
-                                # -------------------------------------------------
-                                seg_choice = random.choice([1,2])
-                                if seg_choice == 1: # Make grey segment as color
-                                    g_index = random.choice(colors_index)
-                                    gblock = colors[g_index]
-
-                                    b_index = random.choice(patterns_index)
-                                    bblock = patterns[b_index]
-
-                                    #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                    tup = (s_index,b_index,g_index,0,0)
-
-                                else: # Make black segment as color
-                                    b_index = random.choice(colors_index)
-                                    bblock = colors[b_index]
-
-                                    g_index = random.choice(patterns_index)
-                                    gblock = patterns[g_index]
-
-                                    #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                    tup = (s_index,g_index,b_index,0,0)
-
-                        else: # Using Checks
-
-                            # Checking to see if either of the segments is very tiny in proportion
-                            # so that we dont end up assigning plain color to major portion
-                            # --------------------------------------------------------------------
-                            if grey_fac < porp_threshold:
-
-                                # Grey seg is less
-                                # ----------------
-                                g_index = random.choice(colors_index)
-                                b_index = random.choice(checks_index)
-                                #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                tup = (s_index,0,g_index,0,b_index)
-                                gblock = colors[g_index]
-                                bblock = checks[b_index]
-
-                            elif black_fac < porp_threshold:
-
-                                # Black seg is less
-                                # ----------------
-                                g_index = random.choice(checks_index)
-                                b_index = random.choice(colors_index)
-                                #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                tup = (s_index,0,b_index,0,g_index)
-                                gblock = checks[g_index]
-                                bblock = colors[b_index]
-
-                            else:
-                                # Both grey and black available in good proportions
-                                # -------------------------------------------------
-                                seg_choice = random.choice([1,2])
-                                if seg_choice == 1: # Make grey segment as color
-                                    g_index = random.choice(colors_index)
-                                    gblock = colors[g_index]
-
-                                    b_index = random.choice(checks_index)
-                                    bblock = checks[b_index]
-
-                                    #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                    tup = (s_index,0,g_index,0,b_index)
-
-                                else: # Make black segment as color
-                                    b_index = random.choice(colors_index)
-                                    bblock = colors[b_index]
-
-                                    g_index = random.choice(checks_index)
-                                    gblock = checks[g_index]
-
-                                    #tup -- (seg_index, pattern_index, color_index, stripes_index, check_index)
-                                    tup = (s_index,0,b_index,0,g_index)
-
-                    elif category_curr_seg == 1: # Girls top
-                        'code'
-                    elif category_curr_seg == 2: # Girls Jeans
-                        'code'
-                    elif category_curr_seg == 3: # Girls
-                        'code'
-                    elif category_curr_seg == 4: # Girls top
-                        'code'
+                    else: ## Equal segments ##
+                        gblock,bblock,tup = returncombo(False,False,None,category_curr_seg,s_index,patterns,stripes,checks,melange,grainy,colors)
 
                 # Code that runs until new combo is caught
                 # ----------------------------------------
@@ -1762,7 +1655,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
                 # Code that times out this while loop incase it goes over board
                 # -------------------------------------------------------------
                 curr_time = time.time()
-                if (end_time - start_time) > 5: # 5 secs
+                if (curr_time - start_time) > 8: # 8 secs
                     return genout # Returns genout and exits
 
 
@@ -1795,11 +1688,10 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
 
         # Saving current generation to storage for keeping frontend progress
         # -------------------------------------------------------------------
-        # CHECKS
-        ##
-        storage_dir = str(task_id) + '/ideas/ideaspreview'
-        image_prefix = str(task_id) + '_' + str(gen_id) + '_preview'
-        save_to_storage_from_array_list(newim_c,storage_dir,image_prefix,False,None)
+        if save_preview == True:
+            storage_dir = str(task_id) + '/ideas/ideaspreview'
+            image_prefix = str(task_id) + '_' + str(gen_id) + '_preview'
+            save_to_storage_from_array_list(newim_c,storage_dir,image_prefix,False,None)
 
         if i == 0:
             genout = newim_c
@@ -1808,7 +1700,290 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
 
     return genout
 
+
+# In[51]:
+
+
+# 7.1
+# API read ##
+# Function that return combos for generating ideas
+# ------------------------------------------------
+
+#0	Girls Dresses
+#1	Girls Tops
+#2	Girls Polos
+#3	Girls Jumpers
+#4	Girls Pants & Capris
+#5	Girls Leggings
+#6	Girls Shorts
+#7	Girls Skirts & Skorts
+#8	Boys Polos
+#9	Boys Shirts
+#10	Boys Jeans
+#11	Boys Pants
+#12	Boys Shorts
+#tup will be always of form --
+# (seg_index,pattern_index,color_index,stripes_index,check_index,melange_index,grainy_index)
+
+def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,patterns,stripes,checks,melange,grainy,colors):
+
+
+    # Some initialisations
+    # --------------------
+    patterns_index = list(range(patterns.shape[0]))
+    stripes_index = list(range(stripes.shape[0]))
+    checks_index = list(range(checks.shape[0]))
+    melange_index = list(range(melange.shape[0]))
+    grainy_index = list(range(grainy.shape[0]))
+    colors_index = list(range(colors.shape[0]))
+
+    # Legend
+    # ------
+    # 0 -- Use print
+    # 1 -- Use stripes
+    # 2 -- Use checks
+    # 3 -- Use Melange
+    # 4 -- Use grainy
+    # 5 -- Use colors
+
+    # Choice making code
+    # ------------------
+    if category == 0: ## Girls dress ##
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = random.choice([0,2]) # Print, checks
+            choice_g = choice_single
+            choice_b = choice_single
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = random.choice([0,2])
+                choice_b = 5
+            else:
+                choice_g = 5
+                choice_b = random.choice([0,2])
+        else:
+            choice_color = random.choice([1,2])
+            if choice_color == 1: # make gray color
+                choice_g = 5
+                choice_b = random.choice([0,2])
+            else: # make black color
+                choice_g = random.choice([0,2])
+                choice_b = 5
+
+    elif category == 1 or category == 3 or category == 6 or category == 7 or category == 12: ## Girls Top, Girls Jumper, Girls Shorts, Girls Skirts, Boys shorts ##
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = random.choice([0,1,2,4,5]) # Print, Stripes, Checks, Grainy, Colors
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = random.choice([0,1,2,4])
+                choice_b = 5
+            else:
+                choice_g = 5
+                choice_b = random.choice([0,1,2,4])
+
+        else:
+            choice_g = random.choice([0,1,2,4,5])
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0:
+                choice_b = random.choice([4,5])
+            elif choice_g == 1:
+                choice_b = random.choice([4,5])
+            elif choice_g == 2:
+                choice_b = random.choice([4,5])
+            elif choice_g == 4:
+                choice_b = random.choice([0,1,2])
+            else:
+                choice_b = random.choice([0,1,2])
+
+    elif category == 2 or category == 8 or category == 5: # Girls polo, boys polo, girls leggings ##
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = random.choice([0,1,3,4]) # Print, Stripes, Melange, Grainy
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = random.choice([0,1,3,4])
+                choice_b = 5
+            else:
+                choice_g = 5
+                choice_b = random.choice([0,1,3,4])
+
+        else:
+            choice_g = random.choice([0,1,3,4])
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0:
+                choice_b = random.choice([4,5])
+            elif choice_g == 1:
+                choice_b = random.choice([4,5])
+            elif choice_g == 3:
+                choice_b = 5
+            else:
+                choice_b = random.choice([0,1])
+
+    elif category == 9: ## Boys shirts ##
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = random.choice([0,2,4,5]) # Print, Checks, Grainy, Color
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = random.choice([0,2,4])
+                choice_b = 5
+            else:
+                choice_g = 5
+                choice_b = random.choice([0,2,4])
+
+        else:
+            choice_g = random.choice([0,2,4,5])
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0:
+                choice_b = random.choice([4,5])
+            elif choice_g == 2:
+                choice_b = random.choice([4,5])
+            elif choice_g == 4:
+                choice_b = random.choice([0,2])
+            else:
+                choice_b = random.choice([0,2])
+
+    elif category == 10 or category == 11: ## Boys jeans, boys trousers ##
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = random.choice([3,4,5]) # Melange, Grainy, Color
+            choice_g = choice_single
+            choice_b = choice_single
+
+
+        # Not checking minor segment
+        # --------------------------
+
+        else:
+            choice_g = random.choice([3,4,5])
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 3:
+                choice_b = 5
+            elif choice_g == 4:
+                choice_b = 5
+            else:
+                choice_b = random.choice([3,4])
+
+    elif category == 4: # Girls pants, capris ##
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = random.choice([0,2,4,5]) # Print, Checks, Grainy, Color
+            choice_g = choice_single
+            choice_b = choice_single
+
+        # Not doing minority check
+        # ------------------------
+
+        else:
+            choice_g = random.choice([0,2,4,5])
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0:
+                choice_b = random.choice([4,5])
+            elif choice_g == 2:
+                choice_b = random.choice([4,5])
+            elif choice_g == 4:
+                choice_b = random.choice([0,2])
+            else:
+                choice_b = random.choice([0,2])
+
+
+    # Index & tup setting code - gindex
+    # ---------------------------------
+    choice = choice_g
+    if choice == 0:
+        g_index = random.choice(patterns_index)
+        gblock = patterns[g_index]
+        tup = (s_index,g_index,0,0,0,0,0)
+    elif choice == 1:
+        g_index = random.choice(stripes_index)
+        gblock = stripes[g_index]
+        tup = (s_index,0,0,g_index,0,0,0)
+    elif choice == 2:
+        g_index = random.choice(checks_index)
+        gblock = checks[g_index]
+        tup = (s_index,0,0,0,g_index,0,0)
+    elif choice == 3:
+        g_index = random.choice(melange_index)
+        gblock = melange[g_index]
+        tup = (s_index,0,0,0,0,g_index,0)
+    elif choice == 4:
+        g_index = random.choice(grainy_index)
+        gblock = grainy[g_index]
+        tup = (s_index,0,0,0,0,0,g_index)
+    else:
+        g_index = random.choice(colors_index)
+        gblock = colors[g_index]
+        tup = (s_index,0,g_index,0,0,0,0)
+
+    # Index & tup setting code - bindex
+    # ---------------------------------
+    choice = choice_b
+    if choice == 0:
+        b_index = random.choice(patterns_index)
+        bblock = patterns[b_index]
+        tup = (s_index,b_index,0,0,0,0,0)
+    elif choice == 1:
+        b_index = random.choice(stripes_index)
+        bblock = stripes[b_index]
+        tup = (s_index,0,0,b_index,0,0,0)
+    elif choice == 2:
+        b_index = random.choice(checks_index)
+        bblock = checks[b_index]
+        tup = (s_index,0,0,0,b_index,0,0)
+    elif choice == 3:
+        b_index = random.choice(melange_index)
+        bblock = melange[b_index]
+        tup = (s_index,0,0,0,0,b_index,0)
+    elif choice == 4:
+        b_index = random.choice(grainy_index)
+        bblock = grainy[b_index]
+        tup = (s_index,0,0,0,0,0,b_index)
+    else:
+        b_index = random.choice(colors_index)
+        bblock = colors[b_index]
+        tup = (s_index,0,b_index,0,0,0,0)
+
+
+    return gblock, bblock, tup
+
+
 # # Ven_API functions
+
+# In[23]:
+
+
 # API 1 Function
 # API -- create_new_patterns
 # creates new patterns for the first time using uploaded theme images at
@@ -1817,7 +1992,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
 # Creates segments, linemarkings, categories from input selected styling names and saves as numpy
 # at /task_id/numpy for easy generation
 # Returns OK, NOT OK
-# ------------------------------------------------------------------------------
+
 def api_create_new_patterns(task_id,selected_style_names,progress):
 
     progress['curr_step'] = 0
@@ -1949,13 +2124,17 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     #
     #    return 500 # NOT OK
 
+
+# In[24]:
+
+
 # API 2 function
 # API -- create_textures
 # Takes in task_id, selected_indices (as string) and creates textures
 # saving them under /task_id/numpy/ And also saved picked indices as numpy array
 # At same location
 # Returns OK, NOT OK
-# ------------------------------------------------------------------------------
+
 def api_create_textures(task_id,picked_ind_string,progress):
 
     #try:
@@ -1971,7 +2150,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     # 2. Getting all patterns npy file
     # --------------------------------
     progress['curr_step'] = 1
-    progress['total_step'] = 5
+    progress['total_step'] = 7
     progress['master_message'] = 'Loading saved patterns..'
     progress['curr_message'] = progress['master_message']
     print('1. At np array load..')
@@ -1984,18 +2163,18 @@ def api_create_textures(task_id,picked_ind_string,progress):
     # 3. Creating stripes and checks
     # ------------------------------
     progress['curr_step'] = 2
-    progress['total_step'] = 5
+    progress['total_step'] = 7
     progress['master_message'] = 'Building textures..'
     progress['curr_message'] = progress['master_message']
     print('2. At textures..')
-    picked_stripes,picked_checks = protomatebeta_build_textures_v1(picked_patterns,h,w,False,progress,task_id)
+    picked_stripes,picked_checks,picked_melange,picked_grainy = protomatebeta_build_textures_v1(picked_patterns,h,w,False,progress,task_id)
 
     # 4. Saving textures under /task_id/numpy/
     # ----------------------------------------
     # Saving Stripes
     # --------------
     progress['curr_step'] = 3
-    progress['total_step'] = 5
+    progress['total_step'] = 7
     progress['master_message'] = 'Saving textures..stripes'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
@@ -2005,12 +2184,33 @@ def api_create_textures(task_id,picked_ind_string,progress):
     # Saving Checks
     # --------------
     progress['curr_step'] = 4
-    progress['total_step'] = 5
+    progress['total_step'] = 7
     progress['master_message'] = 'Saving textures..checks'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
     np.save(file_io.FileIO(storage_address, 'w'), picked_checks)
     print('4. Saved checks..')
+
+    # Saving Melange
+    # --------------
+    progress['curr_step'] = 5
+    progress['total_step'] = 7
+    progress['master_message'] = 'Saving textures..melange'
+    progress['curr_message'] = progress['master_message']
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
+    np.save(file_io.FileIO(storage_address, 'w'), picked_melange)
+    print('4. Saved melange..')
+
+    # Saving Grainy
+    # --------------
+    progress['curr_step'] = 6
+    progress['total_step'] = 7
+    progress['master_message'] = 'Saving textures..grainy'
+    progress['curr_message'] = progress['master_message']
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
+    np.save(file_io.FileIO(storage_address, 'w'), picked_grainy)
+    print('4. Saved grainy..')
+
 
     # Saving Picked_ind
     # -----------------
@@ -2018,8 +2218,8 @@ def api_create_textures(task_id,picked_ind_string,progress):
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_picked_ind.npy'
     np.save(file_io.FileIO(storage_address, 'w'), picked_ind_np)
     print('5. Saved indices..')
-    progress['curr_step'] = 5
-    progress['total_step'] = 5
+    progress['curr_step'] = 7
+    progress['total_step'] = 7
     progress['master_message'] = 'Done.'
     progress['curr_message'] = progress['master_message']
 
@@ -2029,12 +2229,16 @@ def api_create_textures(task_id,picked_ind_string,progress):
 
     #    return 500
 
+
+# In[54]:
+
+
 # API 3 function
 # API -- generate ideas
 # Takes in task_id, gen_id, no_images as inputs
 # Generates new ideas and saves them under /task_id/ideas/gen_id/
 # Returns OK, NOT OK
-# ------------------------------------------------------------------------------
+
 def api_generate(task_id,gen_id,no_images,progress):
 
 #    try:
@@ -2136,7 +2340,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     progress['total_step'] = 9
     progress['master_message'] = 'Generating ideas..'
     progress['curr_message'] = progress['master_message']
-    ideas = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,colors,no_images,progress,task_id,gen_id)
+    ideas = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,colors,no_images,progress,task_id,gen_id,True)
 
     # 4. Saving generated images under /task_id/ideas/gen_id/
     # -------------------------------------------------------
@@ -2153,16 +2357,24 @@ def api_generate(task_id,gen_id,no_images,progress):
     progress['master_message'] = 'Done.'
     progress['curr_message'] = progress['master_message']
 
-#        return 200
+    return 200
 
 #    except:
 #
 #        return 500
 
 
+
+
 # # Actual Ven API endpoints
+
 # ### 1. create new patterns external API
-# ------------------------------------------------------------------------------
+
+# In[73]:
+
+
+##
+
 class create_new_patterns_threaded_task(threading.Thread):
     def __init__(self,p_task_id,p_selected_style_names):
         super().__init__()
@@ -2181,13 +2393,21 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_task_id,self.p_selected_style_names,self.progress)
 
 
+# In[74]:
+
+
 # Creating a Main global dictionary to track progress of create new pattern task
 # ------------------------------------------------------------------------------
 global new_pattern_threads
 new_pattern_threads = {}
 
+
+# In[75]:
+
+
 ## MAIN function TO BE CALLED ON API
 # ----------------------------------
+
 class externalAPI_create_new_patterns(Resource):
 
     def put(self):
@@ -2215,8 +2435,14 @@ class externalAPI_create_new_patterns(Resource):
         return 'Thread started', 200
 
 
+
 # ### 2. create new texture external API
-# ------------------------------------------------------------------------------
+
+# In[76]:
+
+
+##
+
 class create_textures_threaded_task(threading.Thread):
     def __init__(self,p_task_id,p_picked_ind_string):
         super().__init__()
@@ -2234,13 +2460,23 @@ class create_textures_threaded_task(threading.Thread):
         # -------------------------------------------
         api_create_textures(self.p_task_id,self.p_picked_ind_string,self.progress)
 
+
+
+# In[77]:
+
+
 # Creating a Main global dictionary to track progress of create textures task
 # ---------------------------------------------------------------------------
 global create_texture_threads
 create_texture_threads = {}
 
+
+# In[78]:
+
+
 ## MAIN function TO BE CALLED ON API for creating texture
 # -------------------------------------------------------
+
 class externalAPI_create_textures(Resource):
 
     def put(self):
@@ -2268,8 +2504,14 @@ class externalAPI_create_textures(Resource):
         return 'Thread started', 200
 
 
+
 # ### 3. generate ideas external API
-# ------------------------------------------------------------------------------
+
+# In[79]:
+
+
+##
+
 class generate_ideas_threaded_task(threading.Thread):
     def __init__(self,p_task_id,p_gen_id,p_no_images):
         super().__init__()
@@ -2289,13 +2531,22 @@ class generate_ideas_threaded_task(threading.Thread):
         api_generate(self.p_task_id,self.p_gen_id,self.p_no_images,self.progress)
 
 
+
+# In[80]:
+
+
 # Creating a Main global dictionary to track progress of generate ideas
 # ---------------------------------------------------------------------
 global generate_ideas_threads
 generate_ideas_threads = {}
 
+
+# In[81]:
+
+
 ## MAIN function TO BE CALLED ON API
 # ----------------------------------
+
 class externalAPI_generate_ideas(Resource):
 
     def put(self):
@@ -2326,12 +2577,24 @@ class externalAPI_generate_ideas(Resource):
         return 'Thread started', 200
 
 
+
 # # running the external api functions
+
+# In[82]:
+
+
 ## MAIN function TO BE CALLED for progress
 # ----------------------------------------
+
 class externalAPI_get_progress(Resource):
 
     def put(self):
+
+        # Initiating global params
+        # ------------------------
+        global create_texture_threads
+        global new_pattern_threads
+        global generate_ideas_threads
 
         # Setting up key values to accept
         # -------------------------------
@@ -2347,17 +2610,14 @@ class externalAPI_get_progress(Resource):
         # ---------------------------------
         try:
             if p_progress_for == 'new_patterns':
-                global new_pattern_threads
                 new_pattern_threads[p_task_id].progress['thread_status'] = new_pattern_threads[p_task_id].isAlive()
                 return jsonify(new_pattern_threads[p_task_id].progress)
 
             elif p_progress_for == 'create_textures':
-                global create_texture_threads
                 create_texture_threads[p_task_id].progress['thread_status'] = create_texture_threads[p_task_id].isAlive()
                 return jsonify(create_texture_threads[p_task_id].progress)
 
             elif p_progress_for == 'generate_ideas':
-                global generate_ideas_threads
                 generate_ideas_threads[p_task_id].progress['thread_status'] = generate_ideas_threads[p_task_id].isAlive()
                 return jsonify(generate_ideas_threads[p_task_id].progress)
             else:
@@ -2366,8 +2626,11 @@ class externalAPI_get_progress(Resource):
         except KeyError:
             return 'Invalid task id.', 500
 
-# RUNNING FLASK APP
-###############################################################################
+
+
+# In[83]:
+
+
 #del api
 app = Flask(__name__)
 api = Api(app)
@@ -2378,6 +2641,10 @@ api.add_resource(externalAPI_create_new_patterns, '/newpatterns') # Route
 api.add_resource(externalAPI_create_textures, '/createtextures') # Route
 api.add_resource(externalAPI_generate_ideas, '/generateideas') # Route
 api.add_resource(externalAPI_get_progress, '/getprogress') # Route
+
+
+# In[ ]:
+
 
 if __name__ == '__main__':
      app.run(host='0.0.0.0', port=8000)
