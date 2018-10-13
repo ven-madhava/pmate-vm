@@ -1,5 +1,5 @@
 # 13 Oct
-# -----
+# ------
 
 # In[1]:
 
@@ -954,7 +954,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
 # Main function that returns textures
 # -----------------------------------
 
-def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id):
+def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,save_preview):
 
 
     # Some initial initialisations
@@ -1029,18 +1029,19 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id)
         curr_prog_percent = int(round((i+1)/m,2)*100)
         progress['curr_message'] = str(progress['master_message']) + '..about ' + str(curr_prog_percent) + '% through'
 
-        # Saving textures to storage for keeping frontend progress
-        # --------------------------------------------------------
-        # CHECKS
-        ##
-        storage_dir = str(task_id) + '/texturespreview'
-        image_prefix = str(task_id) + '_textures_preview_checks'
-        save_to_storage_from_array_list(oim_checks,storage_dir,image_prefix,False,None)
-        # STRIPES
-        ##
-        storage_dir = str(task_id) + '/texturespreview'
-        image_prefix = str(task_id) + '_textures_preview_stripes'
-        save_to_storage_from_array_list(oim_stripes,storage_dir,image_prefix,False,None)
+        if save_preview == True:
+            # Saving textures to storage for keeping frontend progress
+            # --------------------------------------------------------
+            # CHECKS
+            ##
+            storage_dir = str(task_id) + '/texturespreview'
+            image_prefix = str(task_id) + '_textures_preview_checks'
+            save_to_storage_from_array_list(oim_checks,storage_dir,image_prefix,False,None)
+            # STRIPES
+            ##
+            storage_dir = str(task_id) + '/texturespreview'
+            image_prefix = str(task_id) + '_textures_preview_stripes'
+            save_to_storage_from_array_list(oim_stripes,storage_dir,image_prefix,False,None)
 
 
         # 5. Printing coloscales
@@ -1715,6 +1716,12 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
     return genout , cats_out
 
 
+# In[ ]:
+
+
+
+
+
 # In[23]:
 
 
@@ -2126,7 +2133,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
 
 
-# In[25]:
+# In[115]:
 
 
 # 8.1
@@ -2143,8 +2150,19 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
     # Feeding function must make sure of this
     # ------------------------------------------------------------------
     h,w = int(285/2),int(221/2) # Hardcoded for now
-    font_file_path_header = 'fonts/Arial Black.ttf'
-    font_file_path_footer = 'fonts/Arial Rounded Bold.ttf'
+
+    # Local
+    # -----
+    #font_file_path_header = '/Users/venkateshmadhava/Desktop/fonts/Kodchasan-Bold.ttf'
+    #font_file_path_labels = '/Users/venkateshmadhava/Desktop/fonts/RobotoCondensed-Bold.ttf'
+    #font_file_path_footer = '/Users/venkateshmadhava/Desktop/fonts/RobotoMono-Light.ttf'
+
+    # VM
+    # --
+    #font_file_path_header = '/home/venkateshmadhava/pmate-vm/Kodchasan-Bold.ttf'
+    #font_file_path_labels = '/home/venkateshmadhava/pmate-vm/RobotoCondensed-Bold.ttf'
+    #font_file_path_footer = '/home/venkateshmadhava/pmate-vm/RobotoMono-Light.tt
+
 
     # Header and footer initialisations
     # ---------------------------------
@@ -2152,28 +2170,28 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
     font_header_main = ImageFont.truetype(font_file_path_header, size=main_header_height, encoding="unic")
     gap_between_header_ideas = 20
 
-    right_header_height = 12
+    right_header_height = 10
     font_header_right = ImageFont.truetype(font_file_path_header, size=right_header_height, encoding="unic")
 
     all_footer_height = 10
     font_footer = ImageFont.truetype(font_file_path_footer, size=all_footer_height, encoding="unic")
     gap_between_footer_ideas = 20
 
+    # Labels
+    # ------
+    font_height = 12
+    font = ImageFont.truetype(font_file_path_labels, size=font_height, encoding="unic")
+    naming_prefix = styling_prefix + ' #'
+
     # 1. Some initialisations
     # -----------------------
-    font_height = 12
-    gap_between_ideas_label = 5
-    gap_between_ideas_v = 50
-    gap_between_ideas_h = 30
-    #no_ideas_per_row = 8
-    #no_total_rows = 4
+    gap_between_ideas_label = 10
+    gap_between_ideas_v = 60
+    gap_between_ideas_h = 40
     outer_padding_v = 25
     outer_padding_h = 50
 
-    # 1.1 Some text initialisations
-    # -----------------------------
-    font = ImageFont.truetype(font_file_path_footer, size=font_height, encoding="unic")
-    naming_prefix = styling_prefix + ' #'
+
 
     # 2. Inside board dimensions Just to place images
     # -----------------------------------------------
@@ -2246,14 +2264,14 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
             # Drawing text
             # ------------
-            draw.text((start_c,start_r),curr_label, fill=(75,75,75), font=font)
+            draw.text((start_c,start_r),curr_label, fill=(100,100,100), font=font)
 
     # 7. Attaching header left
     # -------------------------
     header_text = board_name + ' - ' + board_header
     header_start_c = outer_padding_v
     header_start_r = gap_between_header_ideas
-    draw.text((header_start_c,header_start_r),header_text, fill=(0,0,0), font=font_header_main)
+    draw.text((header_start_c,header_start_r),header_text, fill=(50,50,50), font=font_header_main)
 
     # 8. Attaching header right
     # -------------------------
@@ -2262,7 +2280,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
     header_r_w += outer_padding_v
     header_r_start_c = ideas_only_dim_w - header_r_w - 5
     header_r_start_r = int((main_header_height + gap_between_header_ideas * 2)/2) - int(all_footer_height/2)
-    draw.text((header_r_start_c,header_r_start_r),header_r_text, fill=(100,100,100), font=font_header_right)
+    draw.text((header_r_start_c,header_r_start_r),header_r_text, fill=(0,0,0), font=font_footer)
 
     # Footer texts initialisations
     # ----------------------------
@@ -2275,14 +2293,14 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
     # 9. Attaching footer left
     # ---------------------
     footer_start_c = outer_padding_v
-    draw.text((footer_start_c,footer_start_r),footer_left_text, fill=(75,75,75), font=font_footer)
+    draw.text((footer_start_c,footer_start_r),footer_left_text, fill=(0,0,0), font=font_footer)
 
     # 10. Attaching footer right
     # --------------------------
     footer_right_w = font_footer.getsize(footer_right_text)[0]
     footer_right_w += outer_padding_v
     footer_r_start_c = ideas_only_dim_w - footer_right_w
-    draw.text((footer_r_start_c,footer_start_r),footer_right_text, fill=(75,75,75), font=font_footer)
+    draw.text((footer_r_start_c,footer_start_r),footer_right_text, fill=(0,0,0), font=font_footer)
 
     # 11. Returning Single range board in (1,h,w,3)
     # ---------------------------------------------
@@ -2481,7 +2499,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     progress['master_message'] = 'Building textures..'
     progress['curr_message'] = progress['master_message']
     print('2. At textures..')
-    picked_stripes,picked_checks,picked_melange,picked_grainy = protomatebeta_build_textures_v1(picked_patterns,h,w,False,progress,task_id)
+    picked_stripes,picked_checks,picked_melange,picked_grainy = protomatebeta_build_textures_v1(picked_patterns,h,w,False,progress,task_id,False)
 
     # 4. Saving textures under /task_id/numpy/
     # ----------------------------------------
@@ -2676,7 +2694,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
     progress['total_step'] = 12
     progress['master_message'] = 'Generating ideas..'
     progress['curr_message'] = progress['master_message']
-    ideas,cats = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,True)
+    ideas,cats = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,False)
 
     # 4. Saving generated images under /task_id/ideas/gen_id/
     # -------------------------------------------------------
