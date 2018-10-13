@@ -1,7 +1,11 @@
-# 10 Oct
-########
+# 13 Oct
+# -----
+
+# In[1]:
+
 
 # Imports
+# -------
 
 import numpy as np
 import cv2
@@ -19,6 +23,9 @@ from tensorflow.python.lib.io import file_io
 from io import BytesIO
 import threading
 import time
+from PIL import ImageFont
+from PIL import ImageDraw
+import datetime
 
 
 # Necessary Flask imports
@@ -1513,7 +1520,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[61]:
+# In[22]:
 
 
 # 7
@@ -1534,6 +1541,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
     #colors_index = list(range(colors.shape[0]))
 
     m = segments.shape[0]
+    cats_out = []
 
     inh_r = segments.shape[1]
     inw_r = segments.shape[2]
@@ -1565,6 +1573,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
             # ---------------
             segc = segments[s_index]
             category_curr_seg = categories[s_index,0]
+            cats_out.append(category_curr_seg)
             temp_grey_pos = (segc == 150).astype(int)
             temp_black_pos = (segc == 0).astype(int)
 
@@ -1612,6 +1621,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
                 # ---------------
                 segc = segments[s_index]
                 category_curr_seg = categories[s_index,0]
+
                 temp_grey_pos = (segc == 150).astype(int)
                 temp_black_pos = (segc == 0).astype(int)
 
@@ -1653,13 +1663,14 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
                     # New combo
                     ##
                     list_combos.append(tup)
+                    cats_out.append(category_curr_seg)
                     break
 
                 # Code that times out this while loop incase it goes over board
                 # -------------------------------------------------------------
                 curr_time = time.time()
                 if (curr_time - start_time) > 8: # 8 secs
-                    return genout # Returns genout and exits
+                    return genout,cats_out  # Returns genout and exits
 
 
         # Actual masking ops
@@ -1701,10 +1712,10 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
         else:
             genout = np.concatenate((genout,newim_c), axis = 0)
 
-    return genout
+    return genout , cats_out
 
 
-# In[51]:
+# In[23]:
 
 
 # 7.1
@@ -1712,19 +1723,32 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
 # Function that return combos for generating ideas
 # ------------------------------------------------
 
-#0	Girls Dresses
-#1	Girls Tops
-#2	Girls Polos
-#3	Girls Jumpers
-#4	Girls Pants & Capris
-#5	Girls Leggings
-#6	Girls Shorts
-#7	Girls Skirts & Skorts
-#8	Boys Polos
-#9	Boys Shirts
-#10	Boys Jeans
-#11	Boys Pants
-#12	Boys Shorts
+#Girls  Womens
+#Cat#   Cat#
+#0	    20	Woven Dresses
+#1	    21	Knit Dresses
+#2	    22	Woven Tops
+#3	    23	Knit Tops
+#4	    24	Knit Polos
+#5	    25	Woven Jumpers
+#6	    26	Knit Jumpers
+#7	    27	Woven Pants & Capris
+#8	    28	Knit Pants & Capris
+#9	    29	Knit Leggings
+#10	    30	Woven Shorts
+#11	    31	Knit Shorts
+#12	    32	Woven Skirts & Skorts
+
+#Boys   Mens
+#Cat#   Cat#
+#13	    33	Knit Polos
+#14	    34	Woven Shirts
+#15	    35	Jeans
+#16	    36	Woven Pants
+#17	    37	Knit Pants
+#18	    38	Woven Shorts
+#19	    39	Knit Shorts
+
 #tup will be always of form --
 # (seg_index,pattern_index,color_index,stripes_index,check_index,melange_index,grainy_index)
 
@@ -1751,49 +1775,27 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
 
     # Choice making code
     # ------------------
-    if category == 0: ## Girls dress ##
+
+    ### Woven tops, jumpsuits, dresses - GIRLS and WOMENS
+    if category == 0 or category == 20 or category == 2 or category == 22 or category == 5 or category == 25:
 
         # Single segment check
         # --------------------
         if single_segment == True:
-            choice_single = random.choice([0,2]) # Print, checks
-            choice_g = choice_single
-            choice_b = choice_single
-        elif minor_segment == True:
-            if minor_segment_seg == 'black':
-                choice_g = random.choice([0,2])
-                choice_b = 5
-            else:
-                choice_g = 5
-                choice_b = random.choice([0,2])
-        else:
-            choice_color = random.choice([1,2])
-            if choice_color == 1: # make gray color
-                choice_g = 5
-                choice_b = random.choice([0,2])
-            else: # make black color
-                choice_g = random.choice([0,2])
-                choice_b = 5
-
-    elif category == 1 or category == 3 or category == 6 or category == 7 or category == 12: ## Girls Top, Girls Jumper, Girls Shorts, Girls Skirts, Boys shorts ##
-
-        # Single segment check
-        # --------------------
-        if single_segment == True:
-            choice_single = random.choice([0,1,2,4,5]) # Print, Stripes, Checks, Grainy, Colors
+            choice_single = random.choice([0,1,2,5])
             choice_g = choice_single
             choice_b = choice_single
 
         elif minor_segment == True:
             if minor_segment_seg == 'black':
-                choice_g = random.choice([0,1,2,4])
+                choice_g = random.choice([0,1,2])
                 choice_b = 5
             else:
                 choice_g = 5
-                choice_b = random.choice([0,1,2,4])
+                choice_b = random.choice([0,1,2])
 
         else:
-            choice_g = random.choice([0,1,2,4,5])
+            choice_g = random.choice([0,1,2,5])
 
             # Setting bblock based on gblock choice
             # -------------------------------------
@@ -1803,123 +1805,111 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
                 choice_b = random.choice([4,5])
             elif choice_g == 2:
                 choice_b = random.choice([4,5])
-            elif choice_g == 4:
-                choice_b = random.choice([0,1,2])
             else:
                 choice_b = random.choice([0,1,2])
 
-    elif category == 2 or category == 8 or category == 5: # Girls polo, boys polo, girls leggings ##
+    ### Knit tops, jumpsuits, dresses - GIRLS and WOMENS
+    elif category == 1 or category == 21 or category == 3 or category == 23 or category == 6 or category == 26:
 
         # Single segment check
         # --------------------
         if single_segment == True:
-            choice_single = random.choice([0,1,3,4]) # Print, Stripes, Melange, Grainy
+            choice_single = random.choice([0,1,2,3,5])
             choice_g = choice_single
             choice_b = choice_single
 
-        elif minor_segment == True:
-            if minor_segment_seg == 'black':
-                choice_g = random.choice([0,1,3,4])
-                choice_b = 5
-            else:
-                choice_g = 5
-                choice_b = random.choice([0,1,3,4])
-
-        else:
-            choice_g = random.choice([0,1,3,4])
-
-            # Setting bblock based on gblock choice
-            # -------------------------------------
-            if choice_g == 0:
-                choice_b = random.choice([4,5])
-            elif choice_g == 1:
-                choice_b = random.choice([4,5])
-            elif choice_g == 3:
-                choice_b = 5
-            else:
-                choice_b = random.choice([0,1])
-
-    elif category == 9: ## Boys shirts ##
-
-        # Single segment check
-        # --------------------
-        if single_segment == True:
-            choice_single = random.choice([0,2,4,5]) # Print, Checks, Grainy, Color
-            choice_g = choice_single
-            choice_b = choice_single
-
-        elif minor_segment == True:
-            if minor_segment_seg == 'black':
-                choice_g = random.choice([0,2,4])
-                choice_b = 5
-            else:
-                choice_g = 5
-                choice_b = random.choice([0,2,4])
-
-        else:
-            choice_g = random.choice([0,2,4,5])
-
-            # Setting bblock based on gblock choice
-            # -------------------------------------
-            if choice_g == 0:
-                choice_b = random.choice([4,5])
-            elif choice_g == 2:
-                choice_b = random.choice([4,5])
-            elif choice_g == 4:
-                choice_b = random.choice([0,2])
-            else:
-                choice_b = random.choice([0,2])
-
-    elif category == 10 or category == 11: ## Boys jeans, boys trousers ##
-
-        # Single segment check
-        # --------------------
-        if single_segment == True:
-            choice_single = random.choice([3,4,5]) # Melange, Grainy, Color
-            choice_g = choice_single
-            choice_b = choice_single
-
-
-        # Not checking minor segment
+        # NOT CHECKING MINOR SEGMENT
         # --------------------------
-
         else:
-            choice_g = random.choice([3,4,5])
-
-            # Setting bblock based on gblock choice
-            # -------------------------------------
-            if choice_g == 3:
-                choice_b = 5
-            elif choice_g == 4:
-                choice_b = 5
-            else:
-                choice_b = random.choice([3,4])
-
-    elif category == 4: # Girls pants, capris ##
-
-        # Single segment check
-        # --------------------
-        if single_segment == True:
-            choice_single = random.choice([0,2,4,5]) # Print, Checks, Grainy, Color
-            choice_g = choice_single
-            choice_b = choice_single
-
-        # Not doing minority check
-        # ------------------------
-
-        else:
-            choice_g = random.choice([0,2,4,5])
+            choice_g = random.choice([0,1,2,3,5])
 
             # Setting bblock based on gblock choice
             # -------------------------------------
             if choice_g == 0:
-                choice_b = random.choice([4,5])
+                choice_b = random.choice([3,5])
+            elif choice_g == 1:
+                choice_b = random.choice([3,5])
             elif choice_g == 2:
-                choice_b = random.choice([4,5])
-            elif choice_g == 4:
-                choice_b = random.choice([0,2])
+                choice_b = random.choice([3,5])
+            elif choice_g == 3:
+                choice_b = random.choice([0,1,2,3,5])
             else:
-                choice_b = random.choice([0,2])
+                choice_b = random.choice([0,1,2,3,5])
+
+    ### Knit shorts, pants, leggings - GIRLS and WOMENS | Knit shorts and pant - BOYS and MENS
+    elif category == 8 or category == 28 or category == 9 or category == 29 or category == 11 or category == 31 or category == 17 or category == 37 or category == 19 or category == 39:
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = random.choice([0,1,2,3,5])
+            choice_g = choice_single
+            choice_b = choice_single
+
+        # NOT CHECKING MINOR SEGMENT
+        # --------------------------
+        else:
+            choice_g = random.choice([0,1,2,3,5])
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0:
+                choice_b = random.choice([3,5])
+            elif choice_g == 1:
+                choice_b = random.choice([3,5])
+            elif choice_g == 2:
+                choice_b = random.choice([3,5])
+            elif choice_g == 3:
+                choice_b = random.choice([3,5])
+            else:
+                choice_b = random.choice([0,3])
+
+    ### Knit Polo -- Boys, Girls, Mens, Women
+    elif category == 4 or category == 24 or category == 13 or category == 33:
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = random.choice([0,1,3,5])
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = random.choice([0,1,3,5])
+                choice_b = random.choice([3,5])
+            else:
+                choice_g = random.choice([3,5])
+                choice_b = random.choice([0,1,3,5])
+        else:
+            choice_b = random.choice([0,1,3,5])
+            choice_g = random.choice([3,5])
+
+    ### Woven pants, shorts, skirts, shirts - across all depts
+    elif category == 7 or category == 27 or category == 15 or category == 35 or category == 16 or category == 36 or category == 10 or category == 30 or category == 12 or category == 32 or category == 18 or category == 38 or category == 14 or category == 34:
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = random.choice([0,1,2,5])
+            choice_g = choice_single
+            choice_b = choice_single
+
+        # NOT CHECKING MINOR SEGMENT
+        # --------------------------
+        else:
+            choice_g = random.choice([0,1,2,5])
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0:
+                choice_b = 5
+            elif choice_g == 1:
+                choice_b = 5
+            elif choice_g == 2:
+                choice_b = 5
+            else:
+                choice_b = random.choice([0,1,2])
 
 
     # Index & tup setting code - gindex
@@ -1982,9 +1972,330 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
+# In[24]:
+
+
+# 8
+# API read ##
+# Function that returns board ranges
+# ----------------------------------
+
+
+def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas_per_row=8,no_total_rows=4):
+
+    # Some preps
+    # ----------
+    all_counter = 0
+    c_counter = 0
+    cats_as_np = np.array(cats).reshape(len(cats), 1)
+    all_unique_cats = list(set(cats))
+    cat_dict = {}
+    cat_dict[0] = 'GIRLS WOVEN DRESSES'
+    cat_dict[1] = 'GIRLS KNIT DRESSES'
+    cat_dict[2] = 'GIRLS WOVEN TOPS'
+    cat_dict[3] = 'GIRLS KNIT TOPS'
+    cat_dict[4] = 'GIRLS POLOS'
+    cat_dict[5] = 'GIRLS WOVEN JUMPSUITS'
+    cat_dict[6] = 'GIRLS KNIT JUMPSUITS'
+    cat_dict[7] = 'GIRLS WOVEN PANTS & CAPRIS'
+    cat_dict[8] = 'GIRLS KNIT PANTS & CAPRIS'
+    cat_dict[9] = 'GIRLS LEGGINGS'
+    cat_dict[10] = 'GIRLS WOVEN SHORTS'
+    cat_dict[11] = 'GIRLS KNIT SHORTS'
+    cat_dict[12] = 'GIRLS WOVEN SKIRTS & SKORTS'
+    cat_dict[13] = 'BOYS POLOS'
+    cat_dict[14] = 'BOYS WOVEN SHIRTS'
+    cat_dict[15] = 'BOYS JEANS'
+    cat_dict[16] = 'BOYS WOVEN PANTS'
+    cat_dict[17] = 'BOYS KNIT PANTS'
+    cat_dict[18] = 'BOYS WOVEN SHORTS'
+    cat_dict[19] = 'BOYS KNIT SHORTS'
+    cat_dict[20] = 'WOMENS WOVEN DRESSES'
+    cat_dict[21] = 'WOMENS KNIT DRESSES'
+    cat_dict[22] = 'WOMENS WOVEN TOPS'
+    cat_dict[23] = 'WOMENS KNIT TOPS'
+    cat_dict[24] = 'WOMENS POLOS'
+    cat_dict[25] = 'WOMENS WOVEN JUMPSUITS'
+    cat_dict[26] = 'WOMENS KNIT JUMPSUITS'
+    cat_dict[27] = 'WOMENS WOVEN PANTS & CAPRIS'
+    cat_dict[28] = 'WOMENS KNIT PANTS & CAPRIS'
+    cat_dict[29] = 'WOMENS LEGGINGS'
+    cat_dict[30] = 'WOMENS WOVEN SHORTS'
+    cat_dict[31] = 'WOMENS KNIT SHORTS'
+    cat_dict[32] = 'WOMENS WOVEN SKIRTS & SKORTS'
+    cat_dict[33] = 'MENS POLOS'
+    cat_dict[34] = 'MENS WOVEN SHIRTS'
+    cat_dict[35] = 'MENS JEANS'
+    cat_dict[36] = 'MENS WOVEN PANTS'
+    cat_dict[37] = 'MENS KNIT PANTS'
+    cat_dict[38] = 'MENS WOVEN SHORTS'
+    cat_dict[39] = 'MENS KNIT SHORTS'
+
+    sty_dict = {}
+    sty_dict[0] = 'GWDR'
+    sty_dict[1] = 'GKDR'
+    sty_dict[2] = 'GWTP'
+    sty_dict[3] = 'GKTP'
+    sty_dict[4] = 'GPL'
+    sty_dict[5] = 'GWJP'
+    sty_dict[6] = 'GKJP'
+    sty_dict[7] = 'GWPC'
+    sty_dict[8] = 'GKPC'
+    sty_dict[9] = 'GLG'
+    sty_dict[10] = 'GWST'
+    sty_dict[11] = 'GKST'
+    sty_dict[12] = 'GWSK'
+    sty_dict[13] = 'BPL'
+    sty_dict[14] = 'BWSH'
+    sty_dict[15] = 'BJ'
+    sty_dict[16] = 'BWP'
+    sty_dict[17] = 'BKP'
+    sty_dict[18] = 'BWST'
+    sty_dict[19] = 'BKST'
+    sty_dict[20] = 'WWDR'
+    sty_dict[21] = 'WKDR'
+    sty_dict[22] = 'WWTP'
+    sty_dict[23] = 'WKTP'
+    sty_dict[24] = 'WPL'
+    sty_dict[25] = 'WWJP'
+    sty_dict[26] = 'WKJP'
+    sty_dict[27] = 'WWPC'
+    sty_dict[28] = 'WKPC'
+    sty_dict[29] = 'WLG'
+    sty_dict[30] = 'WWST'
+    sty_dict[31] = 'WKST'
+    sty_dict[32] = 'WWSK'
+    sty_dict[33] = 'MPL'
+    sty_dict[34] = 'MWSH'
+    sty_dict[35] = 'MJ'
+    sty_dict[36] = 'MWP'
+    sty_dict[37] = 'MKP'
+    sty_dict[38] = 'MWST'
+    sty_dict[39] = 'MKST'
+
+
+
+
+    # Itering through unique categories to build range boards
+    # -------------------------------------------------------
+    for c in all_unique_cats:
+
+        c_counter += 1
+        print('At category ' + str(c_counter) + ' of around ' + str(len(all_unique_cats)))
+
+        # 1. Getting indices of ideas belonging to a particular cat
+        # ---------------------------------------------------------
+        ind_curr_c = list(np.argwhere(cats_as_np[:,0] == c)[:,0])
+
+        # 2. Getting all ideas belonging to this cat
+        # ------------------------------------------
+        curr_cat_ideas = x[ind_curr_c]
+
+        # 3. Some paging ops
+        # ------------------
+        no_pages = math.ceil(curr_cat_ideas.shape[0]/(no_ideas_per_row*no_total_rows))
+
+        # 4. Calling single range build function iteratively
+        # --------------------------------------------------
+        for i in range(no_pages):
+
+            # 4.1 Setting curr input
+            # ----------------------
+            try:
+                curr_xin_for_single_range = curr_cat_ideas[i*no_ideas_per_row*no_total_rows:i*no_ideas_per_row*no_total_rows + no_ideas_per_row*no_total_rows]
+            except:
+                curr_xin_for_single_range = curr_cat_ideas[i*no_ideas_per_row*no_total_rows:]
+
+            # 4.2 Calling function
+            # --------------------
+            all_counter += 1
+            curr_styling_prefix = styling_prefix + ' ' + sty_dict[c]
+
+            curr_board_out = build_single_range_board(curr_xin_for_single_range,task_id,gen_id,board_name,curr_styling_prefix,cat_dict[c],i+1,no_pages,no_ideas_per_row,no_total_rows)
+            if all_counter == 1:
+                boardout = curr_board_out
+            else:
+                boardout = np.concatenate((boardout,curr_board_out), axis = 0)
+
+        print('Done')
+
+    return boardout
+
+
+
+
+
+
+# In[25]:
+
+
+# 8.1
+# API read ##
+# Main function to build a single board
+# -------------------------------------
+
+
+def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_header,curr_page_number,total_page_numbers,no_ideas_per_row,no_total_rows):
+
+    # Initialising a fixed board size based on input image dimensions
+    # ---------------------------------------------------------------
+    # xin will only have a max of no_ideas_per_row *no_total_rows images
+    # Feeding function must make sure of this
+    # ------------------------------------------------------------------
+    h,w = int(285/2),int(221/2) # Hardcoded for now
+    font_file_path_header = 'fonts/Arial Black.ttf'
+    font_file_path_footer = 'fonts/Arial Rounded Bold.ttf'
+
+    # Header and footer initialisations
+    # ---------------------------------
+    main_header_height = 25
+    font_header_main = ImageFont.truetype(font_file_path_header, size=main_header_height, encoding="unic")
+    gap_between_header_ideas = 20
+
+    right_header_height = 12
+    font_header_right = ImageFont.truetype(font_file_path_header, size=right_header_height, encoding="unic")
+
+    all_footer_height = 10
+    font_footer = ImageFont.truetype(font_file_path_footer, size=all_footer_height, encoding="unic")
+    gap_between_footer_ideas = 20
+
+    # 1. Some initialisations
+    # -----------------------
+    font_height = 12
+    gap_between_ideas_label = 5
+    gap_between_ideas_v = 50
+    gap_between_ideas_h = 30
+    #no_ideas_per_row = 8
+    #no_total_rows = 4
+    outer_padding_v = 25
+    outer_padding_h = 50
+
+    # 1.1 Some text initialisations
+    # -----------------------------
+    font = ImageFont.truetype(font_file_path_footer, size=font_height, encoding="unic")
+    naming_prefix = styling_prefix + ' #'
+
+    # 2. Inside board dimensions Just to place images
+    # -----------------------------------------------
+    ideas_only_dim_h = (h + font_height + gap_between_ideas_label) * no_total_rows + (no_total_rows - 1) * gap_between_ideas_h + 2 * outer_padding_h + main_header_height + gap_between_header_ideas * 2 + all_footer_height + gap_between_footer_ideas * 2
+    ideas_only_dim_w = w * no_ideas_per_row + (no_ideas_per_row - 1) * gap_between_ideas_v + 2 * outer_padding_v
+
+    # 3. Filling ideas within the board
+    # ---------------------------------
+    ideas_board = (np.ones((ideas_only_dim_h,ideas_only_dim_w,3))*255).astype('uint8')
+    ideas_cords = []
+    label_cords = []
+
+    # 4. Getting ideas co-ordinates dynamically
+    # --------------------------------------
+    for r in range(1,no_total_rows+1):
+        for c in range(1,no_ideas_per_row+1):
+
+            # Getting row co-ordinate
+            # -----------------------
+            if r == 1: # First row
+                curr_rs = outer_padding_h + main_header_height + gap_between_header_ideas * 2
+            else:
+                curr_rs = outer_padding_h + (r-1)*(h + font_height + gap_between_ideas_label + gap_between_ideas_h) + main_header_height + gap_between_header_ideas * 2
+
+            # Getting col co-ordinate
+            # -----------------------
+            if c == 1: # First idea
+                curr_cs = outer_padding_v
+            else:
+                curr_cs = outer_padding_v + (c-1) * (w + gap_between_ideas_v)
+
+            # Appending to list
+            # -----------------
+            ideas_cords.append((curr_rs,curr_cs))
+
+    # 5. Attaching ideas
+    # -----------------
+    idea_at = {}
+    for i in range(no_ideas_per_row * no_total_rows):
+        try:
+            # Attaching image
+            # ---------------
+            curr_np_img = cv2.resize(xin[i], dsize=(w, h), interpolation=cv2.INTER_CUBIC)
+            ideas_board[ideas_cords[i][0]:ideas_cords[i][0]+h,ideas_cords[i][1]:ideas_cords[i][1]+w,:] = curr_np_img
+            idea_at[i] = True
+
+        except:
+            idea_at[i] = False
+            'do nothing'
+
+    # 6. Attaching labels
+    # -------------------
+    ideas_board_img = Image.fromarray(ideas_board)
+    draw = ImageDraw.Draw(ideas_board_img)
+
+    for i in range(no_ideas_per_row * no_total_rows):
+
+        if idea_at[i] ==  True:
+
+            # Attaching label
+            # ---------------
+            curr_label = naming_prefix + str((curr_page_number-1) * no_ideas_per_row * no_total_rows + i+1)
+            curr_label_w = font.getsize(curr_label)[0]
+
+            # Working out centers
+            # -------------------
+            center_c = ideas_cords[i][1] + int(w/2)
+            start_c = center_c - int(curr_label_w/2)
+            start_r = ideas_cords[i][0] + h + gap_between_ideas_label
+
+            # Drawing text
+            # ------------
+            draw.text((start_c,start_r),curr_label, fill=(75,75,75), font=font)
+
+    # 7. Attaching header left
+    # -------------------------
+    header_text = board_name + ' - ' + board_header
+    header_start_c = outer_padding_v
+    header_start_r = gap_between_header_ideas
+    draw.text((header_start_c,header_start_r),header_text, fill=(0,0,0), font=font_header_main)
+
+    # 8. Attaching header right
+    # -------------------------
+    header_r_text = str(curr_page_number) + '/' + str(total_page_numbers)
+    header_r_w = font_header_right.getsize(header_r_text)[0]
+    header_r_w += outer_padding_v
+    header_r_start_c = ideas_only_dim_w - header_r_w - 5
+    header_r_start_r = int((main_header_height + gap_between_header_ideas * 2)/2) - int(all_footer_height/2)
+    draw.text((header_r_start_c,header_r_start_r),header_r_text, fill=(100,100,100), font=font_header_right)
+
+    # Footer texts initialisations
+    # ----------------------------
+    time_block = datetime.datetime.now().strftime("Created on %Y-%m-%d at %H:%M for task ")
+    footer_left_text = time_block + str(task_id) + ', generation ' + str(gen_id) + '.'
+    footer_right_text = 'Powered By Protomate'
+    footer_start_row_in_image = ideas_only_dim_h - (all_footer_height + gap_between_footer_ideas * 2)
+    footer_start_r =footer_start_row_in_image + gap_between_footer_ideas
+
+    # 9. Attaching footer left
+    # ---------------------
+    footer_start_c = outer_padding_v
+    draw.text((footer_start_c,footer_start_r),footer_left_text, fill=(75,75,75), font=font_footer)
+
+    # 10. Attaching footer right
+    # --------------------------
+    footer_right_w = font_footer.getsize(footer_right_text)[0]
+    footer_right_w += outer_padding_v
+    footer_r_start_c = ideas_only_dim_w - footer_right_w
+    draw.text((footer_r_start_c,footer_start_r),footer_right_text, fill=(75,75,75), font=font_footer)
+
+    # 11. Returning Single range board in (1,h,w,3)
+    # ---------------------------------------------
+    boardout_np = np.array(ideas_board_img)
+    boardout_np = boardout_np.reshape(1,boardout_np.shape[0],boardout_np.shape[1],3)
+
+    return boardout_np
+
+
+
 # # Ven_API functions
 
-# In[23]:
+# In[26]:
 
 
 # API 1 Function
@@ -2128,7 +2439,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     #    return 500 # NOT OK
 
 
-# In[24]:
+# In[27]:
 
 
 # API 2 function
@@ -2233,7 +2544,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     #    return 500
 
 
-# In[54]:
+# In[28]:
 
 
 # API 3 function
@@ -2242,11 +2553,11 @@ def api_create_textures(task_id,picked_ind_string,progress):
 # Generates new ideas and saves them under /task_id/ideas/gen_id/
 # Returns OK, NOT OK
 
-def api_generate(task_id,gen_id,no_images,progress):
+def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_images,progress):
 
 #    try:
     progress['curr_step'] = 0
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Inside function..'
     progress['curr_message'] = 'Inside function..'
 
@@ -2256,7 +2567,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting linemarkings
     # -----------------------
     progress['curr_step'] = 1
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Loading stylings..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_linemarkings.npy'
@@ -2267,7 +2578,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting segments
     # -------------------
     progress['curr_step'] = 2
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Loading segments..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_segments.npy'
@@ -2278,7 +2589,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting all pats
     # -------------------
     progress['curr_step'] = 3
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Loading patterns..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
@@ -2296,7 +2607,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting colors
     # ---------------------
     progress['curr_step'] = 4
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Loading colors..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
@@ -2307,7 +2618,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting Checks
     # -----------------
     progress['curr_step'] = 5
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Loading checks..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
@@ -2318,7 +2629,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting Stripes
     # -----------------
     progress['curr_step'] = 6
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Loading stripes..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
@@ -2329,7 +2640,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting Melange
     # -----------------
     progress['curr_step'] = 7
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Loading melange..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
@@ -2340,7 +2651,7 @@ def api_generate(task_id,gen_id,no_images,progress):
     # Collecting Grainy
     # -----------------
     progress['curr_step'] = 8
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Loading grainy..'
     progress['curr_message'] = progress['master_message']
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
@@ -2362,23 +2673,36 @@ def api_generate(task_id,gen_id,no_images,progress):
     # 3. Actual generation
     # --------------------
     progress['curr_step'] = 9
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Generating ideas..'
     progress['curr_message'] = progress['master_message']
-    ideas = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,True)
+    ideas,cats = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,True)
 
     # 4. Saving generated images under /task_id/ideas/gen_id/
     # -------------------------------------------------------
     progress['curr_step'] = 10
-    progress['total_step'] = 11
+    progress['total_step'] = 12
     progress['master_message'] = 'Saving ideas..'
     progress['curr_message'] = progress['master_message']
     storage_dir = task_id + '/ideas/' + str(gen_id)
     image_prefix = str(task_id) + '_' + str(gen_id) + '_ideas'
     save_to_storage_from_array_list(ideas,storage_dir,image_prefix,True,progress)
 
+    # 5. Building and saving range boards under /task_id/rangeboards/gen_id/
+    # ----------------------------------------------------------------------
     progress['curr_step'] = 11
-    progress['total_step'] = 11
+    progress['total_step'] = 12
+    progress['master_message'] = 'Building and saving rangeboards..'
+    progress['curr_message'] = progress['master_message']
+    range_built = feed_to_build_range(ideas,cats,task_id,gen_id,task_board_name,task_styling_name_prefix)
+    storage_dir = task_id + '/rangeboards/' + str(gen_id)
+    image_prefix = str(task_id) + '_' + str(gen_id) + '_rangeboards'
+    save_to_storage_from_array_list(range_built,storage_dir,image_prefix,True,progress)
+
+    # Final progress update
+    # ---------------------
+    progress['curr_step'] = 12
+    progress['total_step'] = 12
     progress['master_message'] = 'Done.'
     progress['curr_message'] = progress['master_message']
 
@@ -2393,7 +2717,7 @@ def api_generate(task_id,gen_id,no_images,progress):
 
 # ### 1. create new patterns external API
 
-# In[73]:
+# In[29]:
 
 
 ##
@@ -2416,7 +2740,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_task_id,self.p_selected_style_names,self.progress)
 
 
-# In[74]:
+# In[30]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -2425,7 +2749,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[75]:
+# In[31]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -2461,7 +2785,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. create new texture external API
 
-# In[76]:
+# In[32]:
 
 
 ##
@@ -2485,7 +2809,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[77]:
+# In[33]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -2494,7 +2818,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[78]:
+# In[34]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -2530,32 +2854,35 @@ class externalAPI_create_textures(Resource):
 
 # ### 3. generate ideas external API
 
-# In[79]:
+# In[35]:
 
 
 ##
 
 class generate_ideas_threaded_task(threading.Thread):
-    def __init__(self,p_task_id,p_gen_id,p_no_images):
+    def __init__(self,p_task_id,p_gen_id,p_task_board_name,p_task_styling_prefix,p_no_images):
         super().__init__()
         self.progress = {}
         self.progress['curr_step'] = 0
         self.progress['total_step'] = 0
         self.progress['master_message'] = 'Starting soon..'
         self.progress['curr_message'] = 'Starting soon..'
+
         self.p_task_id = p_task_id
         self.p_gen_id = p_gen_id
+        self.p_task_board_name = p_task_board_name
+        self.p_task_styling_prefix = p_task_styling_prefix
         self.p_no_images = p_no_images
 
     def run(self): # Run method probably overrides the inherited Threads run method
 
         # 1. Running the generate ideas function
         # --------------------------------------
-        api_generate(self.p_task_id,self.p_gen_id,self.p_no_images,self.progress)
+        api_generate(self.p_task_id,self.p_gen_id,self.p_task_board_name,self.p_task_styling_prefix,self.p_no_images,self.progress)
 
 
 
-# In[80]:
+# In[36]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -2564,7 +2891,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[81]:
+# In[37]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -2579,11 +2906,15 @@ class externalAPI_generate_ideas(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('task_id')
         parser.add_argument('gen_id')
+        parser.add_argument('task_board_name')
+        parser.add_argument('task_styling_name_prefix')
         parser.add_argument('no_images')
         args = parser.parse_args()
 
         p_task_id = args['task_id']
         p_gen_id = args['gen_id']
+        p_task_board_name = args['task_board_name']
+        p_task_styling_name_prefix = args['task_styling_name_prefix']
         p_no_images = int(args['no_images'])
 
 
@@ -2594,7 +2925,7 @@ class externalAPI_generate_ideas(Resource):
             del generate_ideas_threads[p_task_id]
         except:
             'do nothing'
-        generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_no_images)
+        generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_images)
         generate_ideas_threads[p_task_id].start()
 
         return 'Thread started', 200
@@ -2603,7 +2934,7 @@ class externalAPI_generate_ideas(Resource):
 
 # # running the external api functions
 
-# In[82]:
+# In[38]:
 
 
 ## MAIN function TO BE CALLED for progress
