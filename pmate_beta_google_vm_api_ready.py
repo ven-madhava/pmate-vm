@@ -2159,9 +2159,9 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
     # VM
     # --
-    #font_file_path_header = '/home/venkateshmadhava/pmate-vm/Kodchasan-Bold.ttf'
-    #font_file_path_labels = '/home/venkateshmadhava/pmate-vm/RobotoCondensed-Bold.ttf'
-    #font_file_path_footer = '/home/venkateshmadhava/pmate-vm/RobotoMono-Light.tt
+    font_file_path_header = '/home/venkateshmadhava/pmate-vm/Kodchasan-Bold.ttf'
+    font_file_path_labels = '/home/venkateshmadhava/pmate-vm/RobotoCondensed-Bold.ttf'
+    font_file_path_footer = '/home/venkateshmadhava/pmate-vm/RobotoMono-Light.tt
 
 
     # Header and footer initialisations
