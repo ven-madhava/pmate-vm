@@ -1,8 +1,7 @@
-# 13 Oct
+# 16 Oct
 # ------
-
-# In[1]:
-
+# Range boards, better progress API & request handling
+# ----------------------------------------------------
 
 # Imports
 # -------
@@ -22,6 +21,7 @@ from google.cloud import storage
 from tensorflow.python.lib.io import file_io
 from io import BytesIO
 import threading
+from threading import Thread
 import time
 from PIL import ImageFont
 from PIL import ImageDraw
@@ -34,7 +34,6 @@ from flask import Flask, request
 from flask_restful import Resource, Api, reqparse
 from json import dumps
 from flask_jsonpify import jsonify
-
 
 # # GCS functions
 
@@ -142,10 +141,12 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
         if update_progress == True:
             curr_prog_percent = int(round((i+1)/m,2)*100)
-            progress['curr_message'] = str(progress['master_message']) + '..about ' + str(curr_prog_percent) + '% through'
+            progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
 
 
+        #
         print('Done saving image ' + str(i) + '..')
+        #print('Saving an array of size: ' + str(m) + '. Image prefix: ' + str(image_prefix) + '. Done saving image ' + str(i) + '..')
 
 
 
@@ -475,7 +476,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
         # Updating progress
         # -----------------
         curr_prog_percent = int(round((i+1)/(len(inlist)),2)*100)
-        progress['curr_message'] = str(progress['master_message']) + '..about ' + str(curr_prog_percent) + '% through'
+        progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
 
         # 3. Getting pattern blocks from segmented image as square blocks
         # ---------------------------------------------------------------
@@ -783,7 +784,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
         # Updating progress
         # -----------------
         curr_prog_percent = int(round((i+1)/(len(inlist)),2)*100)
-        progress['curr_message'] = str(progress['master_message']) + '..about ' + str(curr_prog_percent) + '% through'
+        progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
 
 
         if counter == 1:
@@ -1027,7 +1028,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
         # Updating progress
         # -----------------
         curr_prog_percent = int(round((i+1)/m,2)*100)
-        progress['curr_message'] = str(progress['master_message']) + '..about ' + str(curr_prog_percent) + '% through'
+        progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
 
         if save_preview == True:
             # Saving textures to storage for keeping frontend progress
@@ -1699,7 +1700,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
         # Updating progress
         # -----------------
         curr_prog_percent = int(round((i+1)/no_images,2)*100)
-        progress['curr_message'] = str(progress['master_message']) + '..about ' + str(curr_prog_percent) + '% through'
+        progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
 
         # Saving current generation to storage for keeping frontend progress
         # -------------------------------------------------------------------
@@ -1714,12 +1715,6 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
             genout = np.concatenate((genout,newim_c), axis = 0)
 
     return genout , cats_out
-
-
-# In[ ]:
-
-
-
 
 
 # In[23]:
@@ -1789,20 +1784,20 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
         # Single segment check
         # --------------------
         if single_segment == True:
-            choice_single = random.choice([0,1,2,5])
+            choice_single = random.choice([0,0,0,0,0,0,1,2,5])
             choice_g = choice_single
             choice_b = choice_single
 
         elif minor_segment == True:
             if minor_segment_seg == 'black':
-                choice_g = random.choice([0,1,2])
+                choice_g = random.choice([0,0,0,0,0,1,2])
                 choice_b = 5
             else:
                 choice_g = 5
-                choice_b = random.choice([0,1,2])
+                choice_b = random.choice([0,0,0,0,0,1,2])
 
         else:
-            choice_g = random.choice([0,1,2,5])
+            choice_g = random.choice([0,0,0,0,0,0,1,2,5])
 
             # Setting bblock based on gblock choice
             # -------------------------------------
@@ -1821,14 +1816,14 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
         # Single segment check
         # --------------------
         if single_segment == True:
-            choice_single = random.choice([0,1,2,3,5])
+            choice_single = random.choice([0,0,0,0,1,2,3,5])
             choice_g = choice_single
             choice_b = choice_single
 
         # NOT CHECKING MINOR SEGMENT
         # --------------------------
         else:
-            choice_g = random.choice([0,1,2,3,5])
+            choice_g = random.choice([0,0,0,0,1,2,3,5])
 
             # Setting bblock based on gblock choice
             # -------------------------------------
@@ -1898,14 +1893,14 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
         # Single segment check
         # --------------------
         if single_segment == True:
-            choice_single = random.choice([0,1,2,5])
+            choice_single = random.choice([0,0,0,1,2,5])
             choice_g = choice_single
             choice_b = choice_single
 
         # NOT CHECKING MINOR SEGMENT
         # --------------------------
         else:
-            choice_g = random.choice([0,1,2,5])
+            choice_g = random.choice([0,0,0,1,2,5])
 
             # Setting bblock based on gblock choice
             # -------------------------------------
@@ -2126,6 +2121,8 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
         print('Done')
 
+
+
     return boardout
 
 
@@ -2133,7 +2130,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
 
 
-# In[115]:
+# In[25]:
 
 
 # 8.1
@@ -2161,7 +2158,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
     # --
     font_file_path_header = '/home/venkateshmadhava/pmate-vm/Kodchasan-Bold.ttf'
     font_file_path_labels = '/home/venkateshmadhava/pmate-vm/RobotoCondensed-Bold.ttf'
-    font_file_path_footer = '/home/venkateshmadhava/pmate-vm/RobotoMono-Light.ttf'
+    font_file_path_footer = '/home/venkateshmadhava/pmate-vm/RobotoMono-Light.tt
 
 
     # Header and footer initialisations
@@ -2268,7 +2265,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
     # 7. Attaching header left
     # -------------------------
-    header_text = board_name + ' - ' + board_header
+    header_text = board_name + ' / ' + board_header
     header_start_c = outer_padding_v
     header_start_r = gap_between_header_ideas
     draw.text((header_start_c,header_start_r),header_text, fill=(50,50,50), font=font_header_main)
@@ -2325,12 +2322,11 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 # at /task_id/numpy for easy generation
 # Returns OK, NOT OK
 
+
 def api_create_new_patterns(task_id,selected_style_names,progress):
 
-    progress['curr_step'] = 0
-    progress['total_step'] = 10
-    progress['master_message'] = 'Inside function..'
-    progress['curr_message'] = 'Inside function..'
+    # progress is a class object of class progress for that task_id
+    ##
 
     #try:
 
@@ -2342,119 +2338,165 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     # ------------------------
     h,w,rp_size = 285,221,30
 
-    # 1. Getting theme images from storage
-    # ------------------------------------
-    progress['curr_step'] = 1
-    progress['master_message'] = 'Getting theme images from storage..'
-    progress['curr_message'] = progress['master_message']
-    theme_list = get_images_from_storage(inputfolder,'list')
+    try:
+        # 1. Getting theme images from storage
+        # ------------------------------------
+        progress.set_status(0) # 0 'Loading theme images..'
+        theme_list = get_images_from_storage(inputfolder,'list')
+        # 2. Stitching images together as list
+        # ------------------------------------
+        themes_stitched = protomatebeta_stitch_incoming_images_v1(theme_list)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
-    # 2. Stitching images together as list
-    # ------------------------------------
-    themes_stitched = protomatebeta_stitch_incoming_images_v1(theme_list)
 
-    # 3. Extracting blocks from stitched images
-    # -----------------------------------------
-    progress['curr_step'] = 2
-    progress['master_message'] = 'Learning objects in the theme images..this may take a while (around 15 seconds per image)..'
-    progress['curr_message'] = progress['master_message']
-    flblocks,flblocks_maps = protomatebeta_extract_blocks_for_aop_v1(themes_stitched,progress)
+    try:
+        # 3. Extracting blocks from stitched images
+        # -----------------------------------------
+        progress.set_status(1) # 1 'Initialising AI learning. This may take a while (around 15 seconds per image)..'
+        flblocks,flblocks_maps = protomatebeta_extract_blocks_for_aop_v1(themes_stitched,progress)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
-    # 4. Building patterns
-    # --------------------
-    progress['curr_step'] = 3
-    progress['master_message'] = 'Building patterns based on learnt objects..'
-    progress['curr_message'] = progress['master_message']
-    built_patterns = protomate_build_aop_patterns_v1(flblocks,h,w,rp_size)
 
-    # 5. Picking key colors
-    # ---------------------
-    progress['curr_step'] = 4
-    progress['master_message'] = 'Learning core colors from theme images..'
-    progress['curr_message'] = progress['master_message']
-    keycolors = protomatebeta_pickcolors_v1(progress,themes_stitched,h,w,similarity_distance=0.1)
+    try:
+        # 4. Building patterns
+        # --------------------
+        progress.set_status(2) # 2 'Building patterns based on learnt objects from theme images..',
+        built_patterns = protomate_build_aop_patterns_v1(flblocks,h,w,rp_size)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
-    # 6. Building maps
-    # ----------------
-    built_maps = protomate_build_aop_patterns_v1(flblocks_maps,h,w,rp_size)
 
-    # 7. Saving all patterns to storage for front end retrieval
-    # ---------------------------------------------------------
-    progress['curr_step'] = 5
-    progress['master_message'] = 'Saving built patterns for display..'
-    progress['curr_message'] = progress['master_message']
-    storage_dir = task_id + '/all_patterns'
-    image_prefix = str(task_id) + '_all_patterns'
-    save_to_storage_from_array_list(built_patterns,storage_dir,image_prefix,True,progress)
+    try:
+        # 5. Picking key colors
+        # ---------------------
+        progress.set_status(3) # 3 'Learning core colors from theme images..',
+        keycolors = protomatebeta_pickcolors_v1(progress,themes_stitched,h,w,similarity_distance=0.1)
+        # 6. Building maps
+        # ----------------
+        built_maps = protomate_build_aop_patterns_v1(flblocks_maps,h,w,rp_size)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
-    # 8. Saving numpy formats of all patterns, all maps, all colors
-    # -------------------------------------------------------------
-    # 8.1 Saving all patterns
-    # -----------------------
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), built_patterns)
 
-    # 8.2 Saving all colors
-    # -----------------------
-    progress['curr_step'] = 6
-    progress['master_message'] = 'Saving core colors for display..'
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), keycolors)
+    try:
+        # 7. Saving all patterns to storage for front end retrieval
+        # ---------------------------------------------------------
+        progress.set_status(4) # 4 'Saving built patterns for user selection..',
+        storage_dir = task_id + '/all_patterns'
+        image_prefix = str(task_id) + '_all_patterns'
+        save_to_storage_from_array_list(built_patterns,storage_dir,image_prefix,True,progress)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
-    # 8.2 Saving all maps
-    # -----------------------
-    progress['curr_step'] = 7
-    progress['master_message'] = 'Saving pattern maps for later use..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_maps.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), built_maps)
 
-    # 9. Picking selected stylings and saving them into temp arrays for correction
-    # ----------------------------------------------------------------------------
-    progress['curr_step'] = 8
-    progress['master_message'] = 'Retrieving selected stylings for generation..'
-    progress['curr_message'] = progress['master_message']
-    x_lines,x_segs,cats = get_stylings_from_storage(selected_style_names)
 
-    # 9.1. Correcting incoming lines and segments
-    # -----------------------------------------
-    xl_corr,xs_corr = protomatebeta_correct_segments_linemarkings(x_lines,x_segs)
+    try:
+        progress.set_status(5) # 5 'Saving internal files for generation..',
+        # 8. Saving numpy formats of all patterns, all maps, all colors
+        # -------------------------------------------------------------
+        # 8.1 Saving all patterns
+        # -----------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), built_patterns)
+        # 8.2 Saving all colors
+        # -----------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), keycolors)
+        # 8.2 Saving all maps
+        # -----------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_maps.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), built_maps)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
-    # 10. Saving lines, segs and categories under /task_id/numpy for generation
-    # -------------------------------------------------------------------------
-    # Saving Segments
-    # ---------------
-    progress['curr_step'] = 9
-    progress['master_message'] = 'Saving stylings and categories for generation..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_segments.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), xs_corr)
 
-    # Saving Linemarkings
-    # --------------------
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_linemarkings.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), xl_corr)
+    try:
+        progress.set_status(6) # 6 'Preparing selected stylings for generations..',
+        # 9. Picking selected stylings and saving them into temp arrays for correction
+        # ----------------------------------------------------------------------------
+        x_lines,x_segs,cats = get_stylings_from_storage(selected_style_names)
+        # 9.1. Correcting incoming lines and segments
+        # -----------------------------------------
+        xl_corr,xs_corr = protomatebeta_correct_segments_linemarkings(x_lines,x_segs)
+        # 10. Saving lines, segs and categories under /task_id/numpy for generation
+        # -------------------------------------------------------------------------
+        # Saving Segments
+        # ---------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_segments.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), xs_corr)
+        # Saving Linemarkings
+        # --------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_linemarkings.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), xl_corr)
+        # Saving Categories
+        # -----------------
+        categories_np = np.array(cats).reshape(len(cats), 1)
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_categories.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), categories_np)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
-    # Saving Categories
-    # -----------------
-    categories_np = np.array(cats).reshape(len(cats), 1)
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_categories.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), categories_np)
+    # Saving status update to 1
+    # -------------------------
+    np_status = np.array([1]).reshape(1,1)
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_status.npy'
+    np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
-    progress['curr_step'] = 10
-    progress['master_message'] = 'All Done.'
-    progress['curr_message'] = progress['master_message']
+    progress.set_status(7) # Done
+    progress.runnning_status = 'Finished.'
+
+    # Delecting appropriate dicts to allow user to run threaded task again
+    # --------------------------------------------------------------------
+    global progress_api_dict
+    global create_texture_threads
+    global new_pattern_threads
+    global generate_ideas_threads
+
+    time.sleep(10) # for 10 secs, status will be available after task completes
+
+    try:
+        del new_pattern_threads[task_id]
+        del progress_api_dict[task_id]
+    except:
+        'do nothing'
+
+
+
 
     # Reading numpy files from cloud
     ###
     #f = BytesIO(file_io.read_file_to_string('gs://ven-ml-project.appspot.com/PMTASK001/numpy/nptest.npy', binary_mode=True))
     #x = np.load(f)
 
-    return 200 # OK
+    return 'All good.', 200
 
-    #except:
-    #
-    #    return 500 # NOT OK
+    #except Exception as ex:
+    #    error_str = type(ex).__name__ + ': ' + ex.args[0]
+    #    return error_str, 500
+
 
 
 # In[27]:
@@ -2467,99 +2509,112 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
 # At same location
 # Returns OK, NOT OK
 
+
 def api_create_textures(task_id,picked_ind_string,progress):
 
+    # progress is a class object of class progress for that task_id
+    ##
+
     #try:
-    progress['curr_step'] = 0
-    progress['total_step'] = 5
-    progress['master_message'] = 'Inside function..'
-    progress['curr_message'] = 'Inside function..'
 
-    # 1. Converting input indices to string
-    # -------------------------------------
-    picked_ind = [int(s) for s in picked_ind_string.split(',')]
-
-    # 2. Getting all patterns npy file
-    # --------------------------------
-    progress['curr_step'] = 1
-    progress['total_step'] = 7
-    progress['master_message'] = 'Loading saved patterns..'
-    progress['curr_message'] = progress['master_message']
-    print('1. At np array load..')
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    all_pats = np.load(f)
-    picked_patterns = all_pats[picked_ind]
-    h,w = picked_patterns.shape[1],picked_patterns.shape[2]
-
-    # 3. Creating stripes and checks
-    # ------------------------------
-    progress['curr_step'] = 2
-    progress['total_step'] = 7
-    progress['master_message'] = 'Building textures..'
-    progress['curr_message'] = progress['master_message']
-    print('2. At textures..')
-    picked_stripes,picked_checks,picked_melange,picked_grainy = protomatebeta_build_textures_v1(picked_patterns,h,w,False,progress,task_id,False)
-
-    # 4. Saving textures under /task_id/numpy/
-    # ----------------------------------------
-    # Saving Stripes
-    # --------------
-    progress['curr_step'] = 3
-    progress['total_step'] = 7
-    progress['master_message'] = 'Saving textures..stripes'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), picked_stripes)
-    print('3. Saved stripes..')
-
-    # Saving Checks
-    # --------------
-    progress['curr_step'] = 4
-    progress['total_step'] = 7
-    progress['master_message'] = 'Saving textures..checks'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), picked_checks)
-    print('4. Saved checks..')
-
-    # Saving Melange
-    # --------------
-    progress['curr_step'] = 5
-    progress['total_step'] = 7
-    progress['master_message'] = 'Saving textures..melange'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), picked_melange)
-    print('4. Saved melange..')
-
-    # Saving Grainy
-    # --------------
-    progress['curr_step'] = 6
-    progress['total_step'] = 7
-    progress['master_message'] = 'Saving textures..grainy'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), picked_grainy)
-    print('4. Saved grainy..')
+    try:
+        progress.set_status(0) # 0 'Loading learnt patterns..'
+        # 1. Converting input indices to string
+        # -------------------------------------
+        picked_ind = [int(s) for s in picked_ind_string.split(',')]
+        # 2. Getting all patterns npy file
+        # --------------------------------
+        print('1. At np array load..')
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        all_pats = np.load(f)
+        picked_patterns = all_pats[picked_ind]
+        h,w = picked_patterns.shape[1],picked_patterns.shape[2]
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
 
-    # Saving Picked_ind
-    # -----------------
-    picked_ind_np = np.array(picked_ind).reshape(len(picked_ind), 1)
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_picked_ind.npy'
-    np.save(file_io.FileIO(storage_address, 'w'), picked_ind_np)
-    print('5. Saved indices..')
-    progress['curr_step'] = 7
-    progress['total_step'] = 7
-    progress['master_message'] = 'Done.'
-    progress['curr_message'] = progress['master_message']
+    try:
+        progress.set_status(1) # 1 'Building textures..',
+        # 3. Creating stripes and checks
+        # ------------------------------
+        print('2. At textures..')
+        picked_stripes,picked_checks,picked_melange,picked_grainy = protomatebeta_build_textures_v1(picked_patterns,h,w,False,progress,task_id,False)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
-    return 200
 
-    #except:
+    try:
+        progress.set_status(2) # 2 'Saving textures..',
+        # 4. Saving textures under /task_id/numpy/
+        # ----------------------------------------
+        # Saving Stripes
+        # --------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), picked_stripes)
+        print('3. Saved stripes..')
+        # Saving Checks
+        # --------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), picked_checks)
+        print('4. Saved checks..')
+        # Saving Melange
+        # --------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), picked_melange)
+        print('4. Saved melange..')
+        # Saving Grainy
+        # --------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), picked_grainy)
+        print('4. Saved grainy..')
+        # Saving Picked_ind
+        # -----------------
+        picked_ind_np = np.array(picked_ind).reshape(len(picked_ind), 1)
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_picked_ind.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), picked_ind_np)
+        print('5. Saved indices..')
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
-    #    return 500
+    # Saving status update to 2
+    # -------------------------
+    np_status = np.array([2]).reshape(1,1)
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_status.npy'
+    np.save(file_io.FileIO(storage_address, 'w'), np_status)
+
+    progress.set_status(3) # Done
+    progress.runnning_status = 'OK'
+
+    # Delecting appropriate dicts to allow user to run threaded task again
+    # --------------------------------------------------------------------
+    global progress_api_dict
+    global create_texture_threads
+    global new_pattern_threads
+    global generate_ideas_threads
+
+    time.sleep(10) # for 10 secs, status will be available after task completes
+
+    try:
+        del create_texture_threads[task_id]
+        del progress_api_dict[task_id]
+    except:
+        'do nothing'
+
+    return 'All good.', 200
+
+    #except Exception as ex:
+    #    error_str = type(ex).__name__ + ': ' + ex.args[0]
+    #    return error_str, 500
 
 
 # In[28]:
@@ -2571,171 +2626,332 @@ def api_create_textures(task_id,picked_ind_string,progress):
 # Generates new ideas and saves them under /task_id/ideas/gen_id/
 # Returns OK, NOT OK
 
+
 def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_images,progress):
 
-#    try:
-    progress['curr_step'] = 0
-    progress['total_step'] = 12
-    progress['master_message'] = 'Inside function..'
-    progress['curr_message'] = 'Inside function..'
+    #try:
+
+    # progress is a class object of class progress for that task_id
+    ##
+
+    try:
+        progress.set_status(0) # 0 'Loading stylings..',
+        # 1. Collect required numpy files and load them locally for generation
+        # --------------------------------------------------------------------
+        # Collecting linemarkings
+        # -----------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_linemarkings.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        lines = np.load(f)
+        print('Got lines..')
+        # Collecting segments
+        # -------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_segments.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        segs = np.load(f)
+        print('Got segs..')
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
 
 
-    # 1. Collect required numpy files and load them locally for generation
+
+    try:
+        progress.set_status(1) # 1 'Loading patterns..',
+        # Collecting all pats
+        # -------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        all_patterns = np.load(f)
+        print('Got all pats..')
+        # Collecting picked_ind
+        # ---------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_picked_ind.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        picked_ind = np.load(f)
+        print('Got picked indices..')
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
+
+
+
+    try:
+        progress.set_status(2) # 2 'Loading colors..',
+        # Collecting colors
+        # ---------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        colors = np.load(f)
+        print('Got colors..')
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
+
+
+
+    try:
+        progress.set_status(3) # 3 'Loading textures..',
+        # Colecting checks
+        # ----------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        checks = np.load(f)
+        print('Got checks..')
+        # Collecting Stripes
+        # -----------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        stripes = np.load(f)
+        print('Got stripes..')
+        # Collecting Melange
+        # -----------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        melange = np.load(f)
+        print('Got melange..')
+        # Collecting Grainy
+        # -----------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        grainy = np.load(f)
+        print('Got grainy..')
+        # Collecting Catagories
+        # ----------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_categories.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        categories = np.load(f)
+        print('Got categories..')
+        # 2. Preparing picked patterns for generation
+        # -------------------------------------------
+        picked_patterns = all_patterns[list(picked_ind[:,0])]
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
+
+
+
+    try:
+        progress.set_status(4) # 4 'Generating ideas..',
+        # 3. Actual generation
+        # --------------------
+        ideas,cats = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,False)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
+
+
+
+    try:
+        progress.set_status(5) # 5 'Saving ideas..',
+        # 4. Saving generated images under /task_id/ideas/gen_id/
+        # -------------------------------------------------------
+        storage_dir = task_id + '/ideas/' + str(gen_id)
+        image_prefix = str(task_id) + '_' + str(gen_id) + '_ideas'
+        save_to_storage_from_array_list(ideas,storage_dir,image_prefix,True,progress)
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
+
+
+
+    try:
+        progress.set_status(6) # 6 'Building and saving rangeboards..',
+        # 5. Building and saving range boards under /task_id/rangeboards/gen_id/
+        # ----------------------------------------------------------------------
+        range_built = feed_to_build_range(ideas,cats,task_id,gen_id,task_board_name,task_styling_name_prefix)
+        storage_dir = task_id + '/rangeboards/' + str(gen_id)
+        image_prefix = str(task_id) + '_' + str(gen_id) + '_rangeboards'
+        save_to_storage_from_array_list(range_built,storage_dir,image_prefix,True,progress)
+        # 6. Building PDF for download
+        # ----------------------------
+        range_list = []
+        for range_i in range(range_built.shape[0]):
+            curr_im = Image.fromarray(range_built[range_i])
+            range_list.append(curr_im)
+        # 6.1
+        # ---
+        bucket_name = 'ven-ml-project.appspot.com'
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
+        with tempfile.NamedTemporaryFile() as temp:
+            # Set name to the temp file
+            # -------------------------
+            pdf_name = ''.join([str(temp.name),'.pdf'])
+            # Save PDF to temp file
+            # -----------------------
+            range_list[0].save(pdf_name, "PDF" ,resolution=100.0, save_all=True, append_images=range_list[1:])
+            # Storing the image temp file inside the bucket
+            # ---------------------------------------------
+            destination_blob_name = storage_dir + '/downloadable_range_boards.pdf'
+            blob = bucket.blob(destination_blob_name)
+            blob.upload_from_filename(pdf_name,content_type='application/pdf')
+        progress.runnning_status = 'OK'
+    except Exception as ex:
+        error_str = type(ex).__name__ + ': ' + ex.args[0]
+        progress.runnning_status = 'ERROR! ' + error_str
+        return error_str, 500
+
+    progress.set_status(7) # Done
+    progress.runnning_status = 'OK'
+
+    # Delecting appropriate dicts to allow user to run threaded task again
     # --------------------------------------------------------------------
-    # Collecting linemarkings
-    # -----------------------
-    progress['curr_step'] = 1
-    progress['total_step'] = 12
-    progress['master_message'] = 'Loading stylings..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_linemarkings.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    lines = np.load(f)
-    print('Got lines..')
+    global progress_api_dict
+    global create_texture_threads
+    global new_pattern_threads
+    global generate_ideas_threads
 
-    # Collecting segments
-    # -------------------
-    progress['curr_step'] = 2
-    progress['total_step'] = 12
-    progress['master_message'] = 'Loading segments..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_segments.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    segs = np.load(f)
-    print('Got segs..')
+    time.sleep(10) # for 10 secs, status will be available after task completes
 
-    # Collecting all pats
-    # -------------------
-    progress['curr_step'] = 3
-    progress['total_step'] = 12
-    progress['master_message'] = 'Loading patterns..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    all_patterns = np.load(f)
-    print('Got all pats..')
+    try:
+        del generate_ideas_threads[task_id]
+        del progress_api_dict[task_id]
+    except:
+        'do nothing'
 
-    # Collecting picked_ind
-    # ---------------------
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_picked_ind.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    picked_ind = np.load(f)
-    print('Got picked indices..')
 
-    # Collecting colors
-    # ---------------------
-    progress['curr_step'] = 4
-    progress['total_step'] = 12
-    progress['master_message'] = 'Loading colors..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    colors = np.load(f)
-    print('Got colors..')
 
-    # Collecting Checks
-    # -----------------
-    progress['curr_step'] = 5
-    progress['total_step'] = 12
-    progress['master_message'] = 'Loading checks..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    checks = np.load(f)
-    print('Got checks..')
+    return 'All good.', 200
 
-    # Collecting Stripes
-    # -----------------
-    progress['curr_step'] = 6
-    progress['total_step'] = 12
-    progress['master_message'] = 'Loading stripes..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    stripes = np.load(f)
-    print('Got stripes..')
+    #except Exception as ex:
+    #    error_str = type(ex).__name__ + ': ' + ex.args[0]
+    #    return error_str, 500
 
-    # Collecting Melange
-    # -----------------
-    progress['curr_step'] = 7
-    progress['total_step'] = 12
-    progress['master_message'] = 'Loading melange..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    melange = np.load(f)
-    print('Got melange..')
-
-    # Collecting Grainy
-    # -----------------
-    progress['curr_step'] = 8
-    progress['total_step'] = 12
-    progress['master_message'] = 'Loading grainy..'
-    progress['curr_message'] = progress['master_message']
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    grainy = np.load(f)
-    print('Got grainy..')
-
-    # Collecting Catagories
-    # ----------------------
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_categories.npy'
-    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-    categories = np.load(f)
-    print('Got categories..')
-
-    # 2. Preparing picked patterns for generation
-    # -------------------------------------------
-    picked_patterns = all_patterns[list(picked_ind[:,0])]
-
-    # 3. Actual generation
-    # --------------------
-    progress['curr_step'] = 9
-    progress['total_step'] = 12
-    progress['master_message'] = 'Generating ideas..'
-    progress['curr_message'] = progress['master_message']
-    ideas,cats = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,False)
-
-    # 4. Saving generated images under /task_id/ideas/gen_id/
-    # -------------------------------------------------------
-    progress['curr_step'] = 10
-    progress['total_step'] = 12
-    progress['master_message'] = 'Saving ideas..'
-    progress['curr_message'] = progress['master_message']
-    storage_dir = task_id + '/ideas/' + str(gen_id)
-    image_prefix = str(task_id) + '_' + str(gen_id) + '_ideas'
-    save_to_storage_from_array_list(ideas,storage_dir,image_prefix,True,progress)
-
-    # 5. Building and saving range boards under /task_id/rangeboards/gen_id/
-    # ----------------------------------------------------------------------
-    progress['curr_step'] = 11
-    progress['total_step'] = 12
-    progress['master_message'] = 'Building and saving rangeboards..'
-    progress['curr_message'] = progress['master_message']
-    range_built = feed_to_build_range(ideas,cats,task_id,gen_id,task_board_name,task_styling_name_prefix)
-    storage_dir = task_id + '/rangeboards/' + str(gen_id)
-    image_prefix = str(task_id) + '_' + str(gen_id) + '_rangeboards'
-    save_to_storage_from_array_list(range_built,storage_dir,image_prefix,True,progress)
-
-    # Final progress update
-    # ---------------------
-    progress['curr_step'] = 12
-    progress['total_step'] = 12
-    progress['master_message'] = 'Done.'
-    progress['curr_message'] = progress['master_message']
-
-    return 200
-
-#    except:
-#
-#        return 500
 
 
 # # Actual Ven API endpoints
 
+# In[29]:
+
+
+# Creating a global progress dict to help with simpler progress API
+# -----------------------------------------------------------------
+global progress_api_dict
+progress_api_dict = {}
+
+
+# In[41]:
+
+
+# Temp code to create progress class
+##
+
+class progress_classobj():
+
+    def __init__(self,task_id,at_step):
+        super().__init__()
+
+        # Initialisations
+        # ---------------
+        self.task_id = task_id
+        self.at_step = at_step
+
+        # A single mode progress call
+        # ---------------------------
+        if self.at_step == 1: # Create new patterns
+
+            # Initialising progress updates
+            # -----------------------------
+            self.all_progress_updates = [
+                'Loading theme images..',
+                'Initialising AI learning. This may take a while (around 15 seconds per image)..',
+                'Building patterns based on learnt objects from theme images..',
+                'Learning core colors from theme images..',
+                'Saving built patterns for user selection..',
+                'Saving internal files for generation..',
+                'Preparing selected stylings for generations..',
+                'Done.']
+
+        elif self.at_step == 2: # Create textures
+
+            # Initialising progress updates
+            # -----------------------------
+            self.all_progress_updates = [
+                'Loading learnt patterns..',
+                'Building textures..',
+                'Saving textures..',
+                'Done.']
+
+        elif self.at_step == 3: # Generate ideas
+
+            # Initialising progress updates
+            # -----------------------------
+            self.all_progress_updates = [
+                'Loading stylings..',
+                'Loading patterns..',
+                'Loading colors..',
+                'Loading textures..',
+                'Generating ideas..',
+                'Saving ideas..',
+                'Building and saving rangeboards..',
+                'Done.']
+
+        # External message params initialisations
+        # ---------------------------------------
+        self.curr_step = 0
+        self.total_step = len(self.all_progress_updates) - 1
+        self.master_message = 'Yet to start.'
+        self.curr_message = 'Yet to start.'
+        #self.thread_status = False
+        self.runnning_status = 'Yet to start.'
+
+    def set_status(self, at_now):
+
+        # Setting message status
+        # ----------------------
+        self.curr_step = at_now
+        self.master_message = self.all_progress_updates[at_now]
+        self.curr_message = self.master_message
+
+    def dict_out(self):
+
+        # To return params for progress API
+        # ---------------------------------
+        d = {}
+        d['mode_number'] = self.at_step
+
+        if self.at_step == 1:
+            d['curr_mode'] = 'Creating new patterns'
+        elif self.at_step == 2:
+            d['curr_mode'] = 'Creating textures'
+        else:
+            d['curr_mode'] = 'Generating ideas'
+
+        d['curr_step'] = self.curr_step
+        d['total_step'] = self.total_step
+        d['curr_message'] = self.curr_message
+        d['master_message'] = self.master_message
+        d['runnning_status'] = self.runnning_status
+
+        return d
+
+
+    def getallprogressstatuses(self):
+        # To return all progress statuses for front end display
+        # -----------------------------------------------------
+        d = {}
+        for i in range(len(self.all_progress_updates)):
+            d[i] = self.all_progress_updates[i]
+
+        return d
+
+
 # ### 1. create new patterns external API
 
-# In[29]:
+# In[32]:
 
 
 ##
@@ -2743,13 +2959,23 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 class create_new_patterns_threaded_task(threading.Thread):
     def __init__(self,p_task_id,p_selected_style_names):
         super().__init__()
-        self.progress = {}
-        self.progress['curr_step'] = 0
-        self.progress['total_step'] = 0
-        self.progress['master_message'] = 'Starting soon..'
-        self.progress['curr_message'] = 'Starting soon..'
+
+        # Initialisations
+        # ---------------
         self.p_task_id = p_task_id
         self.p_selected_style_names = p_selected_style_names
+        self.progress = progress_classobj(p_task_id,1)
+
+        # For progress api
+        # ----------------
+        global progress_api_dict
+        try:
+            del progress_api_dict[p_task_id]
+        except:
+            'do nothing'
+
+        progress_api_dict[p_task_id] = self.progress
+
 
     def run(self): # Run method probably overrides the inherited Threads run method
 
@@ -2758,7 +2984,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_task_id,self.p_selected_style_names,self.progress)
 
 
-# In[30]:
+# In[33]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -2767,7 +2993,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[31]:
+# In[34]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -2787,23 +3013,40 @@ class externalAPI_create_new_patterns(Resource):
         p_task_id = args['task_id']
         p_selected_style_names = args['selected_style_names']
 
-        # This function really just starts the create new pattern thread class and assigns it to a global dict
-        # ----------------------------------------------------------------------------------------------------
-        global new_pattern_threads
+        # First trying to get np_status
+        # -----------------------------
         try:
-            del new_pattern_threads[p_task_id]
-        except:
-            'do nothing'
-        new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_task_id,p_selected_style_names)
-        new_pattern_threads[p_task_id].start()
+            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
 
-        return 'Thread started', 200
+            # This means patterns already built
+            # ---------------------------------
+            return 'Invalid operation. Patterns already built for this task.', 500 #### Checked
+
+        except:
+
+            # This means there is no such file and new pattern build can begin.
+            # This function really just starts the create new pattern thread class and assigns it to a global dict
+            # ----------------------------------------------------------------------------------------------------
+            global new_pattern_threads
+            try:
+                # Checking for parallel active thread
+                # -----------------------------------
+                if new_pattern_threads[p_task_id].progress.curr_step >= 0:
+                    return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 #### Checked
+                else:
+                    return 'Something went wrong, check progress for error.', 500 #### Checked
+            except:
+                print('API Create new patterns firing ------ ')
+                new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_task_id,p_selected_style_names)
+                new_pattern_threads[p_task_id].start()
+                return 'Thread started', 200 #### Checked
 
 
 
 # ### 2. create new texture external API
 
-# In[32]:
+# In[35]:
 
 
 ##
@@ -2811,13 +3054,22 @@ class externalAPI_create_new_patterns(Resource):
 class create_textures_threaded_task(threading.Thread):
     def __init__(self,p_task_id,p_picked_ind_string):
         super().__init__()
-        self.progress = {}
-        self.progress['curr_step'] = 0
-        self.progress['total_step'] = 0
-        self.progress['master_message'] = 'Starting soon..'
-        self.progress['curr_message'] = 'Starting soon..'
+
+        # Initialisations
+        # ---------------
         self.p_task_id = p_task_id
         self.p_picked_ind_string = p_picked_ind_string
+        self.progress = progress_classobj(p_task_id,2)
+
+        # For progress api
+        # ----------------
+        global progress_api_dict
+        try:
+            del progress_api_dict[p_task_id]
+        except:
+            'do nothing'
+
+        progress_api_dict[p_task_id] = self.progress
 
     def run(self): # Run method probably overrides the inherited Threads run method
 
@@ -2827,7 +3079,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[33]:
+# In[36]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -2836,7 +3088,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[34]:
+# In[37]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -2856,23 +3108,45 @@ class externalAPI_create_textures(Resource):
         p_task_id = args['task_id']
         p_picked_ind_string = args['picked_ind_string']
 
-        # This function really just starts the create new pattern thread class and assigns it to a global dict
-        # ----------------------------------------------------------------------------------------------------
+        # First trying to get np_status
+        # -----------------------------
         global create_texture_threads
-        try:
-            del create_texture_threads[p_task_id]
-        except:
-            'do nothing'
-        create_texture_threads[p_task_id] = create_textures_threaded_task(p_task_id,p_picked_ind_string)
-        create_texture_threads[p_task_id].start()
 
-        return 'Thread started', 200
+        try:
+            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+            npstatus = np.load(f)[0,0]
+
+            if npstatus == 1: # Good to go
+
+                try:
+                    # Checking for parallel active thread
+                    # -----------------------------------
+                    if create_texture_threads[p_task_id].progress.curr_step >= 0:
+                        return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 ## Checked
+                    else:
+                        return 'Something went wrong, check progress for error.', 500
+                except:
+                    print('API Create Texture firing ------ ')
+                    create_texture_threads[p_task_id] = create_textures_threaded_task(p_task_id,p_picked_ind_string)
+                    create_texture_threads[p_task_id].start()
+                    return 'Thread started', 200
+
+            elif npstatus == 2:
+                return 'Invalid operation. Textures already built for this task.', 500 #### Checked
+            else:
+                err_msg = 'Invalid operation. Something not right about the flow. Here is the npstatus: ' + str(npstatus)
+                return err_msg, 500
+
+        except:
+
+            return 'Invalid operation. Looks like patterns not built for this task.', 500 #### Checked
 
 
 
 # ### 3. generate ideas external API
 
-# In[35]:
+# In[38]:
 
 
 ##
@@ -2880,17 +3154,25 @@ class externalAPI_create_textures(Resource):
 class generate_ideas_threaded_task(threading.Thread):
     def __init__(self,p_task_id,p_gen_id,p_task_board_name,p_task_styling_prefix,p_no_images):
         super().__init__()
-        self.progress = {}
-        self.progress['curr_step'] = 0
-        self.progress['total_step'] = 0
-        self.progress['master_message'] = 'Starting soon..'
-        self.progress['curr_message'] = 'Starting soon..'
 
+        # Initialisations
+        # ---------------
         self.p_task_id = p_task_id
         self.p_gen_id = p_gen_id
         self.p_task_board_name = p_task_board_name
         self.p_task_styling_prefix = p_task_styling_prefix
         self.p_no_images = p_no_images
+        self.progress = progress_classobj(p_task_id,3)
+
+        # For progress api
+        # ----------------
+        global progress_api_dict
+        try:
+            del progress_api_dict[p_task_id]
+        except:
+            'do nothing'
+
+        progress_api_dict[p_task_id] = self.progress
 
     def run(self): # Run method probably overrides the inherited Threads run method
 
@@ -2900,7 +3182,8 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[36]:
+
+# In[39]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -2909,7 +3192,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[37]:
+# In[40]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -2939,20 +3222,66 @@ class externalAPI_generate_ideas(Resource):
         # This function really just starts the create new pattern thread class and assigns it to a global dict
         # ----------------------------------------------------------------------------------------------------
         global generate_ideas_threads
-        try:
-            del generate_ideas_threads[p_task_id]
-        except:
-            'do nothing'
-        generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_images)
-        generate_ideas_threads[p_task_id].start()
 
-        return 'Thread started', 200
+        try:
+            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+            npstatus = np.load(f)[0,0]
+
+            if npstatus == 1:
+                return 'Invalid operation. Textures not built for this task.', 500 ## Checked
+            elif npstatus == 2:
+                try:
+                    # Checking for parallel thread
+                    # ----------------------------
+                    if generate_ideas_threads[p_task_id].progress.curr_step >= 0:
+                        return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 #### Checked
+                    else:
+                        return 'Something went wrong, check progress for error.', 500
+                except:
+
+                    generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_images)
+                    generate_ideas_threads[p_task_id].start()
+                    return 'Thread started', 200
+        except:
+            return 'Invalid operation. Looks like patterns not built for this task.', 500 #### Checked
 
 
 
 # # running the external api functions
 
-# In[38]:
+# In[55]:
+
+
+## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
+# ----------------------------------------------------------------------------------------------
+
+class externalAPI_get_all_progress_updates(Resource):
+
+    def put(self):
+
+        # For progress api
+        # ----------------
+        global progress_api_dict
+
+        # Setting up key values to accept
+        # -------------------------------
+        parser = reqparse.RequestParser()
+        parser.add_argument('task_id')
+        args = parser.parse_args()
+        p_task_id = args['task_id']
+
+        # Returning data
+        # --------------
+        try:
+            d = progress_api_dict[p_task_id].getallprogressstatuses()
+            return jsonify(d)
+
+        except KeyError:
+            return 'Invalid task id.', 500
+
+
+# In[56]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -2962,8 +3291,9 @@ class externalAPI_get_progress(Resource):
 
     def put(self):
 
-        # Initiating global params
-        # ------------------------
+        # For progress api
+        # ----------------
+        global progress_api_dict
         global create_texture_threads
         global new_pattern_threads
         global generate_ideas_threads
@@ -2972,35 +3302,28 @@ class externalAPI_get_progress(Resource):
         # -------------------------------
         parser = reqparse.RequestParser()
         parser.add_argument('task_id')
-        parser.add_argument('progress_for')
         args = parser.parse_args()
-
         p_task_id = args['task_id']
-        p_progress_for = args['progress_for']
 
-        # Using diff dicts based on request
-        # ---------------------------------
+        # Returning data
+        # --------------
         try:
-            if p_progress_for == 'new_patterns':
-                new_pattern_threads[p_task_id].progress['thread_status'] = new_pattern_threads[p_task_id].isAlive()
-                return jsonify(new_pattern_threads[p_task_id].progress)
+            d = progress_api_dict[p_task_id].dict_out()
 
-            elif p_progress_for == 'create_textures':
-                create_texture_threads[p_task_id].progress['thread_status'] = create_texture_threads[p_task_id].isAlive()
-                return jsonify(create_texture_threads[p_task_id].progress)
-
-            elif p_progress_for == 'generate_ideas':
-                generate_ideas_threads[p_task_id].progress['thread_status'] = generate_ideas_threads[p_task_id].isAlive()
-                return jsonify(generate_ideas_threads[p_task_id].progress)
+            if d['mode_number'] == 1:
+                d['thread_status'] = new_pattern_threads[p_task_id].isAlive()
+            elif d['mode_number'] == 2:
+                d['thread_status'] = create_texture_threads[p_task_id].isAlive()
             else:
-                return 'Invalid task decription.'
+                d['thread_status'] = generate_ideas_threads[p_task_id].isAlive()
+            return jsonify(d)
 
         except KeyError:
             return 'Invalid task id.', 500
 
 
 
-# In[83]:
+# In[57]:
 
 
 #del api
@@ -3013,9 +3336,10 @@ api.add_resource(externalAPI_create_new_patterns, '/newpatterns') # Route
 api.add_resource(externalAPI_create_textures, '/createtextures') # Route
 api.add_resource(externalAPI_generate_ideas, '/generateideas') # Route
 api.add_resource(externalAPI_get_progress, '/getprogress') # Route
+api.add_resource(externalAPI_get_all_progress_updates, '/getallprogressstatuses') # Route
 
 
-# In[ ]:
+# In[58]:
 
 
 if __name__ == '__main__':
