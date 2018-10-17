@@ -3364,7 +3364,7 @@ api.add_resource(externalAPI_get_all_progress_updates, '/getallprogressstatuses'
 
 global vm_or_local
 if __name__ == '__main__':
-    if vm_or_local == 'local'
+    if vm_or_local == 'local':
         app.run(port='5002') # For local
     else:
         app.run(host='0.0.0.0', port=8000) # VM
