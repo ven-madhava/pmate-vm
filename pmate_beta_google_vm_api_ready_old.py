@@ -1,7 +1,5 @@
-# 16 Oct
+# 17 Oct
 # ------
-# Range boards, better progress API & request handling
-# ----------------------------------------------------
 
 # Imports
 # -------
@@ -35,9 +33,19 @@ from flask_restful import Resource, Api, reqparse
 from json import dumps
 from flask_jsonpify import jsonify
 
+
 # # GCS functions
 
 # In[2]:
+
+
+'SWITCH BETWEEN LOCAL AND VM HERE'
+
+global vm_or_local
+vm_or_local = 'vm'
+
+
+# In[3]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -73,7 +81,7 @@ def get_images_from_storage(parent_dir,output_mode):
 
     for b in blobs:
 
-        if '.jpg' in str(b.name) or '.jpeg' in str(b.name):
+        if '.jpg' in str(b.name) or '.jpeg' in str(b.name) or '.png' in str(b.name):
 
             counter += 1
             blob_curr = bucket.blob(str(b.name))
@@ -96,7 +104,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[3]:
+# In[4]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -145,12 +153,12 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
         #
-        print('Done saving image ' + str(i) + '..')
-        #print('Saving an array of size: ' + str(m) + '. Image prefix: ' + str(image_prefix) + '. Done saving image ' + str(i) + '..')
+        #print('Done saving image ' + str(i) + '..')
+        print('Saving an array of size: ' + str(m) + '. Image prefix: ' + str(image_prefix) + '. Done saving image ' + str(i) + '..')
 
 
 
-# In[4]:
+# In[5]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -224,7 +232,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[5]:
+# In[6]:
 
 
 # protomate function to get block images
@@ -264,7 +272,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[6]:
+# In[7]:
 
 
 # protomate kmeans function
@@ -324,7 +332,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[7]:
+# In[8]:
 
 
 # protomate recurring kmeans function
@@ -352,7 +360,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[8]:
+# In[9]:
 
 
 # 1
@@ -405,6 +413,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
             else:
                 xcurr = np.concatenate((xcurr,img_res), axis = 1)
 
+
     # Final xcurr concatenation to xout
     # ---------------------------------
     try:
@@ -412,9 +421,12 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
 
             # Need to concat the last bit image to the last xout image
             # --------------------------------------------------------
-            xout_lastim = xout[len(xout)-1]
-            xout_lastim = np.concatenate((xout_lastim,xcurr), axis = 1)
-            xout[len(xout)-1] = xout_lastim
+            if len(xout) > 0: #  If all theme images are very very small and never attain max_width even after going through all images
+                xout_lastim = xout[len(xout)-1]
+                xout_lastim = np.concatenate((xout_lastim,xcurr), axis = 1)
+                xout[len(xout)-1] = xout_lastim
+            else:
+                xout.append(xcurr)
 
         else:
             xout.append(xcurr)
@@ -425,7 +437,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[9]:
+# In[10]:
 
 
 # 2
@@ -498,7 +510,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
 
 
 
-# In[10]:
+# In[11]:
 
 
 # 2.1
@@ -589,7 +601,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[11]:
+# In[12]:
 
 
 # 3
@@ -687,7 +699,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[12]:
+# In[13]:
 
 
 # 3.1
@@ -736,7 +748,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[13]:
+# In[14]:
 
 
 # 4
@@ -796,7 +808,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[14]:
+# In[15]:
 
 
 # 4.1
@@ -867,7 +879,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[15]:
+# In[16]:
 
 
 # 4.2
@@ -947,7 +959,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[16]:
+# In[17]:
 
 
 # 5
@@ -1058,7 +1070,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[17]:
+# In[18]:
 
 
 # 5.1
@@ -1146,7 +1158,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[18]:
+# In[19]:
 
 
 # 5.2
@@ -1245,7 +1257,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[19]:
+# In[20]:
 
 
 # 5.3
@@ -1355,7 +1367,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[20]:
+# In[21]:
 
 
 # 6
@@ -1363,7 +1375,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
 # API ready ##
 # ---------------------------------------------------------------------------------------------
 
-def get_stylings_from_storage(in_names):
+def get_stylings_from_storage(in_names,update_progress,progress):
 
     """"For example, given these blobs:
         /a/1.txt
@@ -1391,11 +1403,12 @@ def get_stylings_from_storage(in_names):
     # Itering through names list
     # --------------------------
     counter = 0
+    len_namelist = len(in_names_list)
     for i in in_names_list:
 
         #print('At image..' + str(i))
-        print(i)
-        print(type(i))
+        #print(i)
+        #print(type(i))
 
         # Getting linemarking blob for curr name
         # ---------------------------------------
@@ -1453,13 +1466,17 @@ def get_stylings_from_storage(in_names):
             # -----------------------------------------------------
             curr_cat_label = int(str(i)[0:str(i).index('_')])
             categories.append(curr_cat_label)
-            print('Added!')
+            #print('Added!')
+            if update_progress == True:
+                curr_prog_percent = int(round(counter/len_namelist,2)*100)
+                progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+
 
 
     return xout_lines,xout_seg,categories
 
 
-# In[21]:
+# In[22]:
 
 
 # 6.1
@@ -1522,7 +1539,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[22]:
+# In[23]:
 
 
 # 7
@@ -1717,7 +1734,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
     return genout , cats_out
 
 
-# In[23]:
+# In[24]:
 
 
 # 7.1
@@ -1974,7 +1991,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[24]:
+# In[25]:
 
 
 # 8
@@ -2130,7 +2147,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
 
 
-# In[25]:
+# In[28]:
 
 
 # 8.1
@@ -2150,15 +2167,18 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
     # Local
     # -----
-    #font_file_path_header = '/Users/venkateshmadhava/Desktop/fonts/Kodchasan-Bold.ttf'
-    #font_file_path_labels = '/Users/venkateshmadhava/Desktop/fonts/RobotoCondensed-Bold.ttf'
-    #font_file_path_footer = '/Users/venkateshmadhava/Desktop/fonts/RobotoMono-Light.ttf'
+    global vm_or_local
+    if vm_or_local == 'local':
+        font_file_path_header = '/Users/venkateshmadhava/Desktop/fonts/Kodchasan-Bold.ttf'
+        font_file_path_labels = '/Users/venkateshmadhava/Desktop/fonts/RobotoCondensed-Bold.ttf'
+        font_file_path_footer = '/Users/venkateshmadhava/Desktop/fonts/RobotoMono-Light.ttf'
 
     # VM
     # --
-    font_file_path_header = '/home/venkateshmadhava/pmate-vm/Kodchasan-Bold.ttf'
-    font_file_path_labels = '/home/venkateshmadhava/pmate-vm/RobotoCondensed-Bold.ttf'
-    font_file_path_footer = '/home/venkateshmadhava/pmate-vm/RobotoMono-Light.ttf'
+    else:
+        font_file_path_header = '/home/venkateshmadhava/pmate-vm/Kodchasan-Bold.ttf'
+        font_file_path_labels = '/home/venkateshmadhava/pmate-vm/RobotoCondensed-Bold.ttf'
+        font_file_path_footer = '/home/venkateshmadhava/pmate-vm/RobotoMono-Light.ttf'
 
 
     # Header and footer initialisations
@@ -2310,7 +2330,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
 # # Ven_API functions
 
-# In[26]:
+# In[29]:
 
 
 # API 1 Function
@@ -2434,7 +2454,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         progress.set_status(6) # 6 'Preparing selected stylings for generations..',
         # 9. Picking selected stylings and saving them into temp arrays for correction
         # ----------------------------------------------------------------------------
-        x_lines,x_segs,cats = get_stylings_from_storage(selected_style_names)
+        x_lines,x_segs,cats = get_stylings_from_storage(selected_style_names,True,progress)
         # 9.1. Correcting incoming lines and segments
         # -----------------------------------------
         xl_corr,xs_corr = protomatebeta_correct_segments_linemarkings(x_lines,x_segs)
@@ -2499,7 +2519,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
 
 
 
-# In[27]:
+# In[30]:
 
 
 # API 2 function
@@ -2617,7 +2637,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     #    return error_str, 500
 
 
-# In[28]:
+# In[31]:
 
 
 # API 3 function
@@ -2834,7 +2854,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
 # # Actual Ven API endpoints
 
-# In[29]:
+# In[32]:
 
 
 # Creating a global progress dict to help with simpler progress API
@@ -2843,7 +2863,7 @@ global progress_api_dict
 progress_api_dict = {}
 
 
-# In[41]:
+# In[33]:
 
 
 # Temp code to create progress class
@@ -2951,7 +2971,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[32]:
+# In[34]:
 
 
 ##
@@ -2984,7 +3004,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_task_id,self.p_selected_style_names,self.progress)
 
 
-# In[33]:
+# In[35]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -2993,7 +3013,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[34]:
+# In[36]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3046,7 +3066,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. create new texture external API
 
-# In[35]:
+# In[37]:
 
 
 ##
@@ -3079,7 +3099,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[36]:
+# In[38]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -3088,7 +3108,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[37]:
+# In[39]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3146,7 +3166,7 @@ class externalAPI_create_textures(Resource):
 
 # ### 3. generate ideas external API
 
-# In[38]:
+# In[40]:
 
 
 ##
@@ -3183,7 +3203,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[39]:
+# In[41]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -3192,7 +3212,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[40]:
+# In[42]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3250,7 +3270,7 @@ class externalAPI_generate_ideas(Resource):
 
 # # running the external api functions
 
-# In[55]:
+# In[43]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -3281,7 +3301,7 @@ class externalAPI_get_all_progress_updates(Resource):
             return 'Invalid task id.', 500
 
 
-# In[56]:
+# In[44]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -3323,7 +3343,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[57]:
+# In[45]:
 
 
 #del api
@@ -3339,9 +3359,12 @@ api.add_resource(externalAPI_get_progress, '/getprogress') # Route
 api.add_resource(externalAPI_get_all_progress_updates, '/getallprogressstatuses') # Route
 
 
-# In[58]:
+# In[243]:
 
 
+global vm_or_local
 if __name__ == '__main__':
-    #app.run(port='5002') # For local
-    app.run(host='0.0.0.0', port=8000) # VM
+    if vm_or_local == 'local'
+        app.run(port='5002') # For local
+    else:
+        app.run(host='0.0.0.0', port=8000) # VM
