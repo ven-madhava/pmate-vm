@@ -1,5 +1,8 @@
-# 17 Oct
-# ------
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
 
 # Imports
 # -------
@@ -33,10 +36,9 @@ from flask_restful import Resource, Api, reqparse
 from json import dumps
 from flask_jsonpify import jsonify
 
-
 # # GCS functions
 
-# In[2]:
+# In[48]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -45,7 +47,7 @@ global vm_or_local
 vm_or_local = 'vm'
 
 
-# In[3]:
+# In[49]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -104,7 +106,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[4]:
+# In[50]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -158,7 +160,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[5]:
+# In[51]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -232,7 +234,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[6]:
+# In[52]:
 
 
 # protomate function to get block images
@@ -272,7 +274,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[7]:
+# In[53]:
 
 
 # protomate kmeans function
@@ -332,7 +334,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[8]:
+# In[54]:
 
 
 # protomate recurring kmeans function
@@ -360,7 +362,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[9]:
+# In[55]:
 
 
 # 1
@@ -437,7 +439,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[10]:
+# In[56]:
 
 
 # 2
@@ -510,7 +512,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
 
 
 
-# In[11]:
+# In[57]:
 
 
 # 2.1
@@ -601,7 +603,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[12]:
+# In[58]:
 
 
 # 3
@@ -699,7 +701,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[13]:
+# In[59]:
 
 
 # 3.1
@@ -748,7 +750,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[14]:
+# In[60]:
 
 
 # 4
@@ -808,7 +810,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[15]:
+# In[61]:
 
 
 # 4.1
@@ -879,7 +881,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[16]:
+# In[62]:
 
 
 # 4.2
@@ -959,7 +961,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[17]:
+# In[63]:
 
 
 # 5
@@ -1070,7 +1072,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[18]:
+# In[64]:
 
 
 # 5.1
@@ -1158,7 +1160,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[19]:
+# In[65]:
 
 
 # 5.2
@@ -1257,7 +1259,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[20]:
+# In[66]:
 
 
 # 5.3
@@ -1367,7 +1369,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[21]:
+# In[67]:
 
 
 # 6
@@ -1476,7 +1478,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[22]:
+# In[68]:
 
 
 # 6.1
@@ -1539,7 +1541,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[23]:
+# In[69]:
 
 
 # 7
@@ -1734,7 +1736,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
     return genout , cats_out
 
 
-# In[24]:
+# In[70]:
 
 
 # 7.1
@@ -1991,7 +1993,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[25]:
+# In[71]:
 
 
 # 8
@@ -2147,7 +2149,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
 
 
-# In[28]:
+# In[72]:
 
 
 # 8.1
@@ -2330,7 +2332,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
 # # Ven_API functions
 
-# In[29]:
+# In[73]:
 
 
 # API 1 Function
@@ -2519,7 +2521,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
 
 
 
-# In[30]:
+# In[74]:
 
 
 # API 2 function
@@ -2637,7 +2639,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     #    return error_str, 500
 
 
-# In[31]:
+# In[75]:
 
 
 # API 3 function
@@ -2854,7 +2856,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
 # # Actual Ven API endpoints
 
-# In[32]:
+# In[76]:
 
 
 # Creating a global progress dict to help with simpler progress API
@@ -2863,7 +2865,7 @@ global progress_api_dict
 progress_api_dict = {}
 
 
-# In[33]:
+# In[77]:
 
 
 # Temp code to create progress class
@@ -2971,7 +2973,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[34]:
+# In[78]:
 
 
 ##
@@ -3004,7 +3006,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_task_id,self.p_selected_style_names,self.progress)
 
 
-# In[35]:
+# In[79]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3013,7 +3015,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[36]:
+# In[80]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3066,7 +3068,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. create new texture external API
 
-# In[37]:
+# In[81]:
 
 
 ##
@@ -3099,7 +3101,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[38]:
+# In[82]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -3108,7 +3110,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[39]:
+# In[83]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3166,7 +3168,7 @@ class externalAPI_create_textures(Resource):
 
 # ### 3. generate ideas external API
 
-# In[40]:
+# In[84]:
 
 
 ##
@@ -3203,7 +3205,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[41]:
+# In[85]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -3212,7 +3214,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[42]:
+# In[86]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3268,9 +3270,9 @@ class externalAPI_generate_ideas(Resource):
 
 
 
-# # running the external api functions
+# ### 4. progress and status APIs
 
-# In[43]:
+# In[87]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -3301,7 +3303,7 @@ class externalAPI_get_all_progress_updates(Resource):
             return 'Invalid task id.', 500
 
 
-# In[44]:
+# In[88]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -3325,6 +3327,7 @@ class externalAPI_get_progress(Resource):
         args = parser.parse_args()
         p_task_id = args['task_id']
 
+
         # Returning data
         # --------------
         try:
@@ -3343,10 +3346,51 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[45]:
+# In[149]:
 
 
-#del api
+## MAIN function TO BE CALLED for task status
+# -------------------------------------------
+
+class externalAPI_get_task_status(Resource):
+
+    def put(self):
+
+        # Setting up key values to accept
+        # -------------------------------
+        parser = reqparse.RequestParser()
+        parser.add_argument('task_id')
+        args = parser.parse_args()
+        p_task_id = args['task_id']
+
+        d = {}
+
+        try:
+            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+            npstatus = np.load(f)[0,0]
+
+            if npstatus == 1: # Patterns done, but textures NOT done.
+                d['task_status'] = 'ok for textures'
+                return jsonify(d) ## Checked
+
+            elif npstatus == 2: # Textures done and can generate ideas.
+                d['task_status'] = 'ok for generation'
+                return jsonify(d) ## Checked
+        except:
+            d['task_status'] = 'Error. Either no such task or no patterns built.'
+            return jsonify(d) #### Checked
+
+
+
+
+
+
+# # running the external api functions
+
+# In[150]:
+
+
 app = Flask(__name__)
 api = Api(app)
 
@@ -3357,9 +3401,10 @@ api.add_resource(externalAPI_create_textures, '/createtextures') # Route
 api.add_resource(externalAPI_generate_ideas, '/generateideas') # Route
 api.add_resource(externalAPI_get_progress, '/getprogress') # Route
 api.add_resource(externalAPI_get_all_progress_updates, '/getallprogressstatuses') # Route
+api.add_resource(externalAPI_get_task_status, '/gettaskstatus') # Route
 
 
-# In[243]:
+# In[151]:
 
 
 global vm_or_local
