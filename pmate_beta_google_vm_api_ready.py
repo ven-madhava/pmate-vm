@@ -1,7 +1,8 @@
-#!/usr/bin/env python
-# coding: utf-8
+# 24 Oct
+# ------
 
-# In[1]:
+# 1. Minutes added to progress
+# 2. Core colors merged with block extraction
 
 
 # Imports
@@ -12,6 +13,7 @@ import cv2
 import random
 import copy
 import math
+import io
 from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -31,14 +33,15 @@ import datetime
 
 # Necessary Flask imports
 # -----------------------
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask_restful import Resource, Api, reqparse
 from json import dumps
 from flask_jsonpify import jsonify
 
+
 # # GCS functions
 
-# In[48]:
+# In[3]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -47,7 +50,7 @@ global vm_or_local
 vm_or_local = 'vm'
 
 
-# In[49]:
+# In[4]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -106,7 +109,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[50]:
+# In[5]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -123,6 +126,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
     xin = copy.deepcopy(x)
     xin = xin.astype('uint8')
     m = len(xin)
+    start_time = time.time()
 
     # Itering through the list / array and saving them to storage
     # -----------------------------------------------------------
@@ -151,7 +155,18 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
         if update_progress == True:
             curr_prog_percent = int(round((i+1)/m,2)*100)
-            progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+            #progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+            progress.process_percent = curr_prog_percent
+            # Eta params, initialise start_time
+            ##
+            try:
+                time_counter += 1
+            except:
+                time_counter = 1
+            curr_time = time.time()
+            progress.process_start_time = start_time
+            eta_remaining = telleta(start_time,curr_time,time_counter,m)
+            progress.process_eta_end_time = curr_time + eta_remaining
 
 
         #
@@ -160,7 +175,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[51]:
+# In[6]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -234,7 +249,41 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[52]:
+# In[7]:
+
+
+# protomate functions to get  progress eta
+# API ready ##
+# ----------------------------------------
+
+def telleta(start_time,end_time,counter,m):
+
+    # Some initialisations
+    # --------------------
+    time_per_iter = (end_time - start_time)/counter
+    eta_left = int((m-counter) * time_per_iter)
+
+    return eta_left
+
+# ----------------------------------------
+
+def printeta(eta_left):
+
+    # Checking if eta left is in minutes or seconds
+    # ---------------------------------------------
+    if int(eta_left/60) >= 1: # In seconds
+        if int(eta_left/60) == 1:
+            minstr = 'minute'
+        else:
+            minstr = 'minutes'
+        eta_out = str(int(eta_left/60)) + ' ' + str(minstr) + ' and ' + str(int(eta_left % 60)) + ' seconds remaining..'
+    else:
+        eta_out = str(int(eta_left)) + ' seconds remaining..'
+
+    return 'About ' + eta_out
+
+
+# In[8]:
 
 
 # protomate function to get block images
@@ -274,7 +323,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[53]:
+# In[9]:
 
 
 # protomate kmeans function
@@ -334,7 +383,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[54]:
+# In[10]:
 
 
 # protomate recurring kmeans function
@@ -362,7 +411,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[55]:
+# In[11]:
 
 
 # 1
@@ -439,7 +488,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[56]:
+# In[12]:
 
 
 # 2
@@ -447,7 +496,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
 # Extracts blocks for building patterns
 # ------------------------------------
 
-def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
+def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_distance=0.1):
 
     # Early initialisations
     # ---------------------
@@ -458,10 +507,10 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
     source_image = 'orig'
     localisation_factor = True
 
-
     # Initialisation
     # --------------
     counter = 0
+    start_time = time.time()
 
     for i in range(len(inlist)):
 
@@ -482,37 +531,64 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress):
 
         # 2. k means
         # ----------
-        print('2. Applying recurring kmeans to segemnt..')
+        print('2. Applying recurring kmeans to segment..')
         kmimg,cen,dv,labels = protomatebeta_recurr_kmeans_v1(img,start_k_c,end_k_c,localisation_factor)
         plt.imshow(kmimg)
         plt.show()
 
+        # 3. Including color picking code as well here
+        # --------------------------------------------
+        print('3. Picking core colors as well..')
+        cen_colors = copy.deepcopy(cen)
+        lb_colors = copy.deepcopy(labels)
+
+        # 3.1 Clustering similar colors
+        # -----------------------------
+        print('3.1 Clustering similar colors..')
+        pick_color_dict = protomatebeta_cluster_colors_v1(cen_colors,similarity_distance,False)
+
+        # 3.2 Getting final colors for the image
+        # --------------------------------------
+        print('3.2 Filtering final colors..')
+        fincolors = protomatebeta_getfinalcolors_v1(pick_color_dict,cen_colors,lb_colors,False,ht,wd)
+
+        if counter == 1:
+            xout_colors = fincolors
+        else:
+            xout_colors = np.concatenate((xout_colors,fincolors), axis = 0)
+
+
         # Updating progress
         # -----------------
+        # Master message
+        ##
         curr_prog_percent = int(round((i+1)/(len(inlist)),2)*100)
-        progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+        #progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+        progress.process_percent = curr_prog_percent
+        # Eta params, initialise start_time
+        ##
+        try:
+            time_counter += 1
+        except:
+            time_counter = 1
+        curr_time = time.time()
+        progress.process_start_time = start_time
+        eta_remaining = telleta(start_time,curr_time,time_counter,len(inlist))
+        progress.process_eta_end_time = curr_time + eta_remaining
+
 
         # 3. Getting pattern blocks from segmented image as square blocks
         # ---------------------------------------------------------------
         print('3. Getting pattern blocks based on segmented image..')
         pt_blocks,pt_sqr_map,fullon_blocks,fullon_map = protomatebeta_cutout_blocks_v1(dv,labels,orig_img,cen,source_image) # can change orig to kmimg for placement patterns
         fullon_blocks_main  = fullon_blocks_main + fullon_blocks
-        fullon_blocks_map = fullon_blocks_map + fullon_map
 
-        if counter == 1:
-            xout = pt_blocks
-            pt_blocks_sqr_map = pt_sqr_map
-        else:
-            xout = np.concatenate((xout,pt_blocks), axis = 0)
-            pt_blocks_sqr_map = np.concatenate((pt_blocks_sqr_map,pt_sqr_map), axis = 0)
+
+    return fullon_blocks_main,xout_colors
 
 
 
-    return fullon_blocks_main,fullon_blocks_map
-
-
-
-# In[57]:
+# In[13]:
 
 
 # 2.1
@@ -603,7 +679,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[58]:
+# In[14]:
 
 
 # 3
@@ -701,7 +777,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[59]:
+# In[15]:
 
 
 # 3.1
@@ -750,7 +826,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[60]:
+# In[16]:
 
 
 # 4
@@ -763,6 +839,8 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
     # Iterating through images
     # ------------------------
     counter = 0
+    start_time = time.time()
+
     for i in range(len(inlist)):
 
         counter += 1
@@ -798,7 +876,18 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
         # Updating progress
         # -----------------
         curr_prog_percent = int(round((i+1)/(len(inlist)),2)*100)
-        progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+        #progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+        progress.process_percent = curr_prog_percent
+        # Eta params, initialise start_time
+        ##
+        try:
+            time_counter += 1
+        except:
+            time_counter = 1
+        curr_time = time.time()
+        progress.process_start_time = start_time
+        eta_remaining = telleta(start_time,curr_time,time_counter,len(inlist))
+        progress.process_eta_end_time = curr_time + eta_remaining
 
 
         if counter == 1:
@@ -810,7 +899,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[61]:
+# In[17]:
 
 
 # 4.1
@@ -881,7 +970,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[62]:
+# In[18]:
 
 
 # 4.2
@@ -961,7 +1050,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[63]:
+# In[19]:
 
 
 # 5
@@ -976,6 +1065,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
     # ----------------------------
     m = x.shape[0]
     cluster_threshold = 35
+    start_time = time.time()
 
     # Iterating through images
     # ------------------------
@@ -1042,7 +1132,18 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
         # Updating progress
         # -----------------
         curr_prog_percent = int(round((i+1)/m,2)*100)
-        progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+        #progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+        progress.process_percent = curr_prog_percent
+        # Eta params, initialise start_time
+        ##
+        try:
+            time_counter += 1
+        except:
+            time_counter = 1
+        curr_time = time.time()
+        progress.process_start_time = start_time
+        eta_remaining = telleta(start_time,curr_time,time_counter,m)
+        progress.process_eta_end_time = curr_time + eta_remaining
 
         if save_preview == True:
             # Saving textures to storage for keeping frontend progress
@@ -1072,7 +1173,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[64]:
+# In[20]:
 
 
 # 5.1
@@ -1160,7 +1261,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[65]:
+# In[21]:
 
 
 # 5.2
@@ -1259,7 +1360,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[66]:
+# In[22]:
 
 
 # 5.3
@@ -1369,7 +1470,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[67]:
+# In[23]:
 
 
 # 6
@@ -1406,6 +1507,8 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     # --------------------------
     counter = 0
     len_namelist = len(in_names_list)
+    start_time = time.time()
+
     for i in in_names_list:
 
         #print('At image..' + str(i))
@@ -1471,14 +1574,25 @@ def get_stylings_from_storage(in_names,update_progress,progress):
             #print('Added!')
             if update_progress == True:
                 curr_prog_percent = int(round(counter/len_namelist,2)*100)
-                progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+                #progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+                progress.process_percent = curr_prog_percent
+                # Eta params, initialise start_time
+                ##
+                try:
+                    time_counter += 1
+                except:
+                    time_counter = 1
+                curr_time = time.time()
+                progress.process_start_time = start_time
+                eta_remaining = telleta(start_time,curr_time,time_counter,len_namelist)
+                progress.process_eta_end_time = curr_time + eta_remaining
 
 
 
     return xout_lines,xout_seg,categories
 
 
-# In[68]:
+# In[24]:
 
 
 # 6.1
@@ -1541,7 +1655,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[69]:
+# In[25]:
 
 
 # 7
@@ -1549,17 +1663,16 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
 # Main function that generates ideas
 # ----------------------------------
 
-def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,save_preview):
+def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stripes,checks,melange,grainy,colors,progress,task_id,gen_id,save_preview):
 
     # Initialisations
     # ---------------
     seg_index = list(range(segments.shape[0]))
-    #patterns_index = list(range(patterns.shape[0]))
-    #stripes_index = list(range(stripes.shape[0]))
-    #checks_index = list(range(checks.shape[0]))
-    #melange_index = list(range(melange.shape[0]))
-    #grainy_index = list(range(grainy.shape[0]))
-    #colors_index = list(range(colors.shape[0]))
+    start_time = time.time()
+
+    # Setting no_images to number of input stylings
+    # ---------------------------------------------
+    no_images = segments.shape[0]
 
     m = segments.shape[0]
     cats_out = []
@@ -1719,7 +1832,18 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
         # Updating progress
         # -----------------
         curr_prog_percent = int(round((i+1)/no_images,2)*100)
-        progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+        #progress.curr_message = str(progress.master_message) + '..about ' + str(curr_prog_percent) + '% through'
+        progress.process_percent = curr_prog_percent
+        # Eta params, initialise start_time
+        ##
+        try:
+            time_counter += 1
+        except:
+            time_counter = 1
+        curr_time = time.time()
+        progress.process_start_time = start_time
+        eta_remaining = telleta(start_time,curr_time,time_counter,no_images)
+        progress.process_eta_end_time = curr_time + eta_remaining
 
         # Saving current generation to storage for keeping frontend progress
         # -------------------------------------------------------------------
@@ -1736,7 +1860,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
     return genout , cats_out
 
 
-# In[70]:
+# In[26]:
 
 
 # 7.1
@@ -1993,7 +2117,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[71]:
+# In[27]:
 
 
 # 8
@@ -2149,7 +2273,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
 
 
-# In[72]:
+# In[28]:
 
 
 # 8.1
@@ -2332,7 +2456,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
 # # Ven_API functions
 
-# In[73]:
+# In[47]:
 
 
 # API 1 Function
@@ -2364,6 +2488,9 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         # 1. Getting theme images from storage
         # ------------------------------------
         progress.set_status(0) # 0 'Loading theme images..'
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         theme_list = get_images_from_storage(inputfolder,'list')
         # 2. Stitching images together as list
         # ------------------------------------
@@ -2379,7 +2506,10 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         # 3. Extracting blocks from stitched images
         # -----------------------------------------
         progress.set_status(1) # 1 'Initialising AI learning. This may take a while (around 15 seconds per image)..'
-        flblocks,flblocks_maps = protomatebeta_extract_blocks_for_aop_v1(themes_stitched,progress)
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
+        flblocks,keycolors = protomatebeta_extract_blocks_for_aop_v1(themes_stitched,progress,h,w)
         progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -2391,22 +2521,10 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         # 4. Building patterns
         # --------------------
         progress.set_status(2) # 2 'Building patterns based on learnt objects from theme images..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         built_patterns = protomate_build_aop_patterns_v1(flblocks,h,w,rp_size)
-        progress.runnning_status = 'OK'
-    except Exception as ex:
-        error_str = type(ex).__name__ + ': ' + ex.args[0]
-        progress.runnning_status = 'ERROR! ' + error_str
-        return error_str, 500
-
-
-    try:
-        # 5. Picking key colors
-        # ---------------------
-        progress.set_status(3) # 3 'Learning core colors from theme images..',
-        keycolors = protomatebeta_pickcolors_v1(progress,themes_stitched,h,w,similarity_distance=0.1)
-        # 6. Building maps
-        # ----------------
-        built_maps = protomate_build_aop_patterns_v1(flblocks_maps,h,w,rp_size)
         progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -2417,7 +2535,10 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     try:
         # 7. Saving all patterns to storage for front end retrieval
         # ---------------------------------------------------------
-        progress.set_status(4) # 4 'Saving built patterns for user selection..',
+        progress.set_status(3) # 3 'Saving built patterns for user selection..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         storage_dir = task_id + '/all_patterns'
         image_prefix = str(task_id) + '_all_patterns'
         save_to_storage_from_array_list(built_patterns,storage_dir,image_prefix,True,progress)
@@ -2428,9 +2549,11 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         return error_str, 500
 
 
-
     try:
-        progress.set_status(5) # 5 'Saving internal files for generation..',
+        progress.set_status(4) # 4 'Saving internal files for generation..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # 8. Saving numpy formats of all patterns, all maps, all colors
         # -------------------------------------------------------------
         # 8.1 Saving all patterns
@@ -2441,11 +2564,6 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         # -----------------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
         np.save(file_io.FileIO(storage_address, 'w'), keycolors)
-        # 8.2 Saving all maps
-        # -----------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_maps.npy'
-        np.save(file_io.FileIO(storage_address, 'w'), built_maps)
-        progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
@@ -2453,7 +2571,10 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
 
 
     try:
-        progress.set_status(6) # 6 'Preparing selected stylings for generations..',
+        progress.set_status(5) # 5 'Preparing selected stylings for generations..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # 9. Picking selected stylings and saving them into temp arrays for correction
         # ----------------------------------------------------------------------------
         x_lines,x_segs,cats = get_stylings_from_storage(selected_style_names,True,progress)
@@ -2487,7 +2608,10 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_status.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
-    progress.set_status(7) # Done
+    progress.set_status(6) # Done
+    progress.process_start_time = None
+    progress.process_eta_end_time = None
+    progress.process_percent = None
     progress.runnning_status = 'Finished.'
 
     # Delecting appropriate dicts to allow user to run threaded task again
@@ -2506,22 +2630,10 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         'do nothing'
 
 
-
-
-    # Reading numpy files from cloud
-    ###
-    #f = BytesIO(file_io.read_file_to_string('gs://ven-ml-project.appspot.com/PMTASK001/numpy/nptest.npy', binary_mode=True))
-    #x = np.load(f)
-
     return 'All good.', 200
 
-    #except Exception as ex:
-    #    error_str = type(ex).__name__ + ': ' + ex.args[0]
-    #    return error_str, 500
 
-
-
-# In[74]:
+# In[48]:
 
 
 # API 2 function
@@ -2541,6 +2653,9 @@ def api_create_textures(task_id,picked_ind_string,progress):
 
     try:
         progress.set_status(0) # 0 'Loading learnt patterns..'
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # 1. Converting input indices to string
         # -------------------------------------
         picked_ind = [int(s) for s in picked_ind_string.split(',')]
@@ -2561,6 +2676,9 @@ def api_create_textures(task_id,picked_ind_string,progress):
 
     try:
         progress.set_status(1) # 1 'Building textures..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # 3. Creating stripes and checks
         # ------------------------------
         print('2. At textures..')
@@ -2574,6 +2692,9 @@ def api_create_textures(task_id,picked_ind_string,progress):
 
     try:
         progress.set_status(2) # 2 'Saving textures..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # 4. Saving textures under /task_id/numpy/
         # ----------------------------------------
         # Saving Stripes
@@ -2615,6 +2736,9 @@ def api_create_textures(task_id,picked_ind_string,progress):
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
     progress.set_status(3) # Done
+    progress.process_start_time = None
+    progress.process_eta_end_time = None
+    progress.process_percent = None
     progress.runnning_status = 'OK'
 
     # Delecting appropriate dicts to allow user to run threaded task again
@@ -2639,17 +2763,17 @@ def api_create_textures(task_id,picked_ind_string,progress):
     #    return error_str, 500
 
 
-# In[75]:
+# In[49]:
 
 
 # API 3 function
 # API -- generate ideas
-# Takes in task_id, gen_id, no_images as inputs
+# Takes in task_id, gen_id as inputs
 # Generates new ideas and saves them under /task_id/ideas/gen_id/
 # Returns OK, NOT OK
 
 
-def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_images,progress):
+def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progress):
 
     #try:
 
@@ -2658,6 +2782,9 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
     try:
         progress.set_status(0) # 0 'Loading stylings..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # 1. Collect required numpy files and load them locally for generation
         # --------------------------------------------------------------------
         # Collecting linemarkings
@@ -2682,6 +2809,9 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
     try:
         progress.set_status(1) # 1 'Loading patterns..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # Collecting all pats
         # -------------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
@@ -2704,6 +2834,9 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
     try:
         progress.set_status(2) # 2 'Loading colors..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # Collecting colors
         # ---------------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
@@ -2720,6 +2853,9 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
     try:
         progress.set_status(3) # 3 'Loading textures..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # Colecting checks
         # ----------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
@@ -2763,9 +2899,12 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
     try:
         progress.set_status(4) # 4 'Generating ideas..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # 3. Actual generation
         # --------------------
-        ideas,cats = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,no_images,progress,task_id,gen_id,False)
+        ideas,cats = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,progress,task_id,gen_id,False)
         progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -2776,6 +2915,9 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
     try:
         progress.set_status(5) # 5 'Saving ideas..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # 4. Saving generated images under /task_id/ideas/gen_id/
         # -------------------------------------------------------
         storage_dir = task_id + '/ideas/' + str(gen_id)
@@ -2791,6 +2933,9 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
     try:
         progress.set_status(6) # 6 'Building and saving rangeboards..',
+        progress.process_start_time = None
+        progress.process_eta_end_time = None
+        progress.process_percent = None
         # 5. Building and saving range boards under /task_id/rangeboards/gen_id/
         # ----------------------------------------------------------------------
         range_built = feed_to_build_range(ideas,cats,task_id,gen_id,task_board_name,task_styling_name_prefix)
@@ -2827,6 +2972,9 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
         return error_str, 500
 
     progress.set_status(7) # Done
+    progress.process_start_time = None
+    progress.process_eta_end_time = None
+    progress.process_percent = None
     progress.runnning_status = 'OK'
 
     # Delecting appropriate dicts to allow user to run threaded task again
@@ -2848,15 +2996,12 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,no_imag
 
     return 'All good.', 200
 
-    #except Exception as ex:
-    #    error_str = type(ex).__name__ + ': ' + ex.args[0]
-    #    return error_str, 500
 
 
 
 # # Actual Ven API endpoints
 
-# In[76]:
+# In[50]:
 
 
 # Creating a global progress dict to help with simpler progress API
@@ -2865,7 +3010,7 @@ global progress_api_dict
 progress_api_dict = {}
 
 
-# In[77]:
+# In[51]:
 
 
 # Temp code to create progress class
@@ -2891,7 +3036,6 @@ class progress_classobj():
                 'Loading theme images..',
                 'Initialising AI learning. This may take a while (around 15 seconds per image)..',
                 'Building patterns based on learnt objects from theme images..',
-                'Learning core colors from theme images..',
                 'Saving built patterns for user selection..',
                 'Saving internal files for generation..',
                 'Preparing selected stylings for generations..',
@@ -2925,18 +3069,20 @@ class progress_classobj():
         # ---------------------------------------
         self.curr_step = 0
         self.total_step = len(self.all_progress_updates) - 1
-        self.master_message = 'Yet to start.'
         self.curr_message = 'Yet to start.'
-        #self.thread_status = False
         self.runnning_status = 'Yet to start.'
+        self.process_start_time = None
+        self.process_eta_end_time = None
+        self.process_percent = None
+
+
 
     def set_status(self, at_now):
 
         # Setting message status
         # ----------------------
         self.curr_step = at_now
-        self.master_message = self.all_progress_updates[at_now]
-        self.curr_message = self.master_message
+        self.curr_message = self.all_progress_updates[at_now]
 
     def dict_out(self):
 
@@ -2952,10 +3098,15 @@ class progress_classobj():
         else:
             d['curr_mode'] = 'Generating ideas'
 
+        if self.process_percent == None:
+            d['curr_process_percent'] = 'Process Percent Not Available'
+        else:
+            d['curr_process_percent'] = self.process_percent
+
         d['curr_step'] = self.curr_step
         d['total_step'] = self.total_step
         d['curr_message'] = self.curr_message
-        d['master_message'] = self.master_message
+
         d['runnning_status'] = self.runnning_status
 
         return d
@@ -2973,7 +3124,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[78]:
+# In[52]:
 
 
 ##
@@ -3006,7 +3157,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_task_id,self.p_selected_style_names,self.progress)
 
 
-# In[79]:
+# In[53]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3015,7 +3166,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[80]:
+# In[54]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3023,7 +3174,7 @@ new_pattern_threads = {}
 
 class externalAPI_create_new_patterns(Resource):
 
-    def put(self):
+    def post(self):
 
         # Setting up key values to accept
         # -------------------------------
@@ -3068,7 +3219,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. create new texture external API
 
-# In[81]:
+# In[55]:
 
 
 ##
@@ -3101,7 +3252,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[82]:
+# In[56]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -3110,7 +3261,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[83]:
+# In[57]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3118,7 +3269,7 @@ create_texture_threads = {}
 
 class externalAPI_create_textures(Resource):
 
-    def put(self):
+    def post(self):
 
         # Setting up key values to accept
         # -------------------------------
@@ -3168,13 +3319,13 @@ class externalAPI_create_textures(Resource):
 
 # ### 3. generate ideas external API
 
-# In[84]:
+# In[58]:
 
 
 ##
 
 class generate_ideas_threaded_task(threading.Thread):
-    def __init__(self,p_task_id,p_gen_id,p_task_board_name,p_task_styling_prefix,p_no_images):
+    def __init__(self,p_task_id,p_gen_id,p_task_board_name,p_task_styling_prefix):
         super().__init__()
 
         # Initialisations
@@ -3183,7 +3334,6 @@ class generate_ideas_threaded_task(threading.Thread):
         self.p_gen_id = p_gen_id
         self.p_task_board_name = p_task_board_name
         self.p_task_styling_prefix = p_task_styling_prefix
-        self.p_no_images = p_no_images
         self.progress = progress_classobj(p_task_id,3)
 
         # For progress api
@@ -3200,12 +3350,12 @@ class generate_ideas_threaded_task(threading.Thread):
 
         # 1. Running the generate ideas function
         # --------------------------------------
-        api_generate(self.p_task_id,self.p_gen_id,self.p_task_board_name,self.p_task_styling_prefix,self.p_no_images,self.progress)
+        api_generate(self.p_task_id,self.p_gen_id,self.p_task_board_name,self.p_task_styling_prefix,self.progress)
 
 
 
 
-# In[85]:
+# In[59]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -3214,7 +3364,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[86]:
+# In[60]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3222,7 +3372,7 @@ generate_ideas_threads = {}
 
 class externalAPI_generate_ideas(Resource):
 
-    def put(self):
+    def post(self):
 
         # Setting up key values to accept
         # -------------------------------
@@ -3231,14 +3381,12 @@ class externalAPI_generate_ideas(Resource):
         parser.add_argument('gen_id')
         parser.add_argument('task_board_name')
         parser.add_argument('task_styling_name_prefix')
-        parser.add_argument('no_images')
         args = parser.parse_args()
 
         p_task_id = args['task_id']
         p_gen_id = args['gen_id']
         p_task_board_name = args['task_board_name']
         p_task_styling_name_prefix = args['task_styling_name_prefix']
-        p_no_images = int(args['no_images'])
 
 
         # This function really just starts the create new pattern thread class and assigns it to a global dict
@@ -3262,7 +3410,7 @@ class externalAPI_generate_ideas(Resource):
                         return 'Something went wrong, check progress for error.', 500
                 except:
 
-                    generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_images)
+                    generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix)
                     generate_ideas_threads[p_task_id].start()
                     return 'Thread started', 200
         except:
@@ -3272,7 +3420,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[87]:
+# In[61]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -3280,7 +3428,7 @@ class externalAPI_generate_ideas(Resource):
 
 class externalAPI_get_all_progress_updates(Resource):
 
-    def put(self):
+    def post(self):
 
         # For progress api
         # ----------------
@@ -3303,7 +3451,7 @@ class externalAPI_get_all_progress_updates(Resource):
             return 'Invalid task id.', 500
 
 
-# In[88]:
+# In[62]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -3311,7 +3459,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 class externalAPI_get_progress(Resource):
 
-    def put(self):
+    def post(self):
 
         # For progress api
         # ----------------
@@ -3333,12 +3481,31 @@ class externalAPI_get_progress(Resource):
         try:
             d = progress_api_dict[p_task_id].dict_out()
 
+            # Updating thread status
+            # ----------------------
             if d['mode_number'] == 1:
                 d['thread_status'] = new_pattern_threads[p_task_id].isAlive()
             elif d['mode_number'] == 2:
                 d['thread_status'] = create_texture_threads[p_task_id].isAlive()
             else:
                 d['thread_status'] = generate_ideas_threads[p_task_id].isAlive()
+
+            # Updating time left
+            # ------------------
+            try:
+                curr_time = time.time()
+
+                if curr_time > progress_api_dict[p_task_id].process_eta_end_time:
+                    d['curr_process_time_remaining'] = 'Finishing up anytime..'
+                else:
+                    curr_time_left = progress_api_dict[p_task_id].process_eta_end_time - curr_time
+                    d['curr_process_time_remaining'] = printeta(curr_time_left)
+
+            except:
+                d['curr_process_time_remaining'] = 'ETA Not Available'
+
+            # Returning d
+            # -----------
             return jsonify(d)
 
         except KeyError:
@@ -3346,7 +3513,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[149]:
+# In[63]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -3354,7 +3521,7 @@ class externalAPI_get_progress(Resource):
 
 class externalAPI_get_task_status(Resource):
 
-    def put(self):
+    def post(self):
 
         # Setting up key values to accept
         # -------------------------------
@@ -3386,9 +3553,42 @@ class externalAPI_get_task_status(Resource):
 
 
 
+# In[64]:
+
+
+## MAIN function TO BE CALLED for download pdf
+# --------------------------------------------
+
+class externalAPI_send_range(Resource):
+
+    def post(self):
+
+        # Setting up key values to accept
+        # -------------------------------
+        parser = reqparse.RequestParser()
+        parser.add_argument('task_id')
+        parser.add_argument('gen_id')
+        args = parser.parse_args()
+
+        # Getting params
+        # --------------
+        p_task_id = args['task_id']
+        p_gen_id = args['gen_id']
+
+        # Returning file
+        # --------------
+        try:
+            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/rangeboards/' + str(p_gen_id) + '/downloadable_range_boards.pdf'
+            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+            return send_file(f, mimetype='application/pdf')
+        except:
+            return 'Could not find range PDF. Invalid URL.', 500
+
+
+
 # # running the external api functions
 
-# In[150]:
+# In[65]:
 
 
 app = Flask(__name__)
@@ -3402,9 +3602,10 @@ api.add_resource(externalAPI_generate_ideas, '/generateideas') # Route
 api.add_resource(externalAPI_get_progress, '/getprogress') # Route
 api.add_resource(externalAPI_get_all_progress_updates, '/getallprogressstatuses') # Route
 api.add_resource(externalAPI_get_task_status, '/gettaskstatus') # Route
+api.add_resource(externalAPI_send_range, '/getrange') # Route
 
 
-# In[151]:
+# In[66]:
 
 
 global vm_or_local
