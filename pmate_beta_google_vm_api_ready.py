@@ -1,9 +1,8 @@
-# 24 Oct
-# ------
-
-# 1. Minutes added to progress
-# 2. Core colors merged with block extraction
-
+# 25 Oct
+# Updates in returncombo
+# NO saving of ideas
+# no_options added in generation
+# ------------------------------
 
 # Imports
 # -------
@@ -14,7 +13,6 @@ import random
 import copy
 import math
 import io
-from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import os
@@ -26,8 +24,7 @@ from io import BytesIO
 import threading
 from threading import Thread
 import time
-from PIL import ImageFont
-from PIL import ImageDraw
+from PIL import Image,ImageFont,ImageDraw
 import datetime
 
 
@@ -38,10 +35,9 @@ from flask_restful import Resource, Api, reqparse
 from json import dumps
 from flask_jsonpify import jsonify
 
-
 # # GCS functions
 
-# In[3]:
+# In[82]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -50,7 +46,7 @@ global vm_or_local
 vm_or_local = 'vm'
 
 
-# In[4]:
+# In[83]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -109,7 +105,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[5]:
+# In[84]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -175,7 +171,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[6]:
+# In[85]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -249,7 +245,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[7]:
+# In[86]:
 
 
 # protomate functions to get  progress eta
@@ -283,7 +279,7 @@ def printeta(eta_left):
     return 'About ' + eta_out
 
 
-# In[8]:
+# In[87]:
 
 
 # protomate function to get block images
@@ -323,7 +319,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[9]:
+# In[88]:
 
 
 # protomate kmeans function
@@ -383,7 +379,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[10]:
+# In[89]:
 
 
 # protomate recurring kmeans function
@@ -411,7 +407,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[11]:
+# In[90]:
 
 
 # 1
@@ -488,7 +484,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[12]:
+# In[91]:
 
 
 # 2
@@ -588,7 +584,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[13]:
+# In[92]:
 
 
 # 2.1
@@ -679,7 +675,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[14]:
+# In[93]:
 
 
 # 3
@@ -777,7 +773,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[15]:
+# In[94]:
 
 
 # 3.1
@@ -826,7 +822,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[16]:
+# In[95]:
 
 
 # 4
@@ -899,7 +895,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[17]:
+# In[96]:
 
 
 # 4.1
@@ -970,7 +966,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[18]:
+# In[97]:
 
 
 # 4.2
@@ -1050,7 +1046,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[19]:
+# In[98]:
 
 
 # 5
@@ -1173,7 +1169,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[20]:
+# In[99]:
 
 
 # 5.1
@@ -1261,7 +1257,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[21]:
+# In[100]:
 
 
 # 5.2
@@ -1360,7 +1356,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[22]:
+# In[101]:
 
 
 # 5.3
@@ -1470,7 +1466,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[23]:
+# In[102]:
 
 
 # 6
@@ -1592,7 +1588,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[24]:
+# In[103]:
 
 
 # 6.1
@@ -1618,7 +1614,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
 
         # Correcting segments
         # -------------------
-        bl_d = 50
+        bl_d = 100
         gl_u,gl_d = bl_d,200
         w_u = gl_d
         black_positions = (curr_seg < bl_d).astype(int)
@@ -1655,7 +1651,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[25]:
+# In[106]:
 
 
 # 7
@@ -1663,7 +1659,21 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
 # Main function that generates ideas
 # ----------------------------------
 
-def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stripes,checks,melange,grainy,colors,progress,task_id,gen_id,save_preview):
+def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patterns,stripes,checks,melange,grainy,colors,progress,task_id,gen_id,save_preview,no_options):
+
+
+
+    # Repeating segments, linemarkings & cats for no_options
+    # ------------------------------------------------------
+    for _ in range(int(no_options)):
+        try:
+            segments = np.concatenate((segments,segments_in), axis = 0)
+            linemarkings = np.concatenate((linemarkings,linemarkings_in), axis = 0)
+            categories = np.concatenate((categories,categories_in), axis = 0)
+        except:
+            segments = copy.deepcopy(segments_in)
+            linemarkings = copy.deepcopy(linemarkings_in)
+            categories = copy.deepcopy(categories_in)
 
     # Initialisations
     # ---------------
@@ -1719,10 +1729,11 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
             grey_fac = grey_prop / total_prop
             black_fac = black_prop / total_prop
             porp_threshold = 0.15
+            single_segment_threshold = 0.05
 
             # Using external function to return combos
             # ----------------------------------------
-            if np.sum(temp_grey_pos) == 0 or np.sum(temp_black_pos) == 0: ## Single segment ##
+            if np.sum(temp_grey_pos) == 0 or np.sum(temp_black_pos) == 0 or grey_fac < single_segment_threshold or black_fac < single_segment_threshold: ## Single segment ##
 
                 # return combo function
                 # ----------------------
@@ -1745,7 +1756,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
             list_combos.append(tup)
 
         else:
-            start_time = time.time()
+            start_time_break_loop = time.time()
 
             while True:
 
@@ -1803,7 +1814,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
                 # Code that times out this while loop incase it goes over board
                 # -------------------------------------------------------------
                 curr_time = time.time()
-                if (curr_time - start_time) > 8: # 8 secs
+                if (curr_time - start_time_break_loop) > 8: # 8 secs
                     return genout,cats_out  # Returns genout and exits
 
 
@@ -1860,7 +1871,7 @@ def protomatebeta_create_ideas_v2(segments,linemarkings,categories,patterns,stri
     return genout , cats_out
 
 
-# In[26]:
+# In[107]:
 
 
 # 7.1
@@ -1917,6 +1928,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     # 3 -- Use Melange
     # 4 -- Use grainy
     # 5 -- Use colors
+    choice_choices = [0,1,2,3,4,5]
 
     # Choice making code
     # ------------------
@@ -1924,23 +1936,33 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     ### Woven tops, jumpsuits, dresses - GIRLS and WOMENS
     if category == 0 or category == 20 or category == 2 or category == 22 or category == 5 or category == 25:
 
+        # Setting choice probabilities
+        # ----------------------------
+        ch_0 = 0.7 # print
+        ch_1 = 0.1 # stripes
+        ch_2 = 0.2 # checks
+        ch_3 = 0.0 # melange
+        ch_4 = 0.0 # grainy
+        ch_5 = 0.0 # colors
+        choice_probs = [ch_0,ch_1,ch_2,ch_3,ch_4,ch_5]
+
         # Single segment check
         # --------------------
         if single_segment == True:
-            choice_single = random.choice([0,0,0,0,0,0,1,2,5])
+            choice_single = int(np.random.choice(choice_choices, p = choice_probs))
             choice_g = choice_single
             choice_b = choice_single
 
         elif minor_segment == True:
             if minor_segment_seg == 'black':
-                choice_g = random.choice([0,0,0,0,0,1,2])
+                choice_g = int(np.random.choice(choice_choices, p = choice_probs))
                 choice_b = 5
             else:
                 choice_g = 5
-                choice_b = random.choice([0,0,0,0,0,1,2])
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
 
         else:
-            choice_g = random.choice([0,0,0,0,0,0,1,2,5])
+            choice_g = int(np.random.choice(choice_choices, p = choice_probs))
 
             # Setting bblock based on gblock choice
             # -------------------------------------
@@ -1951,110 +1973,160 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
             elif choice_g == 2:
                 choice_b = random.choice([4,5])
             else:
-                choice_b = random.choice([0,1,2])
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
 
     ### Knit tops, jumpsuits, dresses - GIRLS and WOMENS
     elif category == 1 or category == 21 or category == 3 or category == 23 or category == 6 or category == 26:
 
-        # Single segment check
-        # --------------------
-        if single_segment == True:
-            choice_single = random.choice([0,0,0,0,1,2,3,5])
-            choice_g = choice_single
-            choice_b = choice_single
-
-        # NOT CHECKING MINOR SEGMENT
-        # --------------------------
-        else:
-            choice_g = random.choice([0,0,0,0,1,2,3,5])
-
-            # Setting bblock based on gblock choice
-            # -------------------------------------
-            if choice_g == 0:
-                choice_b = random.choice([3,5])
-            elif choice_g == 1:
-                choice_b = random.choice([3,5])
-            elif choice_g == 2:
-                choice_b = random.choice([3,5])
-            elif choice_g == 3:
-                choice_b = random.choice([0,1,2,3,5])
-            else:
-                choice_b = random.choice([0,1,2,3,5])
-
-    ### Knit shorts, pants, leggings - GIRLS and WOMENS | Knit shorts and pant - BOYS and MENS
-    elif category == 8 or category == 28 or category == 9 or category == 29 or category == 11 or category == 31 or category == 17 or category == 37 or category == 19 or category == 39:
+        # Setting choice probabilities
+        # ----------------------------
+        ch_0 = 0.5 # print
+        ch_1 = 0.3 # stripes
+        ch_2 = 0.0 # checks
+        ch_3 = 0.1 # melange
+        ch_4 = 0.0 # grainy
+        ch_5 = 0.1 # colors
+        choice_probs = [ch_0,ch_1,ch_2,ch_3,ch_4,ch_5]
 
         # Single segment check
         # --------------------
         if single_segment == True:
-            choice_single = random.choice([0,1,2,3,5])
-            choice_g = choice_single
-            choice_b = choice_single
-
-        # NOT CHECKING MINOR SEGMENT
-        # --------------------------
-        else:
-            choice_g = random.choice([0,1,2,3,5])
-
-            # Setting bblock based on gblock choice
-            # -------------------------------------
-            if choice_g == 0:
-                choice_b = random.choice([3,5])
-            elif choice_g == 1:
-                choice_b = random.choice([3,5])
-            elif choice_g == 2:
-                choice_b = random.choice([3,5])
-            elif choice_g == 3:
-                choice_b = random.choice([3,5])
-            else:
-                choice_b = random.choice([0,3])
-
-    ### Knit Polo -- Boys, Girls, Mens, Women
-    elif category == 4 or category == 24 or category == 13 or category == 33:
-
-        # Single segment check
-        # --------------------
-        if single_segment == True:
-            choice_single = random.choice([0,1,3,5])
+            choice_single = int(np.random.choice(choice_choices, p = choice_probs))
             choice_g = choice_single
             choice_b = choice_single
 
         elif minor_segment == True:
             if minor_segment_seg == 'black':
-                choice_g = random.choice([0,1,3,5])
+                choice_g = int(np.random.choice(choice_choices, p = choice_probs))
                 choice_b = random.choice([3,5])
             else:
                 choice_g = random.choice([3,5])
-                choice_b = random.choice([0,1,3,5])
-        else:
-            choice_b = random.choice([0,1,3,5])
-            choice_g = random.choice([3,5])
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
 
-    ### Woven pants, shorts, skirts, shirts - across all depts
-    elif category == 7 or category == 27 or category == 15 or category == 35 or category == 16 or category == 36 or category == 10 or category == 30 or category == 12 or category == 32 or category == 18 or category == 38 or category == 14 or category == 34:
+        else:
+            choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0 or choice_g == 1:
+                choice_b = random.choice([3,5])
+            else:
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+
+    ### Knit shorts, pants, leggings - GIRLS and WOMENS | Knit shorts and pant - BOYS and MENS
+    elif category == 8 or category == 28 or category == 9 or category == 29 or category == 11 or category == 31 or category == 17 or category == 37 or category == 19 or category == 39:
+
+        # Setting choice probabilities
+        # ----------------------------
+        ch_0 = 0.3 # print
+        ch_1 = 0.3 # stripes
+        ch_2 = 0.0 # checks
+        ch_3 = 0.3 # melange
+        ch_4 = 0.0 # grainy
+        ch_5 = 0.1 # colors
+        choice_probs = [ch_0,ch_1,ch_2,ch_3,ch_4,ch_5]
 
         # Single segment check
         # --------------------
         if single_segment == True:
-            choice_single = random.choice([0,0,0,1,2,5])
+            choice_single = int(np.random.choice(choice_choices, p = choice_probs))
             choice_g = choice_single
             choice_b = choice_single
 
-        # NOT CHECKING MINOR SEGMENT
-        # --------------------------
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+                choice_b = random.choice([3,5])
+            else:
+                choice_g = random.choice([3,5])
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
         else:
-            choice_g = random.choice([0,0,0,1,2,5])
+            choice_g = int(np.random.choice(choice_choices, p = choice_probs))
 
             # Setting bblock based on gblock choice
             # -------------------------------------
-            if choice_g == 0:
-                choice_b = 5
-            elif choice_g == 1:
-                choice_b = 5
-            elif choice_g == 2:
+            if choice_g == 0 or choice_g == 1:
+                choice_b = random.choice([3,5])
+            else:
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+    ### Knit Polo -- Boys, Girls, Mens, Women
+    elif category == 4 or category == 24 or category == 13 or category == 33:
+
+        # Setting choice probabilities
+        # ----------------------------
+        ch_0 = 0.2 # print
+        ch_1 = 0.5 # stripes
+        ch_2 = 0.0 # checks
+        ch_3 = 0.2 # melange
+        ch_4 = 0.0 # grainy
+        ch_5 = 0.1 # colors
+        choice_probs = [ch_0,ch_1,ch_2,ch_3,ch_4,ch_5]
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = int(np.random.choice(choice_choices, p = choice_probs))
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+                choice_b = random.choice([3,5])
+            else:
+                choice_g = random.choice([3,5])
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+        else:
+            choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0 or choice_g == 1:
+                choice_b = random.choice([3,5])
+            else:
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+    ### Woven pants, shorts, skirts, shirts - across all depts
+    elif category == 7 or category == 27 or category == 15 or category == 35 or category == 16 or category == 36 or category == 10 or category == 30 or category == 12 or category == 32 or category == 18 or category == 38 or category == 14 or category == 34:
+
+        # Setting choice probabilities
+        # ----------------------------
+        ch_0 = 0.4 # print
+        ch_1 = 0.1 # stripes
+        ch_2 = 0.4 # checks
+        ch_3 = 0.0 # melange
+        ch_4 = 0.0 # grainy
+        ch_5 = 0.1 # colors
+        choice_probs = [ch_0,ch_1,ch_2,ch_3,ch_4,ch_5]
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = int(np.random.choice(choice_choices, p = choice_probs))
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = int(np.random.choice(choice_choices, p = choice_probs))
                 choice_b = 5
             else:
-                choice_b = random.choice([0,1,2])
+                choice_g = 5
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+        else:
+            choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0 or choice_g == 1 or choice_g == 2:
+                choice_b = 5
+            else:
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
 
 
     # Index & tup setting code - gindex
@@ -2117,7 +2189,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[27]:
+# In[108]:
 
 
 # 8
@@ -2273,7 +2345,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
 
 
-# In[28]:
+# In[109]:
 
 
 # 8.1
@@ -2289,15 +2361,16 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
     # xin will only have a max of no_ideas_per_row *no_total_rows images
     # Feeding function must make sure of this
     # ------------------------------------------------------------------
-    h,w = int(285/2),int(221/2) # Hardcoded for now
+    #h,w = int(285/2),int(221/2) # Hardcoded for now
+    h,w = 285,221 # Hardcoded for now
 
     # Local
     # -----
     global vm_or_local
     if vm_or_local == 'local':
-        font_file_path_header = '/Users/venkateshmadhava/Desktop/fonts/Kodchasan-Bold.ttf'
-        font_file_path_labels = '/Users/venkateshmadhava/Desktop/fonts/RobotoCondensed-Bold.ttf'
-        font_file_path_footer = '/Users/venkateshmadhava/Desktop/fonts/RobotoMono-Light.ttf'
+        font_file_path_header = '/Users/venkateshmadhava/Documents/ml_projects/protomate_master/code/fonts/Kodchasan-Bold.ttf'
+        font_file_path_labels = '/Users/venkateshmadhava/Documents/ml_projects/protomate_master/code/fonts/RobotoCondensed-Bold.ttf'
+        font_file_path_footer = '/Users/venkateshmadhava/Documents/ml_projects/protomate_master/code/fonts/RobotoMono-Light.ttf'
 
     # VM
     # --
@@ -2456,7 +2529,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
 # # Ven_API functions
 
-# In[47]:
+# In[110]:
 
 
 # API 1 Function
@@ -2499,6 +2572,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2514,6 +2588,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2529,6 +2604,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2546,6 +2622,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2567,6 +2644,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2600,6 +2678,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
     # Saving status update to 1
@@ -2633,7 +2712,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     return 'All good.', 200
 
 
-# In[48]:
+# In[111]:
 
 
 # API 2 function
@@ -2671,6 +2750,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2687,6 +2767,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2727,6 +2808,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
     # Saving status update to 2
@@ -2763,7 +2845,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     #    return error_str, 500
 
 
-# In[49]:
+# In[112]:
 
 
 # API 3 function
@@ -2773,7 +2855,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
 # Returns OK, NOT OK
 
 
-def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progress):
+def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progress,no_options):
 
     #try:
 
@@ -2803,6 +2885,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2828,6 +2911,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2847,6 +2931,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2893,6 +2978,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
@@ -2904,35 +2990,36 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         progress.process_percent = None
         # 3. Actual generation
         # --------------------
-        ideas,cats = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,progress,task_id,gen_id,False)
+        ideas,cats = protomatebeta_create_ideas_v2(segs,lines,categories,picked_patterns,stripes,checks,melange,grainy,colors,progress,task_id,gen_id,False,no_options)
         progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
 
 
-    try:
-        progress.set_status(5) # 5 'Saving ideas..',
-        progress.process_start_time = None
-        progress.process_eta_end_time = None
-        progress.process_percent = None
-        # 4. Saving generated images under /task_id/ideas/gen_id/
-        # -------------------------------------------------------
-        storage_dir = task_id + '/ideas/' + str(gen_id)
-        image_prefix = str(task_id) + '_' + str(gen_id) + '_ideas'
-        save_to_storage_from_array_list(ideas,storage_dir,image_prefix,True,progress)
-        progress.runnning_status = 'OK'
-    except Exception as ex:
-        error_str = type(ex).__name__ + ': ' + ex.args[0]
-        progress.runnning_status = 'ERROR! ' + error_str
-        return error_str, 500
+    #try:
+    #    progress.set_status(5) # 5 'Saving ideas..',
+    #    progress.process_start_time = None
+    #    progress.process_eta_end_time = None
+    #    progress.process_percent = None
+    #    # 4. Saving generated images under /task_id/ideas/gen_id/
+    #    # -------------------------------------------------------
+    #    storage_dir = task_id + '/ideas/' + str(gen_id)
+    #    image_prefix = str(task_id) + '_' + str(gen_id) + '_ideas'
+    #    save_to_storage_from_array_list(ideas,storage_dir,image_prefix,True,progress)
+    #    progress.runnning_status = 'OK'
+    #except Exception as ex:
+    #    error_str = type(ex).__name__ + ': ' + ex.args[0]
+    #    progress.runnning_status = 'ERROR! ' + error_str
+    #    return error_str, 500
 
 
 
     try:
-        progress.set_status(6) # 6 'Building and saving rangeboards..',
+        progress.set_status(5) # 5 'Building and saving rangeboards..',
         progress.process_start_time = None
         progress.process_eta_end_time = None
         progress.process_percent = None
@@ -2969,9 +3056,10 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
+        progress.curr_step = None
         return error_str, 500
 
-    progress.set_status(7) # Done
+    progress.set_status(6) # Done
     progress.process_start_time = None
     progress.process_eta_end_time = None
     progress.process_percent = None
@@ -3001,7 +3089,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
 
 # # Actual Ven API endpoints
 
-# In[50]:
+# In[113]:
 
 
 # Creating a global progress dict to help with simpler progress API
@@ -3010,7 +3098,7 @@ global progress_api_dict
 progress_api_dict = {}
 
 
-# In[51]:
+# In[114]:
 
 
 # Temp code to create progress class
@@ -3061,7 +3149,6 @@ class progress_classobj():
                 'Loading colors..',
                 'Loading textures..',
                 'Generating ideas..',
-                'Saving ideas..',
                 'Building and saving rangeboards..',
                 'Done.']
 
@@ -3124,7 +3211,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[52]:
+# In[115]:
 
 
 ##
@@ -3157,7 +3244,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_task_id,self.p_selected_style_names,self.progress)
 
 
-# In[53]:
+# In[116]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3166,7 +3253,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[54]:
+# In[117]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3211,6 +3298,11 @@ class externalAPI_create_new_patterns(Resource):
                     return 'Something went wrong, check progress for error.', 500 #### Checked
             except:
                 print('API Create new patterns firing ------ ')
+                try:
+                    del new_pattern_threads[p_task_id]
+                except:
+                    'do nothing'
+
                 new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_task_id,p_selected_style_names)
                 new_pattern_threads[p_task_id].start()
                 return 'Thread started', 200 #### Checked
@@ -3219,7 +3311,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. create new texture external API
 
-# In[55]:
+# In[118]:
 
 
 ##
@@ -3252,7 +3344,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[56]:
+# In[119]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -3261,7 +3353,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[57]:
+# In[120]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3301,6 +3393,10 @@ class externalAPI_create_textures(Resource):
                         return 'Something went wrong, check progress for error.', 500
                 except:
                     print('API Create Texture firing ------ ')
+                    try:
+                        del create_texture_threads[p_task_id]
+                    except:
+                        'do nothing'
                     create_texture_threads[p_task_id] = create_textures_threaded_task(p_task_id,p_picked_ind_string)
                     create_texture_threads[p_task_id].start()
                     return 'Thread started', 200
@@ -3319,13 +3415,13 @@ class externalAPI_create_textures(Resource):
 
 # ### 3. generate ideas external API
 
-# In[58]:
+# In[121]:
 
 
 ##
 
 class generate_ideas_threaded_task(threading.Thread):
-    def __init__(self,p_task_id,p_gen_id,p_task_board_name,p_task_styling_prefix):
+    def __init__(self,p_task_id,p_gen_id,p_task_board_name,p_task_styling_prefix,p_no_options):
         super().__init__()
 
         # Initialisations
@@ -3335,6 +3431,7 @@ class generate_ideas_threaded_task(threading.Thread):
         self.p_task_board_name = p_task_board_name
         self.p_task_styling_prefix = p_task_styling_prefix
         self.progress = progress_classobj(p_task_id,3)
+        self.p_no_options = p_no_options
 
         # For progress api
         # ----------------
@@ -3350,12 +3447,12 @@ class generate_ideas_threaded_task(threading.Thread):
 
         # 1. Running the generate ideas function
         # --------------------------------------
-        api_generate(self.p_task_id,self.p_gen_id,self.p_task_board_name,self.p_task_styling_prefix,self.progress)
+        api_generate(self.p_task_id,self.p_gen_id,self.p_task_board_name,self.p_task_styling_prefix,self.progress,self.p_no_options)
 
 
 
 
-# In[59]:
+# In[122]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -3364,7 +3461,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[60]:
+# In[123]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3381,12 +3478,14 @@ class externalAPI_generate_ideas(Resource):
         parser.add_argument('gen_id')
         parser.add_argument('task_board_name')
         parser.add_argument('task_styling_name_prefix')
+        parser.add_argument('no_options')
         args = parser.parse_args()
 
         p_task_id = args['task_id']
         p_gen_id = args['gen_id']
         p_task_board_name = args['task_board_name']
         p_task_styling_name_prefix = args['task_styling_name_prefix']
+        p_no_options = args['no_options']
 
 
         # This function really just starts the create new pattern thread class and assigns it to a global dict
@@ -3409,8 +3508,11 @@ class externalAPI_generate_ideas(Resource):
                     else:
                         return 'Something went wrong, check progress for error.', 500
                 except:
-
-                    generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix)
+                    try:
+                        del generate_ideas_threads[p_task_id]
+                    except:
+                        'do nothing'
+                    generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_options)
                     generate_ideas_threads[p_task_id].start()
                     return 'Thread started', 200
         except:
@@ -3420,7 +3522,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[61]:
+# In[124]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -3451,7 +3553,7 @@ class externalAPI_get_all_progress_updates(Resource):
             return 'Invalid task id.', 500
 
 
-# In[62]:
+# In[125]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -3513,7 +3615,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[63]:
+# In[126]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -3553,7 +3655,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[64]:
+# In[127]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -3588,7 +3690,7 @@ class externalAPI_send_range(Resource):
 
 # # running the external api functions
 
-# In[65]:
+# In[128]:
 
 
 app = Flask(__name__)
@@ -3605,7 +3707,7 @@ api.add_resource(externalAPI_get_task_status, '/gettaskstatus') # Route
 api.add_resource(externalAPI_send_range, '/getrange') # Route
 
 
-# In[66]:
+# In[129]:
 
 
 global vm_or_local
