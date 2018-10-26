@@ -1,8 +1,7 @@
-# 25 Oct
-# Updates in returncombo
-# NO saving of ideas
-# no_options added in generation
-# ------------------------------
+# 26 Oct
+# Added API authentication
+# Removed print on VM
+# ------------------
 
 # Imports
 # -------
@@ -26,6 +25,7 @@ from threading import Thread
 import time
 from PIL import Image,ImageFont,ImageDraw
 import datetime
+import string
 
 
 # Necessary Flask imports
@@ -37,7 +37,7 @@ from flask_jsonpify import jsonify
 
 # # GCS functions
 
-# In[82]:
+# In[57]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -46,7 +46,7 @@ global vm_or_local
 vm_or_local = 'vm'
 
 
-# In[83]:
+# In[5]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -54,6 +54,8 @@ vm_or_local = 'vm'
 # -----------------------------------------------------------------------------
 
 def get_images_from_storage(parent_dir,output_mode):
+
+    global vm_or_local
 
     """"For example, given these blobs:
         /a/1.txt
@@ -105,7 +107,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[84]:
+# In[51]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -113,6 +115,8 @@ def get_images_from_storage(parent_dir,output_mode):
 # --------------------------------------------------------------------
 
 def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,progress):
+
+    global vm_or_local
 
     # Create a storage client to use with bucket
     # ------------------------------------------
@@ -165,13 +169,12 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
             progress.process_eta_end_time = curr_time + eta_remaining
 
 
-        #
-        #print('Done saving image ' + str(i) + '..')
-        print('Saving an array of size: ' + str(m) + '. Image prefix: ' + str(image_prefix) + '. Done saving image ' + str(i) + '..')
+        global vm_or_local
+        if vm_or_local == 'local': print('Saving an array of size: ' + str(m) + '. Image prefix: ' + str(image_prefix) + '. Done saving image ' + str(i) + '..')
 
 
 
-# In[85]:
+# In[7]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -179,6 +182,8 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 # -----------------------------------------------------------------------------
 
 def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
+
+    global vm_or_local
 
     """"For example, given these blobs:
         /a/1.txt
@@ -245,7 +250,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[86]:
+# In[8]:
 
 
 # protomate functions to get  progress eta
@@ -276,10 +281,31 @@ def printeta(eta_left):
     else:
         eta_out = str(int(eta_left)) + ' seconds remaining..'
 
-    return 'About ' + eta_out
+    return 'Around ' + eta_out
+
+# ----------------------------------------
+
+# Getting key from storage
+# -----------------------
+
+def get_api_key():
+
+    # 1. Initialising bucket details
+    # ------------------------------
+    bucket_name = 'ven-ml-project.appspot.com'
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    destination_blob_name = 'admin/secret_key_vm_apis.txt'
+    blob = bucket.blob(destination_blob_name)
+
+    # 2. Getting content and processing
+    # ---------------------------------
+    key = blob.download_as_string().decode()
+
+    return key
 
 
-# In[87]:
+# In[9]:
 
 
 # protomate function to get block images
@@ -319,7 +345,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[88]:
+# In[10]:
 
 
 # protomate kmeans function
@@ -379,7 +405,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[89]:
+# In[11]:
 
 
 # protomate recurring kmeans function
@@ -407,7 +433,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[90]:
+# In[12]:
 
 
 # 1
@@ -419,6 +445,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
 
     # Some initialisations
     # --------------------
+    global vm_or_local
     insidecounter = 0
     xcurr = None
     xout = []
@@ -484,7 +511,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[91]:
+# In[13]:
 
 
 # 2
@@ -496,6 +523,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
     # Early initialisations
     # ---------------------
+    global vm_or_local
     fullon_blocks_main = []
     fullon_blocks_map = []
     start_k_c = 150
@@ -513,12 +541,12 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
         counter += 1
         img = inlist[i]
         orig_img = copy.deepcopy(img)
-        print('At image ' + str(counter) + ' of around ' + str(len(inlist)) + '..')
+        if vm_or_local == 'local': print('At image ' + str(counter) + ' of around ' + str(len(inlist)) + '..')
 
 
         # 1. Smoothening images
         # ---------------------
-        print('1. Smoothening image..')
+        if vm_or_local == 'local': print('1. Smoothening image..')
         for _ in range(1): # was 5
             for _ in range(1):
                 img = cv2.medianBlur(img, 5)
@@ -527,25 +555,25 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
         # 2. k means
         # ----------
-        print('2. Applying recurring kmeans to segment..')
+        if vm_or_local == 'local': print('2. Applying recurring kmeans to segment..')
         kmimg,cen,dv,labels = protomatebeta_recurr_kmeans_v1(img,start_k_c,end_k_c,localisation_factor)
-        plt.imshow(kmimg)
-        plt.show()
+        if vm_or_local == 'local': plt.imshow(kmimg)
+        if vm_or_local == 'local': plt.show()
 
         # 3. Including color picking code as well here
         # --------------------------------------------
-        print('3. Picking core colors as well..')
+        if vm_or_local == 'local': print('3. Picking core colors as well..')
         cen_colors = copy.deepcopy(cen)
         lb_colors = copy.deepcopy(labels)
 
         # 3.1 Clustering similar colors
         # -----------------------------
-        print('3.1 Clustering similar colors..')
+        if vm_or_local == 'local': print('3.1 Clustering similar colors..')
         pick_color_dict = protomatebeta_cluster_colors_v1(cen_colors,similarity_distance,False)
 
         # 3.2 Getting final colors for the image
         # --------------------------------------
-        print('3.2 Filtering final colors..')
+        if vm_or_local == 'local': print('3.2 Filtering final colors..')
         fincolors = protomatebeta_getfinalcolors_v1(pick_color_dict,cen_colors,lb_colors,False,ht,wd)
 
         if counter == 1:
@@ -575,7 +603,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
         # 3. Getting pattern blocks from segmented image as square blocks
         # ---------------------------------------------------------------
-        print('3. Getting pattern blocks based on segmented image..')
+        if vm_or_local == 'local': print('3. Getting pattern blocks based on segmented image..')
         pt_blocks,pt_sqr_map,fullon_blocks,fullon_map = protomatebeta_cutout_blocks_v1(dv,labels,orig_img,cen,source_image) # can change orig to kmimg for placement patterns
         fullon_blocks_main  = fullon_blocks_main + fullon_blocks
 
@@ -584,7 +612,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[92]:
+# In[14]:
 
 
 # 2.1
@@ -596,6 +624,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
     # Initialistations
     # ----------------
+    global vm_or_local
     no_patterns = cen.shape[0]
     pad_size = 0
     full_on_blocks = []
@@ -675,7 +704,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[93]:
+# In[15]:
 
 
 # 3
@@ -687,6 +716,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
 
     # Getting into direct iter
     # ------------------------
+    global vm_or_local
     counter = 0
     for i in range(len(blocks)):
 
@@ -773,7 +803,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[94]:
+# In[16]:
 
 
 # 3.1
@@ -785,6 +815,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
 
     # Initialisations
     # ---------------
+    global vm_or_local
     block_h = x.shape[1]
     block_w = x.shape[2]
     no_rows = int(h/block_h) + 5
@@ -822,7 +853,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[95]:
+# In[17]:
 
 
 # 4
@@ -834,6 +865,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
     # Iterating through images
     # ------------------------
+    global vm_or_local
     counter = 0
     start_time = time.time()
 
@@ -842,11 +874,11 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
         counter += 1
         img = inlist[i]
         orig_img = copy.deepcopy(img)
-        print('At image ' + str(counter) + ' of around ' + str(len(inlist)) + '..')
+        if vm_or_local == 'local': print('At image ' + str(counter) + ' of around ' + str(len(inlist)) + '..')
 
         # 1. Smoothening the image
         # ------------------------
-        print('1. Smoothening image..')
+        if vm_or_local == 'local': print('1. Smoothening image..')
         for _ in range(5):
             for _ in range(10):
                 img = cv2.medianBlur(img, 5)
@@ -855,18 +887,18 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
         # 2. Recurring k means extractin key 25 colors
         # --------------------------------------------
-        print('2. Extracting key colors using kmeans..')
+        if vm_or_local == 'local': print('2. Extracting key colors using kmeans..')
         kmimg_colors,cen_colrs,dv_clrs,lb_clrs = protomatebeta_recurr_kmeans_v1(img,30,25,False)
 
 
         # 3. Clustering similar colors
         # ----------------------------
-        print('3. Clustering similar colors..')
+        if vm_or_local == 'local': print('3. Clustering similar colors..')
         pick_color_dict = protomatebeta_cluster_colors_v1(cen_colrs,similarity_distance,False)
 
         # 4. Getting final colors for the image
         # -------------------------------------
-        print('4. Filtering final colors..')
+        if vm_or_local == 'local': print('4. Filtering final colors..')
         fincolors = protomatebeta_getfinalcolors_v1(pick_color_dict,cen_colrs,lb_clrs,False,ht,wd)
 
         # Updating progress
@@ -895,7 +927,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[96]:
+# In[18]:
 
 
 # 4.1
@@ -907,6 +939,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
     # Some initial master settings
     # ----------------------------
+    global vm_or_local
     total_cols = raw_colors.shape[0]
     master_all_ind = list(range(total_cols))
 
@@ -966,7 +999,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[97]:
+# In[19]:
 
 
 # 4.2
@@ -978,6 +1011,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
 
     # Some initialisations
     # --------------------
+    global vm_or_local
     total_cen = cen.shape[0]
     counter = 0
 
@@ -1046,7 +1080,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[98]:
+# In[20]:
 
 
 # 5
@@ -1059,6 +1093,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
     # Some initial initialisations
     # ----------------------------
+    global vm_or_local
     m = x.shape[0]
     cluster_threshold = 35
     start_time = time.time()
@@ -1067,12 +1102,12 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
     # ------------------------
     for i in range(m):
 
-        print('At image ' + str(i+1) + ' of around ' + str(m) + '..')
+        if vm_or_local == 'local': print('At image ' + str(i+1) + ' of around ' + str(m) + '..')
         img = x[i]
 
         # 1. Bluring ops
         # --------------
-        print('1. Blurring ops started..')
+        if vm_or_local == 'local': print('1. Blurring ops started..')
         for _ in range(1):
             img = cv2.medianBlur(img, 3)
         for _ in range(2):
@@ -1080,7 +1115,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
         # 2. kmeans ops
         # -------------
-        print('2. Recurring k means started..')
+        if vm_or_local == 'local': print('2. Recurring k means started..')
         kmimg,centroids,_,_ = protomatebeta_recurr_kmeans_v1(img,30,30,True) # 75,75
         #plt.figure(figsize=(2,3))
         #plt.imshow(kmimg)
@@ -1169,7 +1204,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[99]:
+# In[21]:
 
 
 # 5.1
@@ -1181,6 +1216,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
 
     # Some initial master settings
     # ----------------------------
+    global vm_or_local
     no_colors = len(tu)
     raw_colors = np.zeros((no_colors,1,1,3))
     weightage_by_color_dict = {}
@@ -1257,7 +1293,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[100]:
+# In[22]:
 
 
 # 5.2
@@ -1269,6 +1305,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
     # Here input dicts represent color scales from a single processed image
     # ---------------------------------------------------------------------
+    global vm_or_local
 
     # 1. Getting total weight
     # -----------------------
@@ -1356,7 +1393,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[101]:
+# In[23]:
 
 
 # 5.3
@@ -1368,12 +1405,13 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
 
     # Accepts a list of color values as tuple and outputs full size melange and grainy blocks
     # ---------------------------------------------------------------------------------------
+    global vm_or_local
     counter = 0
 
     for l in inlist:
 
         counter += 1
-        print('At image ' + str(counter) + '..')
+        if vm_or_local == 'local': print('At image ' + str(counter) + '..')
 
         # l of format (R,G,B). Example (202,123,34). Initialising colors
         # --------------------------------------------------------------
@@ -1466,7 +1504,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[102]:
+# In[24]:
 
 
 # 6
@@ -1475,6 +1513,8 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
 # ---------------------------------------------------------------------------------------------
 
 def get_stylings_from_storage(in_names,update_progress,progress):
+
+    global vm_or_local
 
     """"For example, given these blobs:
         /a/1.txt
@@ -1588,7 +1628,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[103]:
+# In[25]:
 
 
 # 6.1
@@ -1600,6 +1640,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
 
     # Initialisations
     # ---------------
+    global vm_or_local
     m = lines.shape[0]
     h,w = lines.shape[1],lines.shape[2]
 
@@ -1651,7 +1692,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[106]:
+# In[26]:
 
 
 # 7
@@ -1665,6 +1706,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
 
     # Repeating segments, linemarkings & cats for no_options
     # ------------------------------------------------------
+    global vm_or_local
     for _ in range(int(no_options)):
         try:
             segments = np.concatenate((segments,segments_in), axis = 0)
@@ -1698,7 +1740,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     # ---------------------------------------
     for i in range(no_images):
 
-        print('Generating image..' + str(i+1))
+        if vm_or_local == 'local': print('Generating image..' + str(i+1))
 
         # First getting the seg_index to use for evenly displaying generations
         # --------------------------------------------------------------------
@@ -1871,7 +1913,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[107]:
+# In[27]:
 
 
 # 7.1
@@ -1910,6 +1952,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
 
 def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,patterns,stripes,checks,melange,grainy,colors):
 
+    global vm_or_local
 
     # Some initialisations
     # --------------------
@@ -2189,7 +2232,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[108]:
+# In[28]:
 
 
 # 8
@@ -2199,6 +2242,8 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
 
 
 def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas_per_row=8,no_total_rows=4):
+
+    global vm_or_local
 
     # Some preps
     # ----------
@@ -2298,7 +2343,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
     for c in all_unique_cats:
 
         c_counter += 1
-        print('At category ' + str(c_counter) + ' of around ' + str(len(all_unique_cats)))
+        if vm_or_local == 'local': print('At category ' + str(c_counter) + ' of around ' + str(len(all_unique_cats)))
 
         # 1. Getting indices of ideas belonging to a particular cat
         # ---------------------------------------------------------
@@ -2334,7 +2379,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
             else:
                 boardout = np.concatenate((boardout,curr_board_out), axis = 0)
 
-        print('Done')
+        if vm_or_local == 'local': print('Done')
 
 
 
@@ -2345,7 +2390,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
 
 
-# In[109]:
+# In[29]:
 
 
 # 8.1
@@ -2355,6 +2400,8 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
 
 def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_header,curr_page_number,total_page_numbers,no_ideas_per_row,no_total_rows):
+
+    global vm_or_local
 
     # Initialising a fixed board size based on input image dimensions
     # ---------------------------------------------------------------
@@ -2529,7 +2576,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
 # # Ven_API functions
 
-# In[110]:
+# In[30]:
 
 
 # API 1 Function
@@ -2543,6 +2590,8 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
 
 def api_create_new_patterns(task_id,selected_style_names,progress):
+
+    global vm_or_local
 
     # progress is a class object of class progress for that task_id
     ##
@@ -2712,7 +2761,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     return 'All good.', 200
 
 
-# In[111]:
+# In[31]:
 
 
 # API 2 function
@@ -2724,6 +2773,8 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
 
 
 def api_create_textures(task_id,picked_ind_string,progress):
+
+    global vm_or_local
 
     # progress is a class object of class progress for that task_id
     ##
@@ -2740,7 +2791,6 @@ def api_create_textures(task_id,picked_ind_string,progress):
         picked_ind = [int(s) for s in picked_ind_string.split(',')]
         # 2. Getting all patterns npy file
         # --------------------------------
-        print('1. At np array load..')
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         all_pats = np.load(f)
@@ -2761,7 +2811,6 @@ def api_create_textures(task_id,picked_ind_string,progress):
         progress.process_percent = None
         # 3. Creating stripes and checks
         # ------------------------------
-        print('2. At textures..')
         picked_stripes,picked_checks,picked_melange,picked_grainy = protomatebeta_build_textures_v1(picked_patterns,h,w,False,progress,task_id,False)
         progress.runnning_status = 'OK'
     except Exception as ex:
@@ -2782,28 +2831,23 @@ def api_create_textures(task_id,picked_ind_string,progress):
         # --------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_stripes)
-        print('3. Saved stripes..')
         # Saving Checks
         # --------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_checks)
-        print('4. Saved checks..')
         # Saving Melange
         # --------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_melange)
-        print('4. Saved melange..')
         # Saving Grainy
         # --------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_grainy)
-        print('4. Saved grainy..')
         # Saving Picked_ind
         # -----------------
         picked_ind_np = np.array(picked_ind).reshape(len(picked_ind), 1)
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_picked_ind.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_ind_np)
-        print('5. Saved indices..')
         progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -2845,7 +2889,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     #    return error_str, 500
 
 
-# In[112]:
+# In[32]:
 
 
 # API 3 function
@@ -2856,6 +2900,8 @@ def api_create_textures(task_id,picked_ind_string,progress):
 
 
 def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progress,no_options):
+
+    global vm_or_local
 
     #try:
 
@@ -2874,13 +2920,13 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_linemarkings.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         lines = np.load(f)
-        print('Got lines..')
+        if vm_or_local == 'local': print('Got lines..')
         # Collecting segments
         # -------------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_segments.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         segs = np.load(f)
-        print('Got segs..')
+        if vm_or_local == 'local': print('Got segs..')
         progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -2900,13 +2946,13 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         all_patterns = np.load(f)
-        print('Got all pats..')
+        if vm_or_local == 'local': print('Got all pats..')
         # Collecting picked_ind
         # ---------------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_picked_ind.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         picked_ind = np.load(f)
-        print('Got picked indices..')
+        if vm_or_local == 'local': print('Got picked indices..')
         progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -2926,7 +2972,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         colors = np.load(f)
-        print('Got colors..')
+        if vm_or_local == 'local': print('Got colors..')
         progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -2946,31 +2992,31 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         checks = np.load(f)
-        print('Got checks..')
+        if vm_or_local == 'local': print('Got checks..')
         # Collecting Stripes
         # -----------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         stripes = np.load(f)
-        print('Got stripes..')
+        if vm_or_local == 'local': print('Got stripes..')
         # Collecting Melange
         # -----------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         melange = np.load(f)
-        print('Got melange..')
+        if vm_or_local == 'local': print('Got melange..')
         # Collecting Grainy
         # -----------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         grainy = np.load(f)
-        print('Got grainy..')
+        if vm_or_local == 'local': print('Got grainy..')
         # Collecting Catagories
         # ----------------------
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_categories.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         categories = np.load(f)
-        print('Got categories..')
+        if vm_or_local == 'local': print('Got categories..')
         # 2. Preparing picked patterns for generation
         # -------------------------------------------
         picked_patterns = all_patterns[list(picked_ind[:,0])]
@@ -3089,16 +3135,17 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
 
 # # Actual Ven API endpoints
 
-# In[113]:
+# In[33]:
 
 
 # Creating a global progress dict to help with simpler progress API
 # -----------------------------------------------------------------
+
 global progress_api_dict
 progress_api_dict = {}
 
 
-# In[114]:
+# In[34]:
 
 
 # Temp code to create progress class
@@ -3211,7 +3258,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[115]:
+# In[35]:
 
 
 ##
@@ -3244,7 +3291,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_task_id,self.p_selected_style_names,self.progress)
 
 
-# In[116]:
+# In[36]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3253,7 +3300,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[117]:
+# In[37]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3263,55 +3310,90 @@ class externalAPI_create_new_patterns(Resource):
 
     def post(self):
 
-        # Setting up key values to accept
-        # -------------------------------
-        parser = reqparse.RequestParser()
-        parser.add_argument('task_id')
-        parser.add_argument('selected_style_names')
-        args = parser.parse_args()
-
-        p_task_id = args['task_id']
-        p_selected_style_names = args['selected_style_names']
-
-        # First trying to get np_status
-        # -----------------------------
+        ## Authenticating request
+        ## ----------------------
         try:
-            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
-            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
 
-            # This means patterns already built
-            # ---------------------------------
-            return 'Invalid operation. Patterns already built for this task.', 500 #### Checked
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('task_id')
+                    parser.add_argument('selected_style_names')
+                    args = parser.parse_args()
+
+                    p_task_id = args['task_id']
+                    p_selected_style_names = args['selected_style_names']
+
+                    # First trying to get np_status
+                    # -----------------------------
+                    try:
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+
+                        # This means patterns already built
+                        # ---------------------------------
+                        return 'Invalid operation. Patterns already built for this task.', 500 #### Checked
+
+                    except:
+
+                        # This means there is no such file and new pattern build can begin.
+                        # This function really just starts the create new pattern thread class and assigns it to a global dict
+                        # ----------------------------------------------------------------------------------------------------
+                        global new_pattern_threads
+                        try:
+                            # Checking for parallel active thread
+                            # -----------------------------------
+                            if new_pattern_threads[p_task_id].progress.curr_step >= 0:
+                                return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 #### Checked
+                            else:
+                                return 'Something went wrong, check progress for error.', 500 #### Checked
+                        except:
+                            print('API Create new patterns firing: ' + str(p_task_id))
+                            try:
+                                del new_pattern_threads[p_task_id]
+                            except:
+                                'do nothing'
+
+                            new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_task_id,p_selected_style_names)
+                            new_pattern_threads[p_task_id].start()
+                            return 'Thread started', 200 #### Checked
+
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
 
         except:
 
-            # This means there is no such file and new pattern build can begin.
-            # This function really just starts the create new pattern thread class and assigns it to a global dict
-            # ----------------------------------------------------------------------------------------------------
-            global new_pattern_threads
-            try:
-                # Checking for parallel active thread
-                # -----------------------------------
-                if new_pattern_threads[p_task_id].progress.curr_step >= 0:
-                    return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 #### Checked
-                else:
-                    return 'Something went wrong, check progress for error.', 500 #### Checked
-            except:
-                print('API Create new patterns firing ------ ')
-                try:
-                    del new_pattern_threads[p_task_id]
-                except:
-                    'do nothing'
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
 
-                new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_task_id,p_selected_style_names)
-                new_pattern_threads[p_task_id].start()
-                return 'Thread started', 200 #### Checked
 
 
 
 # ### 2. create new texture external API
 
-# In[118]:
+# In[38]:
 
 
 ##
@@ -3344,7 +3426,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[119]:
+# In[39]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -3353,7 +3435,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[120]:
+# In[40]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3363,59 +3445,92 @@ class externalAPI_create_textures(Resource):
 
     def post(self):
 
-        # Setting up key values to accept
-        # -------------------------------
-        parser = reqparse.RequestParser()
-        parser.add_argument('task_id')
-        parser.add_argument('picked_ind_string')
-        args = parser.parse_args()
-
-        p_task_id = args['task_id']
-        p_picked_ind_string = args['picked_ind_string']
-
-        # First trying to get np_status
-        # -----------------------------
-        global create_texture_threads
-
+        ## Authenticating request
+        ## ----------------------
         try:
-            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
-            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-            npstatus = np.load(f)[0,0]
 
-            if npstatus == 1: # Good to go
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
 
-                try:
-                    # Checking for parallel active thread
-                    # -----------------------------------
-                    if create_texture_threads[p_task_id].progress.curr_step >= 0:
-                        return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 ## Checked
-                    else:
-                        return 'Something went wrong, check progress for error.', 500
-                except:
-                    print('API Create Texture firing ------ ')
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('task_id')
+                    parser.add_argument('picked_ind_string')
+                    args = parser.parse_args()
+
+                    p_task_id = args['task_id']
+                    p_picked_ind_string = args['picked_ind_string']
+
+                    # First trying to get np_status
+                    # -----------------------------
+                    global create_texture_threads
+
                     try:
-                        del create_texture_threads[p_task_id]
-                    except:
-                        'do nothing'
-                    create_texture_threads[p_task_id] = create_textures_threaded_task(p_task_id,p_picked_ind_string)
-                    create_texture_threads[p_task_id].start()
-                    return 'Thread started', 200
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+                        npstatus = np.load(f)[0,0]
 
-            elif npstatus == 2:
-                return 'Invalid operation. Textures already built for this task.', 500 #### Checked
-            else:
-                err_msg = 'Invalid operation. Something not right about the flow. Here is the npstatus: ' + str(npstatus)
-                return err_msg, 500
+                        if npstatus == 1: # Good to go
+
+                            try:
+                                # Checking for parallel active thread
+                                # -----------------------------------
+                                if create_texture_threads[p_task_id].progress.curr_step >= 0:
+                                    return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 ## Checked
+                                else:
+                                    return 'Something went wrong, check progress for error.', 500
+                            except:
+                                print('API Create Texture firing: ' + str(p_task_id))
+                                try:
+                                    del create_texture_threads[p_task_id]
+                                except:
+                                    'do nothing'
+                                create_texture_threads[p_task_id] = create_textures_threaded_task(p_task_id,p_picked_ind_string)
+                                create_texture_threads[p_task_id].start()
+                                return 'Thread started', 200
+
+                        elif npstatus == 2:
+                            return 'Invalid operation. Textures already built for this task.', 500 #### Checked
+                        else:
+                            err_msg = 'Invalid operation. Something not right about the flow. Here is the npstatus: ' + str(npstatus)
+                            return err_msg, 500
+
+                    except:
+
+                        return 'Invalid operation. Looks like patterns not built for this task.', 500 #### Checked
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
 
         except:
 
-            return 'Invalid operation. Looks like patterns not built for this task.', 500 #### Checked
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
 
 
 
 # ### 3. generate ideas external API
 
-# In[121]:
+# In[41]:
 
 
 ##
@@ -3452,7 +3567,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[122]:
+# In[42]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -3461,7 +3576,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[123]:
+# In[43]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3471,58 +3586,92 @@ class externalAPI_generate_ideas(Resource):
 
     def post(self):
 
-        # Setting up key values to accept
-        # -------------------------------
-        parser = reqparse.RequestParser()
-        parser.add_argument('task_id')
-        parser.add_argument('gen_id')
-        parser.add_argument('task_board_name')
-        parser.add_argument('task_styling_name_prefix')
-        parser.add_argument('no_options')
-        args = parser.parse_args()
-
-        p_task_id = args['task_id']
-        p_gen_id = args['gen_id']
-        p_task_board_name = args['task_board_name']
-        p_task_styling_name_prefix = args['task_styling_name_prefix']
-        p_no_options = args['no_options']
-
-
-        # This function really just starts the create new pattern thread class and assigns it to a global dict
-        # ----------------------------------------------------------------------------------------------------
-        global generate_ideas_threads
-
+        ## Authenticating request
+        ## ----------------------
         try:
-            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
-            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-            npstatus = np.load(f)[0,0]
 
-            if npstatus == 1:
-                return 'Invalid operation. Textures not built for this task.', 500 ## Checked
-            elif npstatus == 2:
-                try:
-                    # Checking for parallel thread
-                    # ----------------------------
-                    if generate_ideas_threads[p_task_id].progress.curr_step >= 0:
-                        return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 #### Checked
-                    else:
-                        return 'Something went wrong, check progress for error.', 500
-                except:
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('task_id')
+                    parser.add_argument('gen_id')
+                    parser.add_argument('task_board_name')
+                    parser.add_argument('task_styling_name_prefix')
+                    parser.add_argument('no_options')
+                    args = parser.parse_args()
+
+                    p_task_id = args['task_id']
+                    p_gen_id = args['gen_id']
+                    p_task_board_name = args['task_board_name']
+                    p_task_styling_name_prefix = args['task_styling_name_prefix']
+                    p_no_options = args['no_options']
+
+
+                    # This function really just starts the create new pattern thread class and assigns it to a global dict
+                    # ----------------------------------------------------------------------------------------------------
+                    global generate_ideas_threads
+
                     try:
-                        del generate_ideas_threads[p_task_id]
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+                        npstatus = np.load(f)[0,0]
+
+                        if npstatus == 1:
+                            return 'Invalid operation. Textures not built for this task.', 500 ## Checked
+                        elif npstatus == 2:
+                            try:
+                                # Checking for parallel thread
+                                # ----------------------------
+                                if generate_ideas_threads[p_task_id].progress.curr_step >= 0:
+                                    return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 #### Checked
+                                else:
+                                    return 'Something went wrong, check progress for error.', 500
+                            except:
+                                print('API Generate Ideas firing: ' + str(p_task_id))
+                                try:
+                                    del generate_ideas_threads[p_task_id]
+                                except:
+                                    'do nothing'
+                                generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_options)
+                                generate_ideas_threads[p_task_id].start()
+                                return 'Thread started', 200
                     except:
-                        'do nothing'
-                    generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_options)
-                    generate_ideas_threads[p_task_id].start()
-                    return 'Thread started', 200
+                        return 'Invalid operation. Looks like patterns are not built for this task yet.', 500 #### Checked
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+
         except:
-            return 'Invalid operation. Looks like patterns not built for this task.', 500 #### Checked
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
 
 
 
 # ### 4. progress and status APIs
 
-# In[124]:
+# In[44]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -3532,28 +3681,62 @@ class externalAPI_get_all_progress_updates(Resource):
 
     def post(self):
 
-        # For progress api
-        # ----------------
-        global progress_api_dict
-
-        # Setting up key values to accept
-        # -------------------------------
-        parser = reqparse.RequestParser()
-        parser.add_argument('task_id')
-        args = parser.parse_args()
-        p_task_id = args['task_id']
-
-        # Returning data
-        # --------------
+        ## Authenticating request
+        ## ----------------------
         try:
-            d = progress_api_dict[p_task_id].getallprogressstatuses()
-            return jsonify(d)
 
-        except KeyError:
-            return 'Invalid task id.', 500
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # For progress api
+                    # ----------------
+                    global progress_api_dict
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('task_id')
+                    args = parser.parse_args()
+                    p_task_id = args['task_id']
+
+                    # Returning data
+                    # --------------
+                    print('API Get All Progress Status firing: ' + str(p_task_id))
+                    try:
+                        d = progress_api_dict[p_task_id].getallprogressstatuses()
+                        return jsonify(d)
+
+                    except KeyError:
+                        return 'Invalid task id.', 500
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+        except:
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
 
 
-# In[125]:
+
+# In[45]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -3563,59 +3746,92 @@ class externalAPI_get_progress(Resource):
 
     def post(self):
 
-        # For progress api
-        # ----------------
-        global progress_api_dict
-        global create_texture_threads
-        global new_pattern_threads
-        global generate_ideas_threads
-
-        # Setting up key values to accept
-        # -------------------------------
-        parser = reqparse.RequestParser()
-        parser.add_argument('task_id')
-        args = parser.parse_args()
-        p_task_id = args['task_id']
-
-
-        # Returning data
-        # --------------
+        ## Authenticating request
+        ## ----------------------
         try:
-            d = progress_api_dict[p_task_id].dict_out()
 
-            # Updating thread status
-            # ----------------------
-            if d['mode_number'] == 1:
-                d['thread_status'] = new_pattern_threads[p_task_id].isAlive()
-            elif d['mode_number'] == 2:
-                d['thread_status'] = create_texture_threads[p_task_id].isAlive()
-            else:
-                d['thread_status'] = generate_ideas_threads[p_task_id].isAlive()
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
 
-            # Updating time left
-            # ------------------
             try:
-                curr_time = time.time()
 
-                if curr_time > progress_api_dict[p_task_id].process_eta_end_time:
-                    d['curr_process_time_remaining'] = 'Finishing up anytime..'
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # For progress api
+                    # ----------------
+                    global progress_api_dict
+                    global create_texture_threads
+                    global new_pattern_threads
+                    global generate_ideas_threads
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('task_id')
+                    args = parser.parse_args()
+                    p_task_id = args['task_id']
+
+                    print('API Get Progress firing: ' + str(p_task_id))
+                    # Returning data
+                    # --------------
+                    try:
+                        d = progress_api_dict[p_task_id].dict_out()
+
+                        # Updating thread status
+                        # ----------------------
+                        if d['mode_number'] == 1:
+                            d['thread_status'] = new_pattern_threads[p_task_id].isAlive()
+                        elif d['mode_number'] == 2:
+                            d['thread_status'] = create_texture_threads[p_task_id].isAlive()
+                        else:
+                            d['thread_status'] = generate_ideas_threads[p_task_id].isAlive()
+
+                        # Updating time left
+                        # ------------------
+                        try:
+                            curr_time = time.time()
+
+                            if curr_time > progress_api_dict[p_task_id].process_eta_end_time:
+                                d['curr_process_time_remaining'] = 'Finishing up anytime..'
+                            else:
+                                curr_time_left = progress_api_dict[p_task_id].process_eta_end_time - curr_time
+                                d['curr_process_time_remaining'] = printeta(curr_time_left)
+
+                        except:
+                            d['curr_process_time_remaining'] = 'ETA Not Available'
+
+                        # Returning d
+                        # -----------
+                        return jsonify(d)
+
+                    except KeyError:
+                        return 'Invalid task id.', 500
                 else:
-                    curr_time_left = progress_api_dict[p_task_id].process_eta_end_time - curr_time
-                    d['curr_process_time_remaining'] = printeta(curr_time_left)
 
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
             except:
-                d['curr_process_time_remaining'] = 'ETA Not Available'
 
-            # Returning d
-            # -----------
-            return jsonify(d)
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
 
-        except KeyError:
-            return 'Invalid task id.', 500
+        except:
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
 
 
 
-# In[126]:
+# In[46]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -3625,37 +3841,70 @@ class externalAPI_get_task_status(Resource):
 
     def post(self):
 
-        # Setting up key values to accept
-        # -------------------------------
-        parser = reqparse.RequestParser()
-        parser.add_argument('task_id')
-        args = parser.parse_args()
-        p_task_id = args['task_id']
-
-        d = {}
-
+        ## Authenticating request
+        ## ----------------------
         try:
-            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
-            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-            npstatus = np.load(f)[0,0]
 
-            if npstatus == 1: # Patterns done, but textures NOT done.
-                d['task_status'] = 'ok for textures'
-                return jsonify(d) ## Checked
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
 
-            elif npstatus == 2: # Textures done and can generate ideas.
-                d['task_status'] = 'ok for generation'
-                return jsonify(d) ## Checked
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('task_id')
+                    args = parser.parse_args()
+                    p_task_id = args['task_id']
+
+                    d = {}
+                    print('API Get Task Status firing: ' + str(p_task_id))
+                    try:
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+                        npstatus = np.load(f)[0,0]
+
+                        if npstatus == 1: # Patterns done, but textures NOT done.
+                            d['task_status'] = 'ok for textures'
+                            return jsonify(d) ## Checked
+
+                        elif npstatus == 2: # Textures done and can generate ideas.
+                            d['task_status'] = 'ok for generation'
+                            return jsonify(d) ## Checked
+                    except:
+                        d['task_status'] = 'Error. Either no such task or no patterns built.'
+                        return jsonify(d) #### Checked
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+
         except:
-            d['task_status'] = 'Error. Either no such task or no patterns built.'
-            return jsonify(d) #### Checked
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
 
 
 
 
 
 
-# In[127]:
+# In[48]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -3665,32 +3914,66 @@ class externalAPI_send_range(Resource):
 
     def post(self):
 
-        # Setting up key values to accept
-        # -------------------------------
-        parser = reqparse.RequestParser()
-        parser.add_argument('task_id')
-        parser.add_argument('gen_id')
-        args = parser.parse_args()
-
-        # Getting params
-        # --------------
-        p_task_id = args['task_id']
-        p_gen_id = args['gen_id']
-
-        # Returning file
-        # --------------
+        ## Authenticating request
+        ## ----------------------
         try:
-            storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/rangeboards/' + str(p_gen_id) + '/downloadable_range_boards.pdf'
-            f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-            return send_file(f, mimetype='application/pdf')
+
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('task_id')
+                    parser.add_argument('gen_id')
+                    args = parser.parse_args()
+
+                    # Getting params
+                    # --------------
+                    p_task_id = args['task_id']
+                    p_gen_id = args['gen_id']
+
+                    print('API Download PDF firing: ' + str(p_task_id))
+                    # Returning file
+                    # --------------
+                    try:
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/rangeboards/' + str(p_gen_id) + '/downloadable_range_boards.pdf'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+                        return send_file(f, mimetype='application/pdf')
+                    except:
+                        return 'Could not find range PDF. Invalid URL.', 500
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+
         except:
-            return 'Could not find range PDF. Invalid URL.', 500
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
 
 
 
 # # running the external api functions
 
-# In[128]:
+# In[49]:
 
 
 app = Flask(__name__)
@@ -3707,7 +3990,7 @@ api.add_resource(externalAPI_get_task_status, '/gettaskstatus') # Route
 api.add_resource(externalAPI_send_range, '/getrange') # Route
 
 
-# In[129]:
+# In[50]:
 
 
 global vm_or_local
