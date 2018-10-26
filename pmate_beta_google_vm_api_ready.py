@@ -42,10 +42,7 @@ from flask_jsonpify import jsonify
 global vm_or_local
 vm_or_local = 'vm'
 
-if vm_or_local == 'local':
-    %env GOOGLE_APPLICATION_CREDENTIALS=/Users/venkateshmadhava/Documents/ml_projects/protomate_master/code/cloud_storage_apis/ven-ml-project-387fdf3f596f.json
-else:
-    %env GOOGLE_APPLICATION_CREDENTIALS=/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json
+%env GOOGLE_APPLICATION_CREDENTIALS=/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json
 
 # In[5]:
 
