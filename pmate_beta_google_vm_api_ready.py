@@ -1,9 +1,6 @@
-# 30 Oct
-# Added url retrieval for linemakrings based on cat
-# ---------------------------------------------------
-
-# In[49]:
-
+# 31 Oct
+# Added user id and wix image retrieval
+# -------------------------------------
 
 # Imports
 # -------
@@ -28,6 +25,7 @@ import time
 from PIL import Image,ImageFont,ImageDraw
 import datetime
 import string
+import requests
 
 
 # Necessary Flask imports
@@ -40,7 +38,7 @@ from flask_jsonpify import jsonify
 
 # # GCS functions
 
-# In[50]:
+# In[186]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -54,7 +52,7 @@ else:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json"
 
 
-# In[51]:
+# In[187]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -115,14 +113,14 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[52]:
+# In[188]:
 
 
 # Function to saving a list or numpy array of images to storage folder
 # API ready ##
 # --------------------------------------------------------------------
 
-def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,progress):
+def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,progress,master_url):
 
     global vm_or_local
 
@@ -136,7 +134,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
     m = len(xin)
     start_time = time.time()
     d = {}
-    task_id = image_prefix[:image_prefix.index('_all_patterns')]
+
 
     # Itering through the list / array and saving them to storage
     # -----------------------------------------------------------
@@ -198,14 +196,14 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
     if '_all_patterns' in image_prefix:
         if vm_or_local == 'local': print('Saving public URL data..')
         np_d = np.array(d)
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns_urls.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_url) + '/numpy/np_all_patterns_urls.npy'
         np.save(file_io.FileIO(storage_address, 'w'), np_d)
 
 
 
 
 
-# In[53]:
+# In[189]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -281,7 +279,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[54]:
+# In[190]:
 
 
 # protomate functions to get  progress eta
@@ -336,7 +334,7 @@ def get_api_key():
     return key
 
 
-# In[55]:
+# In[191]:
 
 
 # protomate function to get block images
@@ -376,7 +374,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[56]:
+# In[192]:
 
 
 # protomate kmeans function
@@ -436,7 +434,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[57]:
+# In[193]:
 
 
 # protomate recurring kmeans function
@@ -464,7 +462,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[58]:
+# In[194]:
 
 
 # 1
@@ -542,7 +540,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[59]:
+# In[195]:
 
 
 # 2
@@ -643,7 +641,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[60]:
+# In[196]:
 
 
 # 2.1
@@ -735,7 +733,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[61]:
+# In[197]:
 
 
 # 3
@@ -834,7 +832,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[62]:
+# In[198]:
 
 
 # 3.1
@@ -884,7 +882,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[63]:
+# In[199]:
 
 
 # 4
@@ -958,7 +956,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[64]:
+# In[200]:
 
 
 # 4.1
@@ -1030,7 +1028,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[65]:
+# In[201]:
 
 
 # 4.2
@@ -1111,7 +1109,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[66]:
+# In[202]:
 
 
 # 5
@@ -1208,18 +1206,20 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
         progress.process_eta_end_time = curr_time + eta_remaining
 
         if save_preview == True:
+
+            ' Do nothing'
             # Saving textures to storage for keeping frontend progress
             # --------------------------------------------------------
             # CHECKS
             ##
-            storage_dir = str(task_id) + '/texturespreview'
-            image_prefix = str(task_id) + '_textures_preview_checks'
-            save_to_storage_from_array_list(oim_checks,storage_dir,image_prefix,False,None)
+            #storage_dir = str(task_id) + '/texturespreview'
+            #image_prefix = str(task_id) + '_textures_preview_checks'
+            #save_to_storage_from_array_list(oim_checks,storage_dir,image_prefix,False,None)
             # STRIPES
             ##
-            storage_dir = str(task_id) + '/texturespreview'
-            image_prefix = str(task_id) + '_textures_preview_stripes'
-            save_to_storage_from_array_list(oim_stripes,storage_dir,image_prefix,False,None)
+            #storage_dir = str(task_id) + '/texturespreview'
+            #image_prefix = str(task_id) + '_textures_preview_stripes'
+            #save_to_storage_from_array_list(oim_stripes,storage_dir,image_prefix,False,None)
 
 
         # 5. Printing coloscales
@@ -1235,7 +1235,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[67]:
+# In[203]:
 
 
 # 5.1
@@ -1324,7 +1324,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[68]:
+# In[204]:
 
 
 # 5.2
@@ -1424,7 +1424,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[69]:
+# In[205]:
 
 
 # 5.3
@@ -1535,7 +1535,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[70]:
+# In[206]:
 
 
 # 6
@@ -1659,7 +1659,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[71]:
+# In[207]:
 
 
 # 6.1
@@ -1723,7 +1723,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[72]:
+# In[208]:
 
 
 # 7
@@ -1932,9 +1932,10 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
         # Saving current generation to storage for keeping frontend progress
         # -------------------------------------------------------------------
         if save_preview == True:
-            storage_dir = str(task_id) + '/ideas/ideaspreview'
-            image_prefix = str(task_id) + '_' + str(gen_id) + '_preview'
-            save_to_storage_from_array_list(newim_c,storage_dir,image_prefix,False,None)
+            'Do nothing'
+            #storage_dir = str(task_id) + '/ideas/ideaspreview'
+            #image_prefix = str(task_id) + '_' + str(gen_id) + '_preview'
+            #save_to_storage_from_array_list(newim_c,storage_dir,image_prefix,False,None)
 
         if i == 0:
             genout = newim_c
@@ -1944,7 +1945,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[73]:
+# In[209]:
 
 
 # 7.1
@@ -2263,7 +2264,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[74]:
+# In[210]:
 
 
 # 8
@@ -2272,7 +2273,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
 # ----------------------------------
 
 
-def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas_per_row=8,no_total_rows=4):
+def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,no_ideas_per_row=8,no_total_rows=4):
 
     global vm_or_local
 
@@ -2404,7 +2405,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
             all_counter += 1
             curr_styling_prefix = styling_prefix + ' ' + sty_dict[c]
 
-            curr_board_out = build_single_range_board(curr_xin_for_single_range,task_id,gen_id,board_name,curr_styling_prefix,cat_dict[c],i+1,no_pages,no_ideas_per_row,no_total_rows)
+            curr_board_out = build_single_range_board(curr_xin_for_single_range,user_id,task_id,gen_id,board_name,curr_styling_prefix,cat_dict[c],i+1,no_pages,no_ideas_per_row,no_total_rows)
             if all_counter == 1:
                 boardout = curr_board_out
             else:
@@ -2421,7 +2422,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 
 
 
-# In[75]:
+# In[211]:
 
 
 # 8.1
@@ -2430,7 +2431,7 @@ def feed_to_build_range(x,cats,task_id,gen_id,board_name,styling_prefix,no_ideas
 # -------------------------------------
 
 
-def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_header,curr_page_number,total_page_numbers,no_ideas_per_row,no_total_rows):
+def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefix,board_header,curr_page_number,total_page_numbers,no_ideas_per_row,no_total_rows):
 
     global vm_or_local
 
@@ -2578,8 +2579,8 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
     # Footer texts initialisations
     # ----------------------------
-    time_block = datetime.datetime.now().strftime("Created on %Y-%m-%d at %H:%M for task ")
-    footer_left_text = time_block + str(task_id) + ', generation ' + str(gen_id) + '.'
+    time_block = datetime.datetime.now().strftime("Created on %Y-%m-%d at %H:%M for ")
+    footer_left_text = time_block + str(user_id) + "'s task " + str(task_id) + ', generation ' + str(gen_id) + '.'
     footer_right_text = 'Powered By Protomate'
     footer_start_row_in_image = ideas_only_dim_h - (all_footer_height + gap_between_footer_ideas * 2)
     footer_start_r =footer_start_row_in_image + gap_between_footer_ideas
@@ -2607,7 +2608,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 
 # # Ven_API functions
 
-# In[76]:
+# In[212]:
 
 
 # API 1 Function
@@ -2620,7 +2621,7 @@ def build_single_range_board(xin,task_id,gen_id,board_name,styling_prefix,board_
 # Returns OK, NOT OK
 
 
-def api_create_new_patterns(task_id,selected_style_names,progress):
+def api_create_new_patterns(user_id,task_id,selected_style_names,progress):
 
     global vm_or_local
 
@@ -2631,7 +2632,8 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
 
     # Setting input folder name as per set format
     # -------------------------------------------
-    inputfolder = task_id + '/themes'
+    master_task_url = user_id + '/' + task_id
+    inputfolder = master_task_url + '/themes'
 
     # Standard initialisations
     # ------------------------
@@ -2695,9 +2697,9 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         progress.process_start_time = None
         progress.process_eta_end_time = None
         progress.process_percent = None
-        storage_dir = task_id + '/all_patterns'
+        storage_dir = master_task_url + '/all_patterns'
         image_prefix = str(task_id) + '_all_patterns'
-        save_to_storage_from_array_list(built_patterns,storage_dir,image_prefix,True,progress)
+        save_to_storage_from_array_list(built_patterns,storage_dir,image_prefix,True,progress,master_task_url)
         progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -2715,11 +2717,11 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         # -------------------------------------------------------------
         # 8.1 Saving all patterns
         # -----------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_all_patterns.npy'
         np.save(file_io.FileIO(storage_address, 'w'), built_patterns)
         # 8.2 Saving all colors
         # -----------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_all_colors.npy'
         np.save(file_io.FileIO(storage_address, 'w'), keycolors)
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -2743,16 +2745,16 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
         # -------------------------------------------------------------------------
         # Saving Segments
         # ---------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_segments.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_segments.npy'
         np.save(file_io.FileIO(storage_address, 'w'), xs_corr)
         # Saving Linemarkings
         # --------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_linemarkings.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_linemarkings.npy'
         np.save(file_io.FileIO(storage_address, 'w'), xl_corr)
         # Saving Categories
         # -----------------
         categories_np = np.array(cats).reshape(len(cats), 1)
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_categories.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_categories.npy'
         np.save(file_io.FileIO(storage_address, 'w'), categories_np)
         progress.runnning_status = 'OK'
     except Exception as ex:
@@ -2764,7 +2766,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     # Saving status update to 1
     # -------------------------
     np_status = np.array([1]).reshape(1,1)
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_status.npy'
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
     progress.set_status(6) # Done
@@ -2792,7 +2794,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
     return 'All good.', 200
 
 
-# In[77]:
+# In[213]:
 
 
 # API 2 function
@@ -2803,7 +2805,7 @@ def api_create_new_patterns(task_id,selected_style_names,progress):
 # Returns OK, NOT OK
 
 
-def api_create_textures(task_id,picked_ind_string,progress):
+def api_create_textures(user_id,task_id,picked_ind_string,progress):
 
     global vm_or_local
 
@@ -2811,6 +2813,10 @@ def api_create_textures(task_id,picked_ind_string,progress):
     ##
 
     #try:
+
+    # Setting master URL
+    # -------------------
+    master_task_url = user_id + '/' + task_id
 
     try:
         progress.set_status(0) # 0 'Loading learnt patterns..'
@@ -2822,7 +2828,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
         picked_ind = [int(s) for s in picked_ind_string.split(',')]
         # 2. Getting all patterns npy file
         # --------------------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_all_patterns.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         all_pats = np.load(f)
         picked_patterns = all_pats[picked_ind]
@@ -2860,24 +2866,24 @@ def api_create_textures(task_id,picked_ind_string,progress):
         # ----------------------------------------
         # Saving Stripes
         # --------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_stripes.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_stripes)
         # Saving Checks
         # --------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_checks.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_checks)
         # Saving Melange
         # --------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_melange.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_melange)
         # Saving Grainy
         # --------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_grainy.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_grainy)
         # Saving Picked_ind
         # -----------------
         picked_ind_np = np.array(picked_ind).reshape(len(picked_ind), 1)
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_picked_ind.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_picked_ind.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_ind_np)
         progress.runnning_status = 'OK'
     except Exception as ex:
@@ -2889,7 +2895,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
     # Saving status update to 2
     # -------------------------
     np_status = np.array([2]).reshape(1,1)
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_status.npy'
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
     progress.set_status(3) # Done
@@ -2920,7 +2926,13 @@ def api_create_textures(task_id,picked_ind_string,progress):
     #    return error_str, 500
 
 
-# In[78]:
+# In[ ]:
+
+
+
+
+
+# In[214]:
 
 
 # API 3 function
@@ -2930,7 +2942,7 @@ def api_create_textures(task_id,picked_ind_string,progress):
 # Returns OK, NOT OK
 
 
-def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progress,no_options):
+def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix,progress,no_options):
 
     global vm_or_local
 
@@ -2938,6 +2950,10 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
 
     # progress is a class object of class progress for that task_id
     ##
+
+    # Setting master URL
+    # -------------------
+    master_task_url = user_id + '/' + task_id
 
     try:
         progress.set_status(0) # 0 'Loading stylings..',
@@ -2948,13 +2964,13 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         # --------------------------------------------------------------------
         # Collecting linemarkings
         # -----------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_linemarkings.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_linemarkings.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         lines = np.load(f)
         if vm_or_local == 'local': print('Got lines..')
         # Collecting segments
         # -------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_segments.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_segments.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         segs = np.load(f)
         if vm_or_local == 'local': print('Got segs..')
@@ -2974,13 +2990,13 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         progress.process_percent = None
         # Collecting all pats
         # -------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_patterns.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_all_patterns.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         all_patterns = np.load(f)
         if vm_or_local == 'local': print('Got all pats..')
         # Collecting picked_ind
         # ---------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_picked_ind.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_picked_ind.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         picked_ind = np.load(f)
         if vm_or_local == 'local': print('Got picked indices..')
@@ -3000,7 +3016,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         progress.process_percent = None
         # Collecting colors
         # ---------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_all_colors.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_all_colors.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         colors = np.load(f)
         if vm_or_local == 'local': print('Got colors..')
@@ -3020,31 +3036,31 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         progress.process_percent = None
         # Colecting checks
         # ----------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_checks.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_checks.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         checks = np.load(f)
         if vm_or_local == 'local': print('Got checks..')
         # Collecting Stripes
         # -----------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_stripes.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_stripes.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         stripes = np.load(f)
         if vm_or_local == 'local': print('Got stripes..')
         # Collecting Melange
         # -----------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_melange.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_melange.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         melange = np.load(f)
         if vm_or_local == 'local': print('Got melange..')
         # Collecting Grainy
         # -----------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_grainy.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_grainy.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         grainy = np.load(f)
         if vm_or_local == 'local': print('Got grainy..')
         # Collecting Catagories
         # ----------------------
-        storage_address = 'gs://ven-ml-project.appspot.com/' + str(task_id) + '/numpy/np_categories.npy'
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_categories.npy'
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         categories = np.load(f)
         if vm_or_local == 'local': print('Got categories..')
@@ -3084,9 +3100,9 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
     #    progress.process_percent = None
     #    # 4. Saving generated images under /task_id/ideas/gen_id/
     #    # -------------------------------------------------------
-    #    storage_dir = task_id + '/ideas/' + str(gen_id)
+    #    storage_dir = master_task_url + '/ideas/' + str(gen_id)
     #    image_prefix = str(task_id) + '_' + str(gen_id) + '_ideas'
-    #    save_to_storage_from_array_list(ideas,storage_dir,image_prefix,True,progress)
+    #    save_to_storage_from_array_list(ideas,storage_dir,image_prefix,True,progress,master_task_url)
     #    progress.runnning_status = 'OK'
     #except Exception as ex:
     #    error_str = type(ex).__name__ + ': ' + ex.args[0]
@@ -3102,10 +3118,10 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
         progress.process_percent = None
         # 5. Building and saving range boards under /task_id/rangeboards/gen_id/
         # ----------------------------------------------------------------------
-        range_built = feed_to_build_range(ideas,cats,task_id,gen_id,task_board_name,task_styling_name_prefix)
-        storage_dir = task_id + '/rangeboards/' + str(gen_id)
+        range_built = feed_to_build_range(ideas,cats,user_id,task_id,gen_id,task_board_name,task_styling_name_prefix)
+        storage_dir = master_task_url + '/rangeboards/' + str(gen_id)
         image_prefix = str(task_id) + '_' + str(gen_id) + '_rangeboards'
-        save_to_storage_from_array_list(range_built,storage_dir,image_prefix,True,progress)
+        save_to_storage_from_array_list(range_built,storage_dir,image_prefix,True,progress,master_task_url)
         # 6. Building PDF for download
         # ----------------------------
         range_list = []
@@ -3166,7 +3182,7 @@ def api_generate(task_id,gen_id,task_board_name,task_styling_name_prefix,progres
 
 # # Actual Ven API endpoints
 
-# In[79]:
+# In[215]:
 
 
 # Creating a global progress dict to help with simpler progress API
@@ -3176,7 +3192,7 @@ global progress_api_dict
 progress_api_dict = {}
 
 
-# In[80]:
+# In[216]:
 
 
 # Temp code to create progress class
@@ -3289,13 +3305,13 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[81]:
+# In[217]:
 
 
 ##
 
 class create_new_patterns_threaded_task(threading.Thread):
-    def __init__(self,p_task_id,p_selected_style_names):
+    def __init__(self,p_user_id,p_task_id,p_selected_style_names):
         super().__init__()
 
         # Initialisations
@@ -3303,6 +3319,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         self.p_task_id = p_task_id
         self.p_selected_style_names = p_selected_style_names
         self.progress = progress_classobj(p_task_id,1)
+        self.p_user_id = p_user_id
 
         # For progress api
         # ----------------
@@ -3319,10 +3336,10 @@ class create_new_patterns_threaded_task(threading.Thread):
 
         # 1. Running the create new patterns function
         # -------------------------------------------
-        api_create_new_patterns(self.p_task_id,self.p_selected_style_names,self.progress)
+        api_create_new_patterns(self.p_user_id,self.p_task_id,self.p_selected_style_names,self.progress)
 
 
-# In[82]:
+# In[218]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3331,7 +3348,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[83]:
+# In[219]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3361,17 +3378,23 @@ class externalAPI_create_new_patterns(Resource):
                     # Setting up key values to accept
                     # -------------------------------
                     parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
                     parser.add_argument('task_id')
                     parser.add_argument('selected_style_names')
                     args = parser.parse_args()
 
+                    p_user_id = args['user_id']
                     p_task_id = args['task_id']
                     p_selected_style_names = args['selected_style_names']
+
+                    # Building master task url
+                    # --------------------------
+                    p_master_url = p_user_id + '/' + p_task_id
 
                     # First trying to get np_status
                     # -----------------------------
                     try:
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status.npy'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
 
                         # This means patterns already built
@@ -3398,7 +3421,7 @@ class externalAPI_create_new_patterns(Resource):
                             except:
                                 'do nothing'
 
-                            new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_task_id,p_selected_style_names)
+                            new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_user_id,p_task_id,p_selected_style_names)
                             new_pattern_threads[p_task_id].start()
                             return 'Thread started', 200 #### Checked
 
@@ -3424,13 +3447,13 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. create new texture external API
 
-# In[84]:
+# In[220]:
 
 
 ##
 
 class create_textures_threaded_task(threading.Thread):
-    def __init__(self,p_task_id,p_picked_ind_string):
+    def __init__(self,p_user_id,p_task_id,p_picked_ind_string):
         super().__init__()
 
         # Initialisations
@@ -3438,6 +3461,7 @@ class create_textures_threaded_task(threading.Thread):
         self.p_task_id = p_task_id
         self.p_picked_ind_string = p_picked_ind_string
         self.progress = progress_classobj(p_task_id,2)
+        self.p_user_id = p_user_id
 
         # For progress api
         # ----------------
@@ -3453,11 +3477,11 @@ class create_textures_threaded_task(threading.Thread):
 
         # 1. Running the create textures function
         # -------------------------------------------
-        api_create_textures(self.p_task_id,self.p_picked_ind_string,self.progress)
+        api_create_textures(self.p_user_id,self.p_task_id,self.p_picked_ind_string,self.progress)
 
 
 
-# In[85]:
+# In[221]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -3466,7 +3490,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[86]:
+# In[222]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3496,19 +3520,25 @@ class externalAPI_create_textures(Resource):
                     # Setting up key values to accept
                     # -------------------------------
                     parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
                     parser.add_argument('task_id')
                     parser.add_argument('picked_ind_string')
                     args = parser.parse_args()
 
                     p_task_id = args['task_id']
+                    p_user_id = args['user_id']
                     p_picked_ind_string = args['picked_ind_string']
+
+                    # Building master task url
+                    # --------------------------
+                    p_master_url = p_user_id + '/' + p_task_id
 
                     # First trying to get np_status
                     # -----------------------------
                     global create_texture_threads
 
                     try:
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status.npy'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
                         npstatus = np.load(f)[0,0]
 
@@ -3527,7 +3557,7 @@ class externalAPI_create_textures(Resource):
                                     del create_texture_threads[p_task_id]
                                 except:
                                     'do nothing'
-                                create_texture_threads[p_task_id] = create_textures_threaded_task(p_task_id,p_picked_ind_string)
+                                create_texture_threads[p_task_id] = create_textures_threaded_task(p_user_id,p_task_id,p_picked_ind_string)
                                 create_texture_threads[p_task_id].start()
                                 return 'Thread started', 200
 
@@ -3561,13 +3591,13 @@ class externalAPI_create_textures(Resource):
 
 # ### 3. generate ideas external API
 
-# In[87]:
+# In[223]:
 
 
 ##
 
 class generate_ideas_threaded_task(threading.Thread):
-    def __init__(self,p_task_id,p_gen_id,p_task_board_name,p_task_styling_prefix,p_no_options):
+    def __init__(self,p_user_id,p_task_id,p_gen_id,p_task_board_name,p_task_styling_prefix,p_no_options):
         super().__init__()
 
         # Initialisations
@@ -3578,6 +3608,7 @@ class generate_ideas_threaded_task(threading.Thread):
         self.p_task_styling_prefix = p_task_styling_prefix
         self.progress = progress_classobj(p_task_id,3)
         self.p_no_options = p_no_options
+        self.p_user_id = p_user_id
 
         # For progress api
         # ----------------
@@ -3593,12 +3624,12 @@ class generate_ideas_threaded_task(threading.Thread):
 
         # 1. Running the generate ideas function
         # --------------------------------------
-        api_generate(self.p_task_id,self.p_gen_id,self.p_task_board_name,self.p_task_styling_prefix,self.progress,self.p_no_options)
+        api_generate(self.p_user_id,self.p_task_id,self.p_gen_id,self.p_task_board_name,self.p_task_styling_prefix,self.progress,self.p_no_options)
 
 
 
 
-# In[88]:
+# In[224]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -3607,7 +3638,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[89]:
+# In[225]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3637,6 +3668,7 @@ class externalAPI_generate_ideas(Resource):
                     # Setting up key values to accept
                     # -------------------------------
                     parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
                     parser.add_argument('task_id')
                     parser.add_argument('gen_id')
                     parser.add_argument('task_board_name')
@@ -3644,11 +3676,16 @@ class externalAPI_generate_ideas(Resource):
                     parser.add_argument('no_options')
                     args = parser.parse_args()
 
+                    p_user_id = args['user_id']
                     p_task_id = args['task_id']
                     p_gen_id = args['gen_id']
                     p_task_board_name = args['task_board_name']
                     p_task_styling_name_prefix = args['task_styling_name_prefix']
                     p_no_options = args['no_options']
+
+                    # Building master task url
+                    # --------------------------
+                    p_master_url = p_user_id + '/' + p_task_id
 
 
                     # This function really just starts the create new pattern thread class and assigns it to a global dict
@@ -3656,7 +3693,7 @@ class externalAPI_generate_ideas(Resource):
                     global generate_ideas_threads
 
                     try:
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status.npy'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
                         npstatus = np.load(f)[0,0]
 
@@ -3676,7 +3713,7 @@ class externalAPI_generate_ideas(Resource):
                                     del generate_ideas_threads[p_task_id]
                                 except:
                                     'do nothing'
-                                generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_options)
+                                generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_user_id,p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_options)
                                 generate_ideas_threads[p_task_id].start()
                                 return 'Thread started', 200
                     except:
@@ -3702,7 +3739,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[90]:
+# In[226]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -3767,7 +3804,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 
 
-# In[91]:
+# In[227]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -3862,7 +3899,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[92]:
+# In[228]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -3892,14 +3929,20 @@ class externalAPI_get_task_status(Resource):
                     # Setting up key values to accept
                     # -------------------------------
                     parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
                     parser.add_argument('task_id')
                     args = parser.parse_args()
+                    p_user_id = args['user_id']
                     p_task_id = args['task_id']
 
+                    # Master URL
+                    # ----------
+                    master_url = p_user_id + '/' + p_task_id
+
                     d = {}
-                    print('API Get Task Status firing: ' + str(p_task_id))
+                    print('API Get Task Status firing: ' + str(master_url))
                     try:
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_status.npy'
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_url) + '/numpy/np_status.npy'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
                         npstatus = np.load(f)[0,0]
 
@@ -3911,8 +3954,8 @@ class externalAPI_get_task_status(Resource):
                             d['task_status'] = 'ok for generation'
                             return jsonify(d) ## Checked
                     except:
-                        d['task_status'] = 'Error. Either no such task or no patterns built.'
-                        return jsonify(d) #### Checked
+
+                        return 'Invalid task details.', 500 #### Checked
                 else:
 
                     # Incorrect credentials
@@ -3935,7 +3978,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[93]:
+# In[229]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -3965,6 +4008,7 @@ class externalAPI_send_range(Resource):
                     # Setting up key values to accept
                     # -------------------------------
                     parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
                     parser.add_argument('task_id')
                     parser.add_argument('gen_id')
                     args = parser.parse_args()
@@ -3973,12 +4017,17 @@ class externalAPI_send_range(Resource):
                     # --------------
                     p_task_id = args['task_id']
                     p_gen_id = args['gen_id']
+                    p_user_id = args['user_id']
 
-                    print('API Download PDF firing: ' + str(p_task_id))
+                    # Master URL
+                    # ----------
+                    master_url = p_user_id + '/' + p_task_id
+
+                    print('API Download PDF firing: ' + str(master_url))
                     # Returning file
                     # --------------
                     try:
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/rangeboards/' + str(p_gen_id) + '/downloadable_range_boards.pdf'
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_url) + '/rangeboards/' + str(p_gen_id) + '/downloadable_range_boards.pdf'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
                         return send_file(f, mimetype='application/pdf')
                     except:
@@ -4002,7 +4051,7 @@ class externalAPI_send_range(Resource):
 
 
 
-# In[94]:
+# In[230]:
 
 
 ## MAIN function TO BE CALLED for getting all patterns URL
@@ -4032,14 +4081,20 @@ class externalAPI_get_all_patterns_url(Resource):
                     # Setting up key values to accept
                     # -------------------------------
                     parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
                     parser.add_argument('task_id')
                     args = parser.parse_args()
 
                     # Getting params
                     # --------------
                     p_task_id = args['task_id']
+                    p_user_id = args['user_id']
 
-                    print('API get all patterns public URL firing: ' + str(p_task_id))
+                    # Master URL
+                    # ----------
+                    master_url = p_user_id + '/' + p_task_id
+
+                    print('API get all patterns public URL firing: ' + str(master_url))
 
                     # Returning JSON
                     # --------------
@@ -4047,7 +4102,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
                         # Loading dict
                         # ------------
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_task_id) + '/numpy/np_all_patterns_urls.npy'
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_url) + '/numpy/np_all_patterns_urls.npy'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
                         np_d = np.load(f)
                         d = np_d.item()
@@ -4056,7 +4111,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
                     except:
 
-                        return 'Internal error occured. Sorry!', 500
+                        return 'Invalid task details.', 500 #### Checked
 
                 else:
 
@@ -4077,7 +4132,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
 
 
-# In[98]:
+# In[231]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4168,9 +4223,123 @@ class externalAPI_get_all_stylings_url(Resource):
 
 
 
+# In[238]:
+
+
+## MAIN function code to get in an incoming wix image URL and save it in themes
+# -----------------------------------------------------------------------------
+
+class externalAPI_save_wix_image(Resource):
+
+    def post(self):
+
+        ## Authenticating request
+        ## ----------------------
+        try:
+
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
+                    parser.add_argument('task_id')
+                    parser.add_argument('wix_url')
+
+                    args = parser.parse_args()
+
+                    # Getting params
+                    # --------------
+                    p_user_id = args['user_id']
+                    p_task_id = args['task_id']
+                    p_wix_url = args['wix_url']
+
+                    # Master URL
+                    # ----------
+                    master_url = p_user_id + '/' + p_task_id + '/themes'
+
+                    print('API save image at wix URL firing: ' + str(master_url))
+
+                    try:
+
+                        # 1. Initialising bucket details
+                        # ------------------------------
+                        bucket_name = 'ven-ml-project.appspot.com'
+                        storage_client = storage.Client()
+                        bucket = storage_client.get_bucket(bucket_name)
+                        storage_dir = master_url
+
+                        # 2. Getting image from wix URL
+                        # -----------------------------
+                        image_location_wix = p_wix_url[p_wix_url.index('221_285/')+8:]
+                        image_url = 'https://static.wixstatic.com/media/' + image_location_wix
+                        response = requests.get(image_url)
+                        img = Image.open(BytesIO(response.content))
+                        img_np = np.array(img)
+
+
+                        # 3. Using temp file for storage ops
+                        # -------------------------------
+                        with tempfile.NamedTemporaryFile() as temp:
+
+                            # Etract name to the temp file
+                            # -----------------------------
+                            image_name = ''.join([str(temp.name),'.jpg'])
+
+                            # Save image to temp file
+                            # -----------------------
+                            img_cv = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
+                            cv2.imwrite(image_name,img_cv.astype('uint8'))
+
+                            # Storing the image temp file inside the bucket
+                            # ---------------------------------------------
+                            image_save_name = str(p_task_id) + '_theme_'+ str(int(time.time()*15)) + '.jpg'
+                            destination_blob_name = storage_dir + '/' + image_save_name
+                            blob = bucket.blob(destination_blob_name)
+                            blob.upload_from_filename(image_name,content_type='image/jpeg')
+
+
+                        # 4. Returning ok
+                        # ---------------
+                        return 'Done', 200
+
+                    except:
+
+                        return 'Internal error occured. Sorry!', 500
+
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+
+        except:
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
+
+
+
 # # running the external api functions
 
-# In[99]:
+# In[239]:
 
 
 app = Flask(__name__)
@@ -4187,9 +4356,10 @@ api.add_resource(externalAPI_get_task_status, '/gettaskstatus') # Route
 api.add_resource(externalAPI_send_range, '/getrange') # Route
 api.add_resource(externalAPI_get_all_patterns_url, '/getallpatternsurl') # Route
 api.add_resource(externalAPI_get_all_stylings_url, '/getallstylingsurl') # Route
+api.add_resource(externalAPI_save_wix_image, '/saveimagefromwixurl') # Route
 
 
-# In[100]:
+# In[240]:
 
 
 global vm_or_local
