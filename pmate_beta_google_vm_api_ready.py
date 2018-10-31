@@ -4282,7 +4282,10 @@ class externalAPI_save_wix_image(Resource):
 
                         # 2. Getting image from wix URL
                         # -----------------------------
-                        image_location_wix = p_wix_url[p_wix_url.index('221_285/')+8:]
+                        for i_name in p_wix_url.split('/'):
+                            if '.jpg' in i_name or '.jpeg' in i_name or '.png' in i_name:
+                                image_location_wix = str(i_name)
+                                break
                         image_url = 'https://static.wixstatic.com/media/' + image_location_wix
                         response = requests.get(image_url)
                         img = Image.open(BytesIO(response.content))
