@@ -1,6 +1,7 @@
-# Nov 2
-# Seperate preparing stylings from new patterns build
-# ----------------------------------------------------
+# Added get task ids
+# ------------------
+
+
 # Imports
 # -------
 
@@ -51,7 +52,67 @@ else:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json"
 
 
-# In[129]:
+# In[122]:
+
+
+# Getting task ids from GCS for a given user id
+# API ready ##
+# -----------------------------------------------------------------------------
+
+def get_task_ids(user_id):
+
+    global vm_or_local
+
+    """"For example, given these blobs:
+        /a/1.txt
+        /a/b/2.txt
+    If you just specify prefix = '/a', you'll get back:
+        /a/1.txt
+        /a/b/2.txt
+    However, if you specify prefix='/a' and delimiter='/', you'll get back:
+        /a/1.txt"""
+
+    # Create a storage client to use with bucket
+    # ------------------------------------------
+    bucket_name = 'ven-ml-project.appspot.com'
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+
+    # Getting all bobs under the mentioned "folder"
+    # --------------------------------------------
+    blobs = bucket.list_blobs(prefix = user_id + '/', delimiter= 'A/')
+
+    # Itering through blobs
+    # ---------------------
+    counter = 0
+    d = {}
+    task_ids = []
+
+    for b in blobs:
+        try:
+            curr_blob_name = str(b.name)
+            curr_blob_name_stripped = curr_blob_name[curr_blob_name.index('PMTASK'):]
+            curr_task_id = curr_blob_name_stripped[:curr_blob_name_stripped.index('/')]
+
+            if curr_task_id in task_ids:
+                'do nothing'
+            else:
+                task_ids.append(curr_task_id)
+                counter += 1
+                d[counter] = curr_task_id
+        except:
+
+            'do nothing'
+
+    if counter >= 1:
+
+        return d, 1
+
+    else:
+        return "NO TASKS FOUND", 500
+
+
+# In[123]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -112,7 +173,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[130]:
+# In[124]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -202,7 +263,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[131]:
+# In[125]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -278,7 +339,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[132]:
+# In[126]:
 
 
 # protomate functions to get  progress eta
@@ -333,7 +394,7 @@ def get_api_key():
     return key
 
 
-# In[133]:
+# In[127]:
 
 
 # protomate function to get block images
@@ -373,7 +434,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[134]:
+# In[128]:
 
 
 # protomate kmeans function
@@ -433,7 +494,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[135]:
+# In[129]:
 
 
 # protomate recurring kmeans function
@@ -461,7 +522,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[136]:
+# In[130]:
 
 
 # 1
@@ -539,7 +600,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[137]:
+# In[131]:
 
 
 # 2
@@ -640,7 +701,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[138]:
+# In[132]:
 
 
 # 2.1
@@ -732,7 +793,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[139]:
+# In[133]:
 
 
 # 3
@@ -831,7 +892,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[140]:
+# In[134]:
 
 
 # 3.1
@@ -881,7 +942,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[141]:
+# In[135]:
 
 
 # 4
@@ -955,7 +1016,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[142]:
+# In[136]:
 
 
 # 4.1
@@ -1027,7 +1088,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[143]:
+# In[137]:
 
 
 # 4.2
@@ -1108,7 +1169,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[144]:
+# In[138]:
 
 
 # 5
@@ -1234,7 +1295,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[145]:
+# In[139]:
 
 
 # 5.1
@@ -1323,7 +1384,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[146]:
+# In[140]:
 
 
 # 5.2
@@ -1423,7 +1484,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[147]:
+# In[141]:
 
 
 # 5.3
@@ -1534,7 +1595,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[148]:
+# In[142]:
 
 
 # 6
@@ -1658,7 +1719,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[149]:
+# In[143]:
 
 
 # 6.1
@@ -1722,7 +1783,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[150]:
+# In[144]:
 
 
 # 7
@@ -1944,7 +2005,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[151]:
+# In[145]:
 
 
 # 7.1
@@ -2263,7 +2324,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[152]:
+# In[146]:
 
 
 # 8
@@ -2421,7 +2482,7 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
 
 
 
-# In[153]:
+# In[147]:
 
 
 # 8.1
@@ -2607,7 +2668,7 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 
 # # Ven_API functions
 
-# In[154]:
+# In[148]:
 
 
 # API 1 Function
@@ -2772,7 +2833,7 @@ def api_create_new_patterns(user_id,task_id,progress):
     return 'All good.', 200
 
 
-# In[155]:
+# In[149]:
 
 
 # API 2 Function
@@ -2864,7 +2925,7 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
 
 
 
-# In[156]:
+# In[150]:
 
 
 # API 3 function
@@ -2999,7 +3060,7 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
     return 'All good.', 200
 
 
-# In[157]:
+# In[151]:
 
 
 # API 4 function
@@ -3244,7 +3305,7 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
 
 # # Actual Ven API endpoints
 
-# In[158]:
+# In[152]:
 
 
 # Creating a global progress dict to help with progress API
@@ -3263,7 +3324,7 @@ global progress_api_dict_generate_ideas
 progress_api_dict_generate_ideas = {}
 
 
-# In[159]:
+# In[153]:
 
 
 # Temp code to create progress class
@@ -3385,7 +3446,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[160]:
+# In[154]:
 
 
 ##
@@ -3418,7 +3479,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_user_id,self.p_task_id,self.progress)
 
 
-# In[161]:
+# In[155]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3427,7 +3488,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[162]:
+# In[156]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3531,7 +3592,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. prepare stylings external API
 
-# In[163]:
+# In[157]:
 
 
 ##
@@ -3565,7 +3626,7 @@ class prepare_stylings_threaded_task(threading.Thread):
 
 
 
-# In[164]:
+# In[158]:
 
 
 # Creating a Main global dictionary to track progress of prepare stylings task
@@ -3574,7 +3635,7 @@ global prepare_stylings_threads
 prepare_stylings_threads = {}
 
 
-# In[165]:
+# In[159]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3682,7 +3743,7 @@ class externalAPI_prepare_stylings(Resource):
 
 # ### 3. create new texture external API
 
-# In[166]:
+# In[160]:
 
 
 ##
@@ -3716,7 +3777,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[167]:
+# In[161]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -3725,7 +3786,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[168]:
+# In[162]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3848,7 +3909,7 @@ class externalAPI_create_textures(Resource):
 
 # ### 4. generate ideas external API
 
-# In[169]:
+# In[163]:
 
 
 ##
@@ -3886,7 +3947,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[170]:
+# In[164]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -3895,7 +3956,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[171]:
+# In[165]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4038,7 +4099,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[172]:
+# In[166]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -4120,7 +4181,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 
 
-# In[173]:
+# In[167]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -4270,7 +4331,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[174]:
+# In[168]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -4373,7 +4434,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[175]:
+# In[169]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4446,7 +4507,7 @@ class externalAPI_send_range(Resource):
 
 
 
-# In[176]:
+# In[170]:
 
 
 ## MAIN function TO BE CALLED for getting all patterns URL
@@ -4527,7 +4588,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
 
 
-# In[177]:
+# In[171]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4618,7 +4679,7 @@ class externalAPI_get_all_stylings_url(Resource):
 
 
 
-# In[178]:
+# In[172]:
 
 
 ## MAIN function code to get in an incoming wix image URL and save it in themes
@@ -4735,9 +4796,85 @@ class externalAPI_save_wix_image(Resource):
 
 
 
+# In[173]:
+
+
+## MAIN function code to get taskids associated with user
+# -------------------------------------------------------
+
+class externalAPI_get_task_ids(Resource):
+
+    def post(self):
+
+        ## Authenticating request
+        ## ----------------------
+        try:
+
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
+
+                    args = parser.parse_args()
+
+                    # Getting params
+                    # --------------
+                    p_user_id = args['user_id']
+
+
+                    try:
+                        # Using get task id function
+                        # --------------------------
+                        d,v = get_task_ids(p_user_id)
+
+                        if v == 1:
+                            # Returning d
+                            # ------------
+                            return jsonify(d)
+                        else:
+                            # Returning as is
+                            # ---------------
+                            return "NO TASKS FOUND", 500
+
+                    except:
+
+                        return 'Internal error occured. Sorry!', 500
+
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+
+        except:
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
+
+
+
 # # running the external api functions
 
-# In[179]:
+# In[174]:
 
 
 app = Flask(__name__)
@@ -4756,9 +4893,10 @@ api.add_resource(externalAPI_send_range, '/getrange') # Route
 api.add_resource(externalAPI_get_all_patterns_url, '/getallpatternsurl') # Route
 api.add_resource(externalAPI_get_all_stylings_url, '/getallstylingsurl') # Route
 api.add_resource(externalAPI_save_wix_image, '/saveimagefromwixurl') # Route
+api.add_resource(externalAPI_get_task_ids, '/gettaskids') # Route
 
 
-# In[180]:
+# In[175]:
 
 
 global vm_or_local
