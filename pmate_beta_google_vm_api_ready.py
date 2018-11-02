@@ -1,7 +1,6 @@
-# 31 Oct
-# Added user id and wix image retrieval
-# -------------------------------------
-
+# Nov 2
+# Seperate preparing stylings from new patterns build
+# ----------------------------------------------------
 # Imports
 # -------
 
@@ -38,7 +37,7 @@ from flask_jsonpify import jsonify
 
 # # GCS functions
 
-# In[186]:
+# In[2]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -52,7 +51,7 @@ else:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json"
 
 
-# In[187]:
+# In[129]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -113,7 +112,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[188]:
+# In[130]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -203,7 +202,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[189]:
+# In[131]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -279,7 +278,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[190]:
+# In[132]:
 
 
 # protomate functions to get  progress eta
@@ -334,7 +333,7 @@ def get_api_key():
     return key
 
 
-# In[191]:
+# In[133]:
 
 
 # protomate function to get block images
@@ -374,7 +373,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[192]:
+# In[134]:
 
 
 # protomate kmeans function
@@ -434,7 +433,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[193]:
+# In[135]:
 
 
 # protomate recurring kmeans function
@@ -462,7 +461,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[194]:
+# In[136]:
 
 
 # 1
@@ -540,7 +539,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[195]:
+# In[137]:
 
 
 # 2
@@ -641,7 +640,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[196]:
+# In[138]:
 
 
 # 2.1
@@ -733,7 +732,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[197]:
+# In[139]:
 
 
 # 3
@@ -832,7 +831,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[198]:
+# In[140]:
 
 
 # 3.1
@@ -882,7 +881,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[199]:
+# In[141]:
 
 
 # 4
@@ -956,7 +955,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[200]:
+# In[142]:
 
 
 # 4.1
@@ -1028,7 +1027,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[201]:
+# In[143]:
 
 
 # 4.2
@@ -1109,7 +1108,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[202]:
+# In[144]:
 
 
 # 5
@@ -1235,7 +1234,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[203]:
+# In[145]:
 
 
 # 5.1
@@ -1324,7 +1323,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[204]:
+# In[146]:
 
 
 # 5.2
@@ -1424,7 +1423,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[205]:
+# In[147]:
 
 
 # 5.3
@@ -1535,7 +1534,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[206]:
+# In[148]:
 
 
 # 6
@@ -1659,7 +1658,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[207]:
+# In[149]:
 
 
 # 6.1
@@ -1723,7 +1722,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[208]:
+# In[150]:
 
 
 # 7
@@ -1945,7 +1944,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[209]:
+# In[151]:
 
 
 # 7.1
@@ -2264,7 +2263,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[210]:
+# In[152]:
 
 
 # 8
@@ -2422,7 +2421,7 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
 
 
 
-# In[211]:
+# In[153]:
 
 
 # 8.1
@@ -2608,7 +2607,7 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 
 # # Ven_API functions
 
-# In[212]:
+# In[154]:
 
 
 # API 1 Function
@@ -2621,23 +2620,32 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 # Returns OK, NOT OK
 
 
-def api_create_new_patterns(user_id,task_id,selected_style_names,progress):
+def api_create_new_patterns(user_id,task_id,progress):
 
     global vm_or_local
+    # Setting master URL
+    # -------------------
+    master_task_url = user_id + '/' + task_id
 
     # progress is a class object of class progress for that task_id
     ##
 
-    #try:
-
     # Setting input folder name as per set format
     # -------------------------------------------
-    master_task_url = user_id + '/' + task_id
     inputfolder = master_task_url + '/themes'
 
     # Standard initialisations
     # ------------------------
     h,w,rp_size = 285,221,30
+
+    # Status messages -
+    # 1 - In progress
+    # 2 - Done
+    # UPDATING STATUS TO IN PROGRESS
+    # -------------------------------
+    np_status = np.array([1]).reshape(1,1)
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_newpatterns.npy'
+    np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
     try:
         # 1. Getting theme images from storage
@@ -2730,11 +2738,72 @@ def api_create_new_patterns(user_id,task_id,selected_style_names,progress):
         return error_str, 500
 
 
+    # Status messages -
+    # 1 - In progress
+    # 2 - Done
+    # UPDATING STATUS TO DONE
+    # -----------------------
+    np_status = np.array([2]).reshape(1,1)
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_newpatterns.npy'
+    np.save(file_io.FileIO(storage_address, 'w'), np_status)
+
+    # Updating progress
+    # -----------------
+    progress.set_status(5) # Done
+    progress.process_start_time = None
+    progress.process_eta_end_time = None
+    progress.process_percent = None
+    progress.runnning_status = 'Finished.'
+
+    # Delecting appropriate dicts to allow user to run threaded task again
+    # --------------------------------------------------------------------
+    global progress_api_dict_newpatterns
+    global new_pattern_threads
+
+    time.sleep(10) # for 10 secs, status will be available after task completes
+
     try:
-        progress.set_status(5) # 5 'Preparing selected stylings for generations..',
+        del new_pattern_threads[task_id]
+        del progress_api_dict_newpatterns[task_id]
+    except:
+        'do nothing'
+
+
+    return 'All good.', 200
+
+
+# In[155]:
+
+
+# API 2 Function
+# API -- prepare_stylings
+# Accepts a list of image names along with user id and taskid
+# prepares the stylings and svaes them as numpy array
+# Returns OK, NOT OK
+
+
+def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
+
+    global vm_or_local
+    # Setting master URL
+    # -------------------
+    master_task_url = user_id + '/' + task_id
+
+    # Status messages -
+    # 1 - In progress
+    # 2 - Done
+    # UPDATING STATUS TO IN PROGRESS
+    # -------------------------------
+    np_status = np.array([1]).reshape(1,1)
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_preparestylings.npy'
+    np.save(file_io.FileIO(storage_address, 'w'), np_status)
+
+    try:
+        progress.set_status(0) # 0  'Preparing selected stylings for generations..',
         progress.process_start_time = None
         progress.process_eta_end_time = None
         progress.process_percent = None
+        progress.runnning_status = 'OK'
         # 9. Picking selected stylings and saving them into temp arrays for correction
         # ----------------------------------------------------------------------------
         x_lines,x_segs,cats = get_stylings_from_storage(selected_style_names,True,progress)
@@ -2756,20 +2825,22 @@ def api_create_new_patterns(user_id,task_id,selected_style_names,progress):
         categories_np = np.array(cats).reshape(len(cats), 1)
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_categories.npy'
         np.save(file_io.FileIO(storage_address, 'w'), categories_np)
-        progress.runnning_status = 'OK'
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
         progress.curr_step = None
         return error_str, 500
 
-    # Saving status update to 1
-    # -------------------------
-    np_status = np.array([1]).reshape(1,1)
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status.npy'
+    # Status messages -
+    # 1 - In progress
+    # 2 - Done
+    # UPDATING STATUS TO DONE
+    # -----------------------
+    np_status = np.array([2]).reshape(1,1)
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_preparestylings.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
-    progress.set_status(6) # Done
+    progress.set_status(1) # Done
     progress.process_start_time = None
     progress.process_eta_end_time = None
     progress.process_percent = None
@@ -2777,16 +2848,14 @@ def api_create_new_patterns(user_id,task_id,selected_style_names,progress):
 
     # Delecting appropriate dicts to allow user to run threaded task again
     # --------------------------------------------------------------------
-    global progress_api_dict
-    global create_texture_threads
-    global new_pattern_threads
-    global generate_ideas_threads
+    global progress_api_dict_prepare_stylings
+    global prepare_stylings_threads
 
     time.sleep(10) # for 10 secs, status will be available after task completes
 
     try:
-        del new_pattern_threads[task_id]
-        del progress_api_dict[task_id]
+        del prepare_stylings_threads[task_id]
+        del progress_api_dict_prepare_stylings[task_id]
     except:
         'do nothing'
 
@@ -2794,10 +2863,11 @@ def api_create_new_patterns(user_id,task_id,selected_style_names,progress):
     return 'All good.', 200
 
 
-# In[213]:
+
+# In[156]:
 
 
-# API 2 function
+# API 3 function
 # API -- create_textures
 # Takes in task_id, selected_indices (as string) and creates textures
 # saving them under /task_id/numpy/ And also saved picked indices as numpy array
@@ -2808,15 +2878,21 @@ def api_create_new_patterns(user_id,task_id,selected_style_names,progress):
 def api_create_textures(user_id,task_id,picked_ind_string,progress):
 
     global vm_or_local
+    # Setting master URL
+    # -------------------
+    master_task_url = user_id + '/' + task_id
 
     # progress is a class object of class progress for that task_id
     ##
 
-    #try:
-
-    # Setting master URL
-    # -------------------
-    master_task_url = user_id + '/' + task_id
+    # Status messages -
+    # 1 - In progress
+    # 2 - Done
+    # UPDATING STATUS TO IN PROGRESS
+    # -------------------------------
+    np_status = np.array([1]).reshape(1,1)
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_createtextures.npy'
+    np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
     try:
         progress.set_status(0) # 0 'Loading learnt patterns..'
@@ -2892,10 +2968,13 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
         progress.curr_step = None
         return error_str, 500
 
-    # Saving status update to 2
-    # -------------------------
+    # Status messages -
+    # 1 - In progress
+    # 2 - Done
+    # UPDATING STATUS TO DONE
+    # -----------------------
     np_status = np.array([2]).reshape(1,1)
-    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status.npy'
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_createtextures.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
     progress.set_status(3) # Done
@@ -2906,36 +2985,24 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
 
     # Delecting appropriate dicts to allow user to run threaded task again
     # --------------------------------------------------------------------
-    global progress_api_dict
+    global progress_api_dict_create_textures
     global create_texture_threads
-    global new_pattern_threads
-    global generate_ideas_threads
 
     time.sleep(10) # for 10 secs, status will be available after task completes
 
     try:
         del create_texture_threads[task_id]
-        del progress_api_dict[task_id]
+        del progress_api_dict_create_textures[task_id]
     except:
         'do nothing'
 
     return 'All good.', 200
 
-    #except Exception as ex:
-    #    error_str = type(ex).__name__ + ': ' + ex.args[0]
-    #    return error_str, 500
+
+# In[157]:
 
 
-# In[ ]:
-
-
-
-
-
-# In[214]:
-
-
-# API 3 function
+# API 4 function
 # API -- generate ideas
 # Takes in task_id, gen_id as inputs
 # Generates new ideas and saves them under /task_id/ideas/gen_id/
@@ -2945,15 +3012,13 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
 def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix,progress,no_options):
 
     global vm_or_local
-
-    #try:
-
-    # progress is a class object of class progress for that task_id
-    ##
-
     # Setting master URL
     # -------------------
     master_task_url = user_id + '/' + task_id
+
+
+    # progress is a class object of class progress for that task_id
+
 
     try:
         progress.set_status(0) # 0 'Loading stylings..',
@@ -3152,6 +3217,7 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
         progress.curr_step = None
         return error_str, 500
 
+
     progress.set_status(6) # Done
     progress.process_start_time = None
     progress.process_eta_end_time = None
@@ -3160,39 +3226,44 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
 
     # Delecting appropriate dicts to allow user to run threaded task again
     # --------------------------------------------------------------------
-    global progress_api_dict
-    global create_texture_threads
-    global new_pattern_threads
+    global progress_api_dict_generate_ideas
     global generate_ideas_threads
 
     time.sleep(10) # for 10 secs, status will be available after task completes
 
     try:
         del generate_ideas_threads[task_id]
-        del progress_api_dict[task_id]
+        del progress_api_dict_generate_ideas[task_id]
     except:
         'do nothing'
-
 
 
     return 'All good.', 200
 
 
 
-
 # # Actual Ven API endpoints
 
-# In[215]:
+# In[158]:
 
 
-# Creating a global progress dict to help with simpler progress API
-# -----------------------------------------------------------------
+# Creating a global progress dict to help with progress API
+# ---------------------------------------------------------
 
-global progress_api_dict
-progress_api_dict = {}
+global progress_api_dict_newpatterns
+progress_api_dict_newpatterns = {}
+
+global progress_api_dict_prepare_stylings
+progress_api_dict_prepare_stylings = {}
+
+global progress_api_dict_create_textures
+progress_api_dict_create_textures = {}
+
+global progress_api_dict_generate_ideas
+progress_api_dict_generate_ideas = {}
 
 
-# In[216]:
+# In[159]:
 
 
 # Temp code to create progress class
@@ -3220,10 +3291,17 @@ class progress_classobj():
                 'Building patterns based on learnt objects from theme images..',
                 'Saving built patterns for user selection..',
                 'Saving internal files for generation..',
-                'Preparing selected stylings for generations..',
                 'Done.']
 
-        elif self.at_step == 2: # Create textures
+        elif self.at_step == 2: # Prepare Stylings
+
+            # Initialising progress updates
+            # -----------------------------
+            self.all_progress_updates = [
+                'Preparing selected stylings for generations..',
+                'Done']
+
+        elif self.at_step == 3: # Create textures
 
             # Initialising progress updates
             # -----------------------------
@@ -3233,7 +3311,7 @@ class progress_classobj():
                 'Saving textures..',
                 'Done.']
 
-        elif self.at_step == 3: # Generate ideas
+        elif self.at_step == 4: # Generate ideas
 
             # Initialising progress updates
             # -----------------------------
@@ -3275,6 +3353,8 @@ class progress_classobj():
         if self.at_step == 1:
             d['curr_mode'] = 'Creating new patterns'
         elif self.at_step == 2:
+            d['curr_mode'] = 'Preparing Stylings'
+        elif self.at_step == 3:
             d['curr_mode'] = 'Creating textures'
         else:
             d['curr_mode'] = 'Generating ideas'
@@ -3305,41 +3385,40 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[217]:
+# In[160]:
 
 
 ##
 
 class create_new_patterns_threaded_task(threading.Thread):
-    def __init__(self,p_user_id,p_task_id,p_selected_style_names):
+    def __init__(self,p_user_id,p_task_id):
         super().__init__()
 
         # Initialisations
         # ---------------
         self.p_task_id = p_task_id
-        self.p_selected_style_names = p_selected_style_names
         self.progress = progress_classobj(p_task_id,1)
         self.p_user_id = p_user_id
 
         # For progress api
         # ----------------
-        global progress_api_dict
+        global progress_api_dict_newpatterns
         try:
-            del progress_api_dict[p_task_id]
+            del progress_api_dict_newpatterns[p_task_id]
         except:
             'do nothing'
 
-        progress_api_dict[p_task_id] = self.progress
+        progress_api_dict_newpatterns[p_task_id] = self.progress
 
 
     def run(self): # Run method probably overrides the inherited Threads run method
 
         # 1. Running the create new patterns function
         # -------------------------------------------
-        api_create_new_patterns(self.p_user_id,self.p_task_id,self.p_selected_style_names,self.progress)
+        api_create_new_patterns(self.p_user_id,self.p_task_id,self.progress)
 
 
-# In[218]:
+# In[161]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3348,7 +3427,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[219]:
+# In[162]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3357,6 +3436,8 @@ new_pattern_threads = {}
 class externalAPI_create_new_patterns(Resource):
 
     def post(self):
+
+        global new_pattern_threads
 
         ## Authenticating request
         ## ----------------------
@@ -3380,33 +3461,35 @@ class externalAPI_create_new_patterns(Resource):
                     parser = reqparse.RequestParser()
                     parser.add_argument('user_id')
                     parser.add_argument('task_id')
-                    parser.add_argument('selected_style_names')
                     args = parser.parse_args()
 
                     p_user_id = args['user_id']
                     p_task_id = args['task_id']
-                    p_selected_style_names = args['selected_style_names']
 
                     # Building master task url
                     # --------------------------
                     p_master_url = p_user_id + '/' + p_task_id
 
-                    # First trying to get np_status
-                    # -----------------------------
+
+                    # 1. CHECKING PATTERNS BUILD INITIATED OR NOT
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # -----------------------------------------------------
                     try:
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status.npy'
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status_newpatterns.npy'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
 
-                        # This means patterns already built
-                        # ---------------------------------
-                        return 'Invalid operation. Patterns already built for this task.', 500 #### Checked
+                        # This means pattern building has started or already built
+                        # --------------------------------------------------------
+                        return 'Invalid operation. Pattern building already initiated for this task.', 500 #### Checked
 
                     except:
 
-                        # This means there is no such file and new pattern build can begin.
-                        # This function really just starts the create new pattern thread class and assigns it to a global dict
-                        # ----------------------------------------------------------------------------------------------------
-                        global new_pattern_threads
+                        # All Good and can proceed
+                        # ()()()()()()()()()()()()()()()()()()()()()
+                        # ()()()()()()()()()()()()()()()()()()()()()
+                        # ------------------------------------------
+
                         try:
                             # Checking for parallel active thread
                             # -----------------------------------
@@ -3416,12 +3499,13 @@ class externalAPI_create_new_patterns(Resource):
                                 return 'Something went wrong, check progress for error.', 500 #### Checked
                         except:
                             print('API Create new patterns firing: ' + str(p_task_id))
+
                             try:
                                 del new_pattern_threads[p_task_id]
                             except:
                                 'do nothing'
 
-                            new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_user_id,p_task_id,p_selected_style_names)
+                            new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_user_id,p_task_id)
                             new_pattern_threads[p_task_id].start()
                             return 'Thread started', 200 #### Checked
 
@@ -3445,14 +3529,14 @@ class externalAPI_create_new_patterns(Resource):
 
 
 
-# ### 2. create new texture external API
+# ### 2. prepare stylings external API
 
-# In[220]:
+# In[163]:
 
 
 ##
 
-class create_textures_threaded_task(threading.Thread):
+class prepare_stylings_threaded_task(threading.Thread):
     def __init__(self,p_user_id,p_task_id,p_picked_ind_string):
         super().__init__()
 
@@ -3465,40 +3549,42 @@ class create_textures_threaded_task(threading.Thread):
 
         # For progress api
         # ----------------
-        global progress_api_dict
+        global progress_api_dict_prepare_stylings
         try:
-            del progress_api_dict[p_task_id]
+            del progress_api_dict_prepare_stylings[p_task_id]
         except:
             'do nothing'
 
-        progress_api_dict[p_task_id] = self.progress
+        progress_api_dict_prepare_stylings[p_task_id] = self.progress
 
     def run(self): # Run method probably overrides the inherited Threads run method
 
         # 1. Running the create textures function
-        # -------------------------------------------
-        api_create_textures(self.p_user_id,self.p_task_id,self.p_picked_ind_string,self.progress)
+        # ---------------------------------------
+        api_prepare_stylings(self.p_user_id,self.p_task_id,self.p_picked_ind_string,self.progress)
 
 
 
-# In[221]:
+# In[164]:
 
 
-# Creating a Main global dictionary to track progress of create textures task
-# ---------------------------------------------------------------------------
-global create_texture_threads
-create_texture_threads = {}
+# Creating a Main global dictionary to track progress of prepare stylings task
+# ----------------------------------------------------------------------------
+global prepare_stylings_threads
+prepare_stylings_threads = {}
 
 
-# In[222]:
+# In[165]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
 # -------------------------------------------------------
 
-class externalAPI_create_textures(Resource):
+class externalAPI_prepare_stylings(Resource):
 
     def post(self):
+
+        global prepare_stylings_threads
 
         ## Authenticating request
         ## ----------------------
@@ -3533,43 +3619,48 @@ class externalAPI_create_textures(Resource):
                     # --------------------------
                     p_master_url = p_user_id + '/' + p_task_id
 
-                    # First trying to get np_status
-                    # -----------------------------
-                    global create_texture_threads
 
+                    # 1. CHECKING PREPARE STYLING INITIATED OR NOT
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # -----------------------------------------------------
                     try:
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status.npy'
+
+                        # Will get here only if pattern build initiated
+                        # ---------------------------------------------
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status_preparestylings.npy'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
                         npstatus = np.load(f)[0,0]
 
-                        if npstatus == 1: # Good to go
-
-                            try:
-                                # Checking for parallel active thread
-                                # -----------------------------------
-                                if create_texture_threads[p_task_id].progress.curr_step >= 0:
-                                    return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 ## Checked
-                                else:
-                                    return 'Something went wrong, check progress for error.', 500
-                            except:
-                                print('API Create Texture firing: ' + str(p_task_id))
-                                try:
-                                    del create_texture_threads[p_task_id]
-                                except:
-                                    'do nothing'
-                                create_texture_threads[p_task_id] = create_textures_threaded_task(p_user_id,p_task_id,p_picked_ind_string)
-                                create_texture_threads[p_task_id].start()
-                                return 'Thread started', 200
-
-                        elif npstatus == 2:
-                            return 'Invalid operation. Textures already built for this task.', 500 #### Checked
-                        else:
-                            err_msg = 'Invalid operation. Something not right about the flow. Here is the npstatus: ' + str(npstatus)
-                            return err_msg, 500
+                        return "Styling preparation already initiated for this task.", 500
 
                     except:
 
-                        return 'Invalid operation. Looks like patterns not built for this task.', 500 #### Checked
+                        # All Good and can proceed
+                        # ()()()()()()()()()()()()()()()()()()()()()
+                        # ()()()()()()()()()()()()()()()()()()()()()
+                        # ------------------------------------------
+
+                        try:
+                            # Checking for parallel active thread
+                            # -----------------------------------
+                            if prepare_stylings_threads[p_task_id].progress.curr_step >= 0:
+                                return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 ## Checked
+                            else:
+                                return 'Something went wrong, check progress for error.', 500
+                        except:
+
+                            print('API Prepare Stylings firing: ' + str(p_task_id))
+
+                            try:
+                                del prepare_stylings_threads[p_task_id]
+                            except:
+                                'do nothing'
+                            prepare_stylings_threads[p_task_id] = prepare_stylings_threaded_task(p_user_id,p_task_id,p_picked_ind_string)
+                            prepare_stylings_threads[p_task_id].start()
+                            return 'Thread started', 200
+
+
                 else:
 
                     # Incorrect credentials
@@ -3589,9 +3680,175 @@ class externalAPI_create_textures(Resource):
 
 
 
-# ### 3. generate ideas external API
+# ### 3. create new texture external API
 
-# In[223]:
+# In[166]:
+
+
+##
+
+class create_textures_threaded_task(threading.Thread):
+    def __init__(self,p_user_id,p_task_id,p_picked_ind_string):
+        super().__init__()
+
+        # Initialisations
+        # ---------------
+        self.p_task_id = p_task_id
+        self.p_picked_ind_string = p_picked_ind_string
+        self.progress = progress_classobj(p_task_id,3)
+        self.p_user_id = p_user_id
+
+        # For progress api
+        # ----------------
+        global progress_api_dict_create_textures
+        try:
+            del progress_api_dict_create_textures[p_task_id]
+        except:
+            'do nothing'
+
+        progress_api_dict_create_textures[p_task_id] = self.progress
+
+    def run(self): # Run method probably overrides the inherited Threads run method
+
+        # 1. Running the create textures function
+        # -------------------------------------------
+        api_create_textures(self.p_user_id,self.p_task_id,self.p_picked_ind_string,self.progress)
+
+
+
+# In[167]:
+
+
+# Creating a Main global dictionary to track progress of create textures task
+# ---------------------------------------------------------------------------
+global create_texture_threads
+create_texture_threads = {}
+
+
+# In[168]:
+
+
+## MAIN function TO BE CALLED ON API for creating texture
+# -------------------------------------------------------
+
+class externalAPI_create_textures(Resource):
+
+    def post(self):
+
+        global create_texture_threads
+
+        ## Authenticating request
+        ## ----------------------
+        try:
+
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
+                    parser.add_argument('task_id')
+                    parser.add_argument('picked_ind_string')
+                    args = parser.parse_args()
+
+                    p_task_id = args['task_id']
+                    p_user_id = args['user_id']
+                    p_picked_ind_string = args['picked_ind_string']
+
+                    # Building master task url
+                    # --------------------------
+                    p_master_url = p_user_id + '/' + p_task_id
+
+
+                    # 1. CHECKING PATTERNS BUILD INITIATED OR NOT
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # -----------------------------------------------------
+                    try:
+                        # New patterns np status
+                        # ---------------------------
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status_newpatterns.npy'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+                        npstatus = np.load(f)[0,0]
+
+                        if npstatus != 2:
+                            return "Looks like pattern build is in progress. Wait until it ends.", 500
+
+                    except:
+
+                        return "Patterns not initiated for this task. Cannot proceed futher.", 500
+
+
+                    # 2. CHECKING CREATE TEXTURE INITIATED OR NOT
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # -----------------------------------------------------
+                    try:
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status_createtextures.npy'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+                        npstatus = np.load(f)[0,0]
+
+                        return "Create textures already initiated for this task.", 500
+
+                    except:
+
+                        # All Good and can proceed
+                        # ()()()()()()()()()()()()()()()()()()()()()
+                        # ()()()()()()()()()()()()()()()()()()()()()
+                        # ------------------------------------------
+
+                        try:
+                            # Checking for parallel active thread
+                            # -----------------------------------
+                            if create_texture_threads[p_task_id].progress.curr_step >= 0:
+                                return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 ## Checked
+                            else:
+                                return 'Something went wrong, check progress for error.', 500
+                        except:
+                            print('API Create Texture firing: ' + str(p_task_id))
+
+                            try:
+                                del create_texture_threads[p_task_id]
+                            except:
+                                'do nothing'
+
+                            create_texture_threads[p_task_id] = create_textures_threaded_task(p_user_id,p_task_id,p_picked_ind_string)
+                            create_texture_threads[p_task_id].start()
+                            return 'Thread started', 200
+
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+
+        except:
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
+
+
+
+# ### 4. generate ideas external API
+
+# In[169]:
 
 
 ##
@@ -3606,19 +3863,19 @@ class generate_ideas_threaded_task(threading.Thread):
         self.p_gen_id = p_gen_id
         self.p_task_board_name = p_task_board_name
         self.p_task_styling_prefix = p_task_styling_prefix
-        self.progress = progress_classobj(p_task_id,3)
+        self.progress = progress_classobj(p_task_id,4)
         self.p_no_options = p_no_options
         self.p_user_id = p_user_id
 
         # For progress api
         # ----------------
-        global progress_api_dict
+        global progress_api_dict_generate_ideas
         try:
-            del progress_api_dict[p_task_id]
+            del progress_api_dict_generate_ideas[p_task_id]
         except:
             'do nothing'
 
-        progress_api_dict[p_task_id] = self.progress
+        progress_api_dict_generate_ideas[p_task_id] = self.progress
 
     def run(self): # Run method probably overrides the inherited Threads run method
 
@@ -3629,7 +3886,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[224]:
+# In[170]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -3638,7 +3895,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[225]:
+# In[171]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3647,6 +3904,8 @@ generate_ideas_threads = {}
 class externalAPI_generate_ideas(Resource):
 
     def post(self):
+
+        global generate_ideas_threads
 
         ## Authenticating request
         ## ----------------------
@@ -3688,36 +3947,76 @@ class externalAPI_generate_ideas(Resource):
                     p_master_url = p_user_id + '/' + p_task_id
 
 
-                    # This function really just starts the create new pattern thread class and assigns it to a global dict
-                    # ----------------------------------------------------------------------------------------------------
-                    global generate_ideas_threads
+                    # 1. CHECKING IF CREATE TEXTURES AND PREPARE STYLINGS COMPLETE OR NOT
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    # -----------------------------------------------------
 
+                    # 1.1 CHECKING PREPARE STYLINGS INITIATION
+                    # -----------------------------------------------------
                     try:
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status.npy'
+                        # Prepare stylings np status
+                        # ---------------------------
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status_preparestylings.npy'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-                        npstatus = np.load(f)[0,0]
+                        npstatus_preparestylings = np.load(f)[0,0]
 
-                        if npstatus == 1:
-                            return 'Invalid operation. Textures not built for this task.', 500 ## Checked
-                        elif npstatus == 2:
-                            try:
-                                # Checking for parallel thread
-                                # ----------------------------
-                                if generate_ideas_threads[p_task_id].progress.curr_step >= 0:
-                                    return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 #### Checked
-                                else:
-                                    return 'Something went wrong, check progress for error.', 500
-                            except:
-                                print('API Generate Ideas firing: ' + str(p_task_id))
-                                try:
-                                    del generate_ideas_threads[p_task_id]
-                                except:
-                                    'do nothing'
-                                generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_user_id,p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_options)
-                                generate_ideas_threads[p_task_id].start()
-                                return 'Thread started', 200
+                        # IF STYLINGS PREPARATION IN PROGRESS
+                        # -----------------------------------
+                        if npstatus_preparestylings == 1:
+                            return "Stylings in preparation. Please wait on.", 500
+
                     except:
-                        return 'Invalid operation. Looks like patterns are not built for this task yet.', 500 #### Checked
+
+                        return "Stylings not prepared for this task. Cannot proceed futher.", 500
+
+                    # 1.2 CHECKING CREATE TEXTURE INITIATION
+                    # -----------------------------------------------------
+                    try:
+                        # Create texture np status
+                        # ---------------------------
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(p_master_url) + '/numpy/np_status_createtextures.npy'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+                        npstatus_createtextures = np.load(f)[0,0]
+
+                        # IF CREATE TEXTURES IN PROGRESS
+                        # ------------------------------
+                        if npstatus_createtextures == 1:
+                            return "Texture creation in preparation. Please wait on.", 500
+
+                    except:
+
+                        return "Textures not created for this task. Cannot proceed futher.", 500
+
+                    # 1.3 ACTUAL CHECK
+                    # -----------------------------------------------------
+                    if npstatus_preparestylings == 2 and npstatus_createtextures == 2:
+
+                        # All Good and can proceed
+                        # ()()()()()()()()()()()()()()()()()()()()()
+                        # ()()()()()()()()()()()()()()()()()()()()()
+                        # ------------------------------------------
+                        try:
+                            # Checking for parallel thread
+                            # ----------------------------
+                            if generate_ideas_threads[p_task_id].progress.curr_step >= 0:
+                                return 'Invalid operation. Parallel operation already running. Check via progress API.', 500 #### Checked
+                            else:
+                                return 'Something went wrong, check progress for error.', 500
+                        except:
+                            print('API Generate Ideas firing: ' + str(p_task_id))
+
+                            try:
+                                del generate_ideas_threads[p_task_id]
+                            except:
+                                'do nothing'
+                            generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_user_id,p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_options)
+                            generate_ideas_threads[p_task_id].start()
+                            return 'Thread started', 200
+                    else:
+
+                        return 'Error. Either Prepare styling or create texture statuses is not 2.', 500
+
                 else:
 
                     # Incorrect credentials
@@ -3739,7 +4038,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[226]:
+# In[172]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -3768,20 +4067,37 @@ class externalAPI_get_all_progress_updates(Resource):
 
                     # For progress api
                     # ----------------
-                    global progress_api_dict
+                    global progress_api_dict_newpatterns
+                    global progress_api_dict_prepare_stylings
+                    global progress_api_dict_create_textures
+                    global progress_api_dict_generate_ideas
+
 
                     # Setting up key values to accept
                     # -------------------------------
                     parser = reqparse.RequestParser()
                     parser.add_argument('task_id')
+                    parser.add_argument('prog_id')
+
                     args = parser.parse_args()
                     p_task_id = args['task_id']
+                    p_prog_id = args['prog_id']
 
                     # Returning data
                     # --------------
-                    print('API Get All Progress Status firing: ' + str(p_task_id))
+                    print('API Get All Progress Status firing: ' + str(p_task_id) + ' prog id: ' + str(p_prog_id))
+
                     try:
-                        d = progress_api_dict[p_task_id].getallprogressstatuses()
+
+                        if str(p_prog_id) == str(1):
+                            d = progress_api_dict_newpatterns[p_task_id].getallprogressstatuses()
+                        elif str(p_prog_id) == str(2):
+                            d = progress_api_dict_prepare_stylings[p_task_id].getallprogressstatuses()
+                        elif str(p_prog_id) == str(3):
+                            d = progress_api_dict_create_textures[p_task_id].getallprogressstatuses()
+                        elif str(p_prog_id) == str(4):
+                            d = progress_api_dict_generate_ideas[p_task_id].getallprogressstatuses()
+
                         return jsonify(d)
 
                     except KeyError:
@@ -3804,7 +4120,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 
 
-# In[227]:
+# In[173]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -3833,46 +4149,101 @@ class externalAPI_get_progress(Resource):
 
                     # For progress api
                     # ----------------
-                    global progress_api_dict
-                    global create_texture_threads
+                    global progress_api_dict_newpatterns
+                    global progress_api_dict_prepare_stylings
+                    global progress_api_dict_create_textures
+                    global progress_api_dict_generate_ideas
+
+                    # Threaded progress
+                    # -----------------
                     global new_pattern_threads
+                    global prepare_stylings_threads
+                    global create_texture_threads
                     global generate_ideas_threads
 
                     # Setting up key values to accept
                     # -------------------------------
                     parser = reqparse.RequestParser()
                     parser.add_argument('task_id')
+                    parser.add_argument('prog_id')
+
                     args = parser.parse_args()
                     p_task_id = args['task_id']
+                    p_prog_id = args['prog_id']
 
-                    print('API Get Progress firing: ' + str(p_task_id))
+                    print('API Get Progress firing: ' + str(p_task_id) + ' prog id: ' + str(p_prog_id))
+
                     # Returning data
                     # --------------
                     try:
-                        d = progress_api_dict[p_task_id].dict_out()
+
+                        if str(p_prog_id) == str(1):
+                            d = progress_api_dict_newpatterns[p_task_id].dict_out()
+                            # Updating time left
+                            # ------------------
+                            try:
+                                curr_time = time.time()
+                                if curr_time > progress_api_dict_newpatterns[p_task_id].process_eta_end_time:
+                                    d['curr_process_time_remaining'] = 'Finishing up anytime..'
+                                else:
+                                    curr_time_left = progress_api_dict_newpatterns[p_task_id].process_eta_end_time - curr_time
+                                    d['curr_process_time_remaining'] = printeta(curr_time_left)
+                            except:
+                                d['curr_process_time_remaining'] = 'ETA Not Available'
+
+                        elif str(p_prog_id) == str(2):
+                            d = progress_api_dict_prepare_stylings[p_task_id].dict_out()
+                            # Updating time left
+                            # ------------------
+                            try:
+                                curr_time = time.time()
+                                if curr_time > progress_api_dict_prepare_stylings[p_task_id].process_eta_end_time:
+                                    d['curr_process_time_remaining'] = 'Finishing up anytime..'
+                                else:
+                                    curr_time_left = progress_api_dict_prepare_stylings[p_task_id].process_eta_end_time - curr_time
+                                    d['curr_process_time_remaining'] = printeta(curr_time_left)
+                            except:
+                                d['curr_process_time_remaining'] = 'ETA Not Available'
+
+                        elif str(p_prog_id) == str(3):
+                            d = progress_api_dict_create_textures[p_task_id].dict_out()
+                            # Updating time left
+                            # ------------------
+                            try:
+                                curr_time = time.time()
+                                if curr_time > progress_api_dict_create_textures[p_task_id].process_eta_end_time:
+                                    d['curr_process_time_remaining'] = 'Finishing up anytime..'
+                                else:
+                                    curr_time_left = progress_api_dict_create_textures[p_task_id].process_eta_end_time - curr_time
+                                    d['curr_process_time_remaining'] = printeta(curr_time_left)
+                            except:
+                                d['curr_process_time_remaining'] = 'ETA Not Available'
+
+                        elif str(p_prog_id) == str(4):
+                            d = progress_api_dict_generate_ideas[p_task_id].dict_out()
+                            # Updating time left
+                            # ------------------
+                            try:
+                                curr_time = time.time()
+                                if curr_time > progress_api_dict_generate_ideas[p_task_id].process_eta_end_time:
+                                    d['curr_process_time_remaining'] = 'Finishing up anytime..'
+                                else:
+                                    curr_time_left = progress_api_dict_generate_ideas[p_task_id].process_eta_end_time - curr_time
+                                    d['curr_process_time_remaining'] = printeta(curr_time_left)
+                            except:
+                                d['curr_process_time_remaining'] = 'ETA Not Available'
 
                         # Updating thread status
                         # ----------------------
                         if d['mode_number'] == 1:
                             d['thread_status'] = new_pattern_threads[p_task_id].isAlive()
                         elif d['mode_number'] == 2:
+                            d['thread_status'] = prepare_stylings_threads[p_task_id].isAlive()
+                        elif d['mode_number'] == 3:
                             d['thread_status'] = create_texture_threads[p_task_id].isAlive()
                         else:
                             d['thread_status'] = generate_ideas_threads[p_task_id].isAlive()
 
-                        # Updating time left
-                        # ------------------
-                        try:
-                            curr_time = time.time()
-
-                            if curr_time > progress_api_dict[p_task_id].process_eta_end_time:
-                                d['curr_process_time_remaining'] = 'Finishing up anytime..'
-                            else:
-                                curr_time_left = progress_api_dict[p_task_id].process_eta_end_time - curr_time
-                                d['curr_process_time_remaining'] = printeta(curr_time_left)
-
-                        except:
-                            d['curr_process_time_remaining'] = 'ETA Not Available'
 
                         # Returning d
                         # -----------
@@ -3899,7 +4270,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[228]:
+# In[174]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -3931,6 +4302,7 @@ class externalAPI_get_task_status(Resource):
                     parser = reqparse.RequestParser()
                     parser.add_argument('user_id')
                     parser.add_argument('task_id')
+
                     args = parser.parse_args()
                     p_user_id = args['user_id']
                     p_task_id = args['task_id']
@@ -3940,22 +4312,45 @@ class externalAPI_get_task_status(Resource):
                     master_url = p_user_id + '/' + p_task_id
 
                     d = {}
+
                     print('API Get Task Status firing: ' + str(master_url))
+
+                    # Getting all status
+                    # ------------------
+                    # np_status_newpatterns, np_status_preparestylings, np_status_createtextures
+
+                    # 1. New patterns
+                    # ---------------
                     try:
-                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_url) + '/numpy/np_status.npy'
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_url) + '/numpy/np_status_newpatterns.npy'
                         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
-                        npstatus = np.load(f)[0,0]
-
-                        if npstatus == 1: # Patterns done, but textures NOT done.
-                            d['task_status'] = 'ok for textures'
-                            return jsonify(d) ## Checked
-
-                        elif npstatus == 2: # Textures done and can generate ideas.
-                            d['task_status'] = 'ok for generation'
-                            return jsonify(d) ## Checked
+                        d['new_patterns'] = int(np.load(f)[0,0])
                     except:
+                        d['new_patterns'] = 0
 
-                        return 'Invalid task details.', 500 #### Checked
+
+                    # 2. Prepare stylings
+                    # ---------------
+                    try:
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_url) + '/numpy/np_status_preparestylings.npy'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+                        d['prepare_stylings'] = int(np.load(f)[0,0])
+                    except:
+                        d['prepare_stylings'] = 0
+
+
+                    # 3. Create texture
+                    # ------------------
+                    try:
+                        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_url) + '/numpy/np_status_createtextures.npy'
+                        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+                        d['create_textures'] = int(np.load(f)[0,0])
+                    except:
+                        d['create_textures'] = 0
+
+
+                    return jsonify(d)
+
                 else:
 
                     # Incorrect credentials
@@ -3978,7 +4373,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[229]:
+# In[175]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4051,7 +4446,7 @@ class externalAPI_send_range(Resource):
 
 
 
-# In[230]:
+# In[176]:
 
 
 ## MAIN function TO BE CALLED for getting all patterns URL
@@ -4132,7 +4527,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
 
 
-# In[231]:
+# In[177]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4223,7 +4618,7 @@ class externalAPI_get_all_stylings_url(Resource):
 
 
 
-# In[238]:
+# In[178]:
 
 
 ## MAIN function code to get in an incoming wix image URL and save it in themes
@@ -4342,7 +4737,7 @@ class externalAPI_save_wix_image(Resource):
 
 # # running the external api functions
 
-# In[239]:
+# In[179]:
 
 
 app = Flask(__name__)
@@ -4351,6 +4746,7 @@ api = Api(app)
 # Adding resource
 # ---------------
 api.add_resource(externalAPI_create_new_patterns, '/newpatterns') # Route
+api.add_resource(externalAPI_prepare_stylings, '/preparestylings') # Route
 api.add_resource(externalAPI_create_textures, '/createtextures') # Route
 api.add_resource(externalAPI_generate_ideas, '/generateideas') # Route
 api.add_resource(externalAPI_get_progress, '/getprogress') # Route
@@ -4362,7 +4758,7 @@ api.add_resource(externalAPI_get_all_stylings_url, '/getallstylingsurl') # Route
 api.add_resource(externalAPI_save_wix_image, '/saveimagefromwixurl') # Route
 
 
-# In[240]:
+# In[180]:
 
 
 global vm_or_local
