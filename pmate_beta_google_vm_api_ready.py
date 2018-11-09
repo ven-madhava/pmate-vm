@@ -202,7 +202,7 @@ def get_images_from_storage(parent_dir,output_mode):
 
     for b in blobs:
 
-        if '.jpg' in str(b.name) or '.jpeg' in str(b.name) or '.png' in str(b.name):
+        if '.jpg' in str(b.name).lower() or '.jpeg' in str(b.name).lower() or '.png' in str(b.name).lower():
 
             counter += 1
             blob_curr = bucket.blob(str(b.name))
@@ -246,7 +246,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
     m = len(xin)
     start_time = time.time()
     d = {}
-    small_w, small_h = 100, 128
+    small_w, small_h = 146, 180
 
 
     # Itering through the list / array and saving them to storage
@@ -4798,7 +4798,7 @@ class externalAPI_get_all_stylings_url(Resource):
                         counter = 0
                         d = {}
                         for b in blobs:
-                            if '.jpg' in str(b.name):
+                            if '.jpg' in str(b.name).lower():
 
                                 # Getting image name
                                 # ------------------
@@ -4895,7 +4895,7 @@ class externalAPI_save_wix_image(Resource):
                         # 2. Getting image from wix URL
                         # -----------------------------
                         for i_name in p_wix_url.split('/'):
-                            if '.jpg' in i_name or '.jpeg' in i_name or '.png' in i_name:
+                            if '.jpg' in i_name.lower() or '.jpeg' in i_name.lower() or '.png' in i_name.lower():
                                 image_location_wix = str(i_name)
                                 break
                         image_url = 'https://static.wixstatic.com/media/' + image_location_wix
