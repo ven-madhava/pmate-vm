@@ -1,7 +1,5 @@
 # 9 Nov
-# Smaller all patterns save
-
-
+# Recheked combo
 
 # Imports
 # -------
@@ -39,7 +37,7 @@ from flask_jsonpify import jsonify
 
 # # GCS functions
 
-# In[77]:
+# In[10]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -53,7 +51,7 @@ else:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json"
 
 
-# In[78]:
+# In[11]:
 
 
 
@@ -94,6 +92,7 @@ def get_rangeboard_urls(user_id,task_id):
     for b in blobs:
         if 'downloadable_range_boards.pdf' in b.name:
             counter += 1
+            #b.make_public()
             d[counter] = b.public_url
 
     if counter >= 1:
@@ -104,7 +103,7 @@ def get_rangeboard_urls(user_id,task_id):
         return "NO TASKS FOUND", 500
 
 
-# In[79]:
+# In[12]:
 
 
 # Getting task ids from GCS for a given user id
@@ -164,7 +163,7 @@ def get_task_ids(user_id):
         return "NO TASKS FOUND", 500
 
 
-# In[80]:
+# In[15]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -225,7 +224,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[81]:
+# In[16]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -246,7 +245,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
     m = len(xin)
     start_time = time.time()
     d = {}
-    small_w, small_h = 146, 180
+    small_w, small_h = 138, 180
 
 
     # Itering through the list / array and saving them to storage
@@ -332,7 +331,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[82]:
+# In[17]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -408,7 +407,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[83]:
+# In[18]:
 
 
 # protomate functions to get  progress eta
@@ -463,7 +462,7 @@ def get_api_key():
     return key
 
 
-# In[84]:
+# In[19]:
 
 
 # protomate function to get block images
@@ -503,7 +502,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[85]:
+# In[20]:
 
 
 # protomate kmeans function
@@ -563,7 +562,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[86]:
+# In[21]:
 
 
 # protomate recurring kmeans function
@@ -591,7 +590,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[87]:
+# In[22]:
 
 
 # 1
@@ -669,7 +668,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[88]:
+# In[23]:
 
 
 # 2
@@ -770,7 +769,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[89]:
+# In[24]:
 
 
 # 2.1
@@ -862,7 +861,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[90]:
+# In[25]:
 
 
 # 3
@@ -961,7 +960,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[91]:
+# In[26]:
 
 
 # 3.1
@@ -1011,7 +1010,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[92]:
+# In[27]:
 
 
 # 4
@@ -1085,7 +1084,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[93]:
+# In[28]:
 
 
 # 4.1
@@ -1157,7 +1156,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[94]:
+# In[29]:
 
 
 # 4.2
@@ -1238,7 +1237,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[95]:
+# In[30]:
 
 
 # 5
@@ -1364,7 +1363,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[96]:
+# In[31]:
 
 
 # 5.1
@@ -1453,7 +1452,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[97]:
+# In[32]:
 
 
 # 5.2
@@ -1553,7 +1552,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[98]:
+# In[33]:
 
 
 # 5.3
@@ -1664,7 +1663,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[99]:
+# In[34]:
 
 
 # 6
@@ -1788,7 +1787,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[100]:
+# In[35]:
 
 
 # 6.1
@@ -1852,7 +1851,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[101]:
+# In[36]:
 
 
 # 7
@@ -2074,7 +2073,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[102]:
+# In[37]:
 
 
 # 7.1
@@ -2294,8 +2293,8 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
             else:
                 choice_b = int(np.random.choice(choice_choices, p = choice_probs))
 
-    ### Woven pants, shorts, skirts, shirts - across all depts
-    elif category == 7 or category == 27 or category == 15 or category == 35 or category == 16 or category == 36 or category == 10 or category == 30 or category == 12 or category == 32 or category == 18 or category == 38 or category == 14 or category == 34:
+    ### Woven pants, shorts, skirts - GIRLS AND WOMENS
+    elif category == 7 or category == 27 or category == 10 or category == 30 or category == 12 or category == 32:
 
         # Setting choice probabilities
         # ----------------------------
@@ -2328,6 +2327,122 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
             # Setting bblock based on gblock choice
             # -------------------------------------
             if choice_g == 0 or choice_g == 1 or choice_g == 2:
+                choice_b = 5
+            else:
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+    ### Woven pants, jeans - BOYS and MENS
+    elif category == 15 or category == 35 or category == 16 or category == 36:
+
+        # Setting choice probabilities
+        # ----------------------------
+        ch_0 = 0.2 # print
+        ch_1 = 0.0 # stripes
+        ch_2 = 0.2 # checks
+        ch_3 = 0.0 # melange
+        ch_4 = 0.3 # grainy
+        ch_5 = 0.3 # colors
+        choice_probs = [ch_0,ch_1,ch_2,ch_3,ch_4,ch_5]
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = int(np.random.choice(choice_choices, p = choice_probs))
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+                choice_b = 5
+            else:
+                choice_g = 5
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+        else:
+            choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0 or choice_g == 2:
+                choice_b = 5
+            else:
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+
+
+     ### Woven shorts - BOYS and MENS
+    elif  category == 18 or category == 38:
+
+        # Setting choice probabilities
+        # ----------------------------
+        ch_0 = 0.2 # print
+        ch_1 = 0.2 # stripes
+        ch_2 = 0.5 # checks
+        ch_3 = 0.0 # melange
+        ch_4 = 0.0 # grainy
+        ch_5 = 0.1 # colors
+        choice_probs = [ch_0,ch_1,ch_2,ch_3,ch_4,ch_5]
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = int(np.random.choice(choice_choices, p = choice_probs))
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+                choice_b = 5
+            else:
+                choice_g = 5
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+        else:
+            choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 0 or choice_g == 1 or choice_g == 2:
+                choice_b = 5
+            else:
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+    ### Woven shirts - BOYS and MENS
+    elif  category == 14 or category == 34:
+
+        # Setting choice probabilities
+        # ----------------------------
+        ch_0 = 0.1 # print
+        ch_1 = 0.0 # stripes
+        ch_2 = 0.9 # checks
+        ch_3 = 0.0 # melange
+        ch_4 = 0.0 # grainy
+        ch_5 = 0.0 # colors
+        choice_probs = [ch_0,ch_1,ch_2,ch_3,ch_4,ch_5]
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = int(np.random.choice(choice_choices, p = choice_probs))
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+                choice_b = 5
+            else:
+                choice_g = 5
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+        else:
+            choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 2:
                 choice_b = 5
             else:
                 choice_b = int(np.random.choice(choice_choices, p = choice_probs))
@@ -2393,7 +2508,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[103]:
+# In[38]:
 
 
 # 8
@@ -2551,7 +2666,7 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
 
 
 
-# In[104]:
+# In[39]:
 
 
 # 8.1
@@ -2737,7 +2852,7 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 
 # # Ven_API functions
 
-# In[105]:
+# In[70]:
 
 
 # API 1 Function
@@ -2902,7 +3017,7 @@ def api_create_new_patterns(user_id,task_id,progress):
     return 'All good.', 200
 
 
-# In[106]:
+# In[71]:
 
 
 # API 2 Function
@@ -2994,7 +3109,7 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
 
 
 
-# In[107]:
+# In[72]:
 
 
 # API 3 function
@@ -3129,7 +3244,7 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
     return 'All good.', 200
 
 
-# In[108]:
+# In[73]:
 
 
 # API 4 function
@@ -3375,7 +3490,7 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
 
 # # Actual Ven API endpoints
 
-# In[109]:
+# In[74]:
 
 
 # Creating a global progress dict to help with progress API
@@ -3394,7 +3509,7 @@ global progress_api_dict_generate_ideas
 progress_api_dict_generate_ideas = {}
 
 
-# In[110]:
+# In[75]:
 
 
 # Temp code to create progress class
@@ -3516,7 +3631,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[111]:
+# In[76]:
 
 
 ##
@@ -3549,7 +3664,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_user_id,self.p_task_id,self.progress)
 
 
-# In[112]:
+# In[77]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3558,7 +3673,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[113]:
+# In[78]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3662,7 +3777,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. prepare stylings external API
 
-# In[114]:
+# In[79]:
 
 
 ##
@@ -3696,7 +3811,7 @@ class prepare_stylings_threaded_task(threading.Thread):
 
 
 
-# In[115]:
+# In[80]:
 
 
 # Creating a Main global dictionary to track progress of prepare stylings task
@@ -3705,7 +3820,7 @@ global prepare_stylings_threads
 prepare_stylings_threads = {}
 
 
-# In[116]:
+# In[81]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3813,7 +3928,7 @@ class externalAPI_prepare_stylings(Resource):
 
 # ### 3. create new texture external API
 
-# In[117]:
+# In[82]:
 
 
 ##
@@ -3847,7 +3962,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[118]:
+# In[83]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -3856,7 +3971,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[119]:
+# In[84]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3979,7 +4094,7 @@ class externalAPI_create_textures(Resource):
 
 # ### 4. generate ideas external API
 
-# In[120]:
+# In[85]:
 
 
 ##
@@ -4017,7 +4132,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[121]:
+# In[86]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -4026,7 +4141,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[122]:
+# In[87]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4169,7 +4284,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[123]:
+# In[88]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -4251,7 +4366,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 
 
-# In[124]:
+# In[89]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -4401,7 +4516,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[125]:
+# In[90]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -4504,7 +4619,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[126]:
+# In[91]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4577,7 +4692,7 @@ class externalAPI_send_range(Resource):
 
 
 
-# In[127]:
+# In[92]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4663,7 +4778,7 @@ class externalAPI_get_range_url(Resource):
 
 
 
-# In[128]:
+# In[93]:
 
 
 ## MAIN function TO BE CALLED for getting range PDF URL
@@ -4744,7 +4859,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
 
 
-# In[129]:
+# In[94]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4835,7 +4950,7 @@ class externalAPI_get_all_stylings_url(Resource):
 
 
 
-# In[130]:
+# In[95]:
 
 
 ## MAIN function code to get in an incoming wix image URL and save it in themes
@@ -4953,7 +5068,7 @@ class externalAPI_save_wix_image(Resource):
 
 
 
-# In[131]:
+# In[96]:
 
 
 ## MAIN function TO BE CALLED for getting themes URL
@@ -5014,7 +5129,7 @@ class externalAPI_get_all_themes_url(Resource):
                         blobs = bucket.list_blobs(prefix=master_url, delimiter='/')
 
                         for b in blobs:
-                            #b.make_public() Themes made public on wixuploadsitself
+                            #b.make_public()# Themes made public on wixuploadsitself
                             counter += 1
                             d[counter] = str(b.public_url)
 
@@ -5042,7 +5157,7 @@ class externalAPI_get_all_themes_url(Resource):
 
 
 
-# In[132]:
+# In[97]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -5079,6 +5194,8 @@ class externalAPI_get_task_ids(Resource):
                     # Getting params
                     # --------------
                     p_user_id = args['user_id']
+
+                    print('API get all task ids firing: ' + str(p_user_id))
 
 
                     try:
@@ -5118,7 +5235,7 @@ class externalAPI_get_task_ids(Resource):
 
 
 
-# In[133]:
+# In[98]:
 
 
 ## MAIN function code to get all rangeboard pdf URLS associated with a userid,task
@@ -5157,6 +5274,8 @@ class externalAPI_get_all_rangeboard_urls(Resource):
                     # --------------
                     p_user_id = args['user_id']
                     p_task_id = args['task_id']
+
+                    print('API get all rangeboards URL firing: ' + str(p_user_id) + ', task_id: ' + str(p_task_id))
 
 
                     try:
@@ -5198,7 +5317,7 @@ class externalAPI_get_all_rangeboard_urls(Resource):
 
 # # running the external api functions
 
-# In[134]:
+# In[99]:
 
 
 app = Flask(__name__)
@@ -5223,7 +5342,7 @@ api.add_resource(externalAPI_get_all_themes_url, '/getthemesurl') # Route
 api.add_resource(externalAPI_get_all_rangeboard_urls, '/getallrangeboardsurls') # Route
 
 
-# In[135]:
+# In[100]:
 
 
 global vm_or_local
