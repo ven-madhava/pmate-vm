@@ -1,6 +1,6 @@
-# 8 Nov
-# made themes, ranges public while creation
-# Added get all rangeboards punlic URL
+# 9 Nov
+# Smaller all patterns save
+
 
 
 # Imports
@@ -246,6 +246,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
     m = len(xin)
     start_time = time.time()
     d = {}
+    small_w, small_h = 100, 128
 
 
     # Itering through the list / array and saving them to storage
@@ -253,6 +254,17 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
     for i in range(len(xin)):
 
         img = xin[i] # Works for both numpy array and list
+
+        # Resizing ops
+        # ------------
+        if '_all_patterns' in image_prefix:
+
+            # Saving just a smaller swatch to load sooner
+            # -------------------------------------------
+            try:
+                img = cv2.resize(img, dsize=(small_w, small_h), interpolation=cv2.INTER_CUBIC)
+            except:
+                'code'
 
         # Using temp file for storage ops
         # -------------------------------
