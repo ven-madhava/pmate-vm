@@ -1,5 +1,7 @@
-# 9 Nov
-# Recheked combo
+# 10 Nov
+# Added code for task files boards and its API
+# -------------------------------------------
+
 
 # Imports
 # -------
@@ -37,7 +39,7 @@ from flask_jsonpify import jsonify
 
 # # GCS functions
 
-# In[10]:
+# In[135]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -51,7 +53,7 @@ else:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json"
 
 
-# In[11]:
+# In[136]:
 
 
 
@@ -103,7 +105,7 @@ def get_rangeboard_urls(user_id,task_id):
         return "NO TASKS FOUND", 500
 
 
-# In[12]:
+# In[137]:
 
 
 # Getting task ids from GCS for a given user id
@@ -163,7 +165,7 @@ def get_task_ids(user_id):
         return "NO TASKS FOUND", 500
 
 
-# In[15]:
+# In[138]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -224,7 +226,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[16]:
+# In[139]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -331,7 +333,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[17]:
+# In[140]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -407,7 +409,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[18]:
+# In[141]:
 
 
 # protomate functions to get  progress eta
@@ -462,7 +464,7 @@ def get_api_key():
     return key
 
 
-# In[19]:
+# In[142]:
 
 
 # protomate function to get block images
@@ -502,7 +504,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[20]:
+# In[143]:
 
 
 # protomate kmeans function
@@ -562,7 +564,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[21]:
+# In[144]:
 
 
 # protomate recurring kmeans function
@@ -590,7 +592,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
 
 # # Protomate main functions
 
-# In[22]:
+# In[145]:
 
 
 # 1
@@ -668,7 +670,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[23]:
+# In[146]:
 
 
 # 2
@@ -769,7 +771,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[24]:
+# In[147]:
 
 
 # 2.1
@@ -861,7 +863,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[25]:
+# In[148]:
 
 
 # 3
@@ -960,7 +962,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[26]:
+# In[149]:
 
 
 # 3.1
@@ -1010,7 +1012,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[27]:
+# In[150]:
 
 
 # 4
@@ -1084,7 +1086,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[28]:
+# In[151]:
 
 
 # 4.1
@@ -1156,7 +1158,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[29]:
+# In[152]:
 
 
 # 4.2
@@ -1237,7 +1239,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[30]:
+# In[153]:
 
 
 # 5
@@ -1363,7 +1365,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[31]:
+# In[154]:
 
 
 # 5.1
@@ -1452,7 +1454,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[32]:
+# In[155]:
 
 
 # 5.2
@@ -1552,7 +1554,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[33]:
+# In[156]:
 
 
 # 5.3
@@ -1663,7 +1665,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[34]:
+# In[157]:
 
 
 # 6
@@ -1787,7 +1789,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[35]:
+# In[158]:
 
 
 # 6.1
@@ -1814,7 +1816,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
 
         # Correcting segments
         # -------------------
-        bl_d = 100
+        bl_d = 50
         gl_u,gl_d = bl_d,200
         w_u = gl_d
         black_positions = (curr_seg < bl_d).astype(int)
@@ -1851,7 +1853,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[36]:
+# In[159]:
 
 
 # 7
@@ -2073,7 +2075,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[37]:
+# In[160]:
 
 
 # 7.1
@@ -2508,7 +2510,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[38]:
+# In[161]:
 
 
 # 8
@@ -2569,6 +2571,16 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
     cat_dict[38] = 'MENS WOVEN SHORTS'
     cat_dict[39] = 'MENS KNIT SHORTS'
 
+    # For prints and textures
+    # -----------------------
+    cat_dict[100] = 'STYLINGS'
+    cat_dict[101] = 'PRINTS'
+    cat_dict[102] = 'STRIPES'
+    cat_dict[103] = 'CHECKS'
+    cat_dict[104] = 'MELANGE'
+    cat_dict[105] = 'COLORS'
+
+
     sty_dict = {}
     sty_dict[0] = 'GWDR'
     sty_dict[1] = 'GKDR'
@@ -2610,6 +2622,15 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
     sty_dict[37] = 'MKP'
     sty_dict[38] = 'MWST'
     sty_dict[39] = 'MKST'
+
+    # For prints and textures
+    # -----------------------
+    sty_dict[100] = 'STYLE'
+    sty_dict[101] = 'PRINT'
+    sty_dict[102] = 'STRIPE'
+    sty_dict[103] = 'CHECK'
+    sty_dict[104] = 'MELANGE'
+    sty_dict[105] = 'COLOR'
 
 
 
@@ -2666,7 +2687,7 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
 
 
 
-# In[39]:
+# In[162]:
 
 
 # 8.1
@@ -2850,9 +2871,70 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 
 
 
+# In[163]:
+
+
+# 8.2
+# API read ##
+# Main function to help build a task boards
+# -----------------------------------------
+
+def save_patterns_textures_stylings_as_singlepdf(user_id,task_id,picked_patterns,stripes,checks,melange,colors):
+
+
+    # For prints and textures
+    # -----------------------
+    #cat_dict[100] = 'STYLINGS'
+    #cat_dict[101] = 'PRINTS'
+    #cat_dict[102] = 'STRIPES'
+    #cat_dict[103] = 'CHECKS'
+    #cat_dict[104] = 'MELANGE'
+    #cat_dict[105] = 'COLORS'
+
+    # Setting master URL
+    # ------------------
+    master_task_url = user_id + '/' + task_id
+
+    # 1. Collecting linemarkings
+    # --------------------------
+    storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_linemarkings.npy'
+    f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+    lines = np.load(f)
+
+    # 2. Category header initialisations
+    # ----------------------------------
+    no_styles = lines.shape[0]
+    no_prints = picked_patterns.shape[0]
+    no_stripes = stripes.shape[0]
+    no_checks = checks.shape[0]
+    no_melange = melange.shape[0]
+    no_colors = colors.shape[0]
+
+    total_shape = no_styles + no_prints + no_stripes + no_checks + no_melange + no_colors
+
+    # 3. Setting category numpy array to pass
+    # ---------------------------------------
+    cats = np.zeros((total_shape, 1)).astype(int)
+    cats[0:no_styles] = 100
+    cats[no_styles:no_styles + no_prints] = 101
+    cats[no_styles + no_prints:no_styles + no_prints + no_stripes] = 102
+    cats[no_styles + no_prints + no_stripes:no_styles + no_prints + no_stripes + no_checks] = 103
+    cats[no_styles + no_prints + no_stripes + no_checks:no_styles + no_prints + no_stripes + no_checks + no_melange] = 104
+    cats[no_styles + no_prints + no_stripes + no_checks + no_melange:no_styles + no_prints + no_stripes + no_checks + no_melange + no_colors] = 105
+
+    # 4. Building concatenated array to pass to feedbuild
+    # ----------------------------------------------------
+    all_images = np.concatenate((lines,picked_patterns,stripes,checks,melange,colors), axis = 0)
+
+    return all_images, list(cats[:,0])
+
+
+
+
+
 # # Ven_API functions
 
-# In[70]:
+# In[164]:
 
 
 # API 1 Function
@@ -3017,7 +3099,7 @@ def api_create_new_patterns(user_id,task_id,progress):
     return 'All good.', 200
 
 
-# In[71]:
+# In[165]:
 
 
 # API 2 Function
@@ -3109,7 +3191,7 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
 
 
 
-# In[72]:
+# In[166]:
 
 
 # API 3 function
@@ -3207,11 +3289,59 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_picked_ind.npy'
         np.save(file_io.FileIO(storage_address, 'w'), picked_ind_np)
         progress.runnning_status = 'OK'
+
+        # Including code to save task related files into single PDF
+        # ---------------------------------------------------------
+        # 1. Collecting colors
+        # ---------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_all_colors.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        picked_colors = np.load(f)
+
+        # 2. Running function
+        # -------------------
+        task_pats,task_cats = save_patterns_textures_stylings_as_singlepdf(user_id,task_id,picked_patterns,picked_stripes,picked_checks,picked_melange,picked_colors)
+
+        # 3. Building range
+        # -----------------
+        task_board_name = "TASK FILES"
+        task_board_sp = "TPF"
+        task_genid = "N/A"
+        task_files_board = feed_to_build_range(task_pats,task_cats,user_id,task_id,task_genid,task_board_name,task_board_sp,no_ideas_per_row=8,no_total_rows=4)
+
+        # 4. Building PDF for download
+        # ----------------------------
+        range_list = []
+        for range_i in range(task_files_board.shape[0]):
+            curr_im = Image.fromarray(task_files_board[range_i])
+            range_list.append(curr_im)
+        # 6.1
+        # ---
+        storage_dir = master_task_url
+        bucket_name = 'ven-ml-project.appspot.com'
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
+        with tempfile.NamedTemporaryFile() as temp:
+            # Set name to the temp file
+            # -------------------------
+            pdf_name = ''.join([str(temp.name),'.pdf'])
+            # Save PDF to temp file
+            # -----------------------
+            range_list[0].save(pdf_name, "PDF" ,resolution=100.0, save_all=True, append_images=range_list[1:])
+            # Storing the image temp file inside the bucket
+            # ---------------------------------------------
+            destination_blob_name = storage_dir + '/downloadable_task_files.pdf'
+            blob = bucket.blob(destination_blob_name)
+            blob.upload_from_filename(pdf_name,content_type='application/pdf')
+            blob.make_public()
+
+
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
         progress.curr_step = None
         return error_str, 500
+
 
     # Status messages -
     # 1 - In progress
@@ -3244,7 +3374,7 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
     return 'All good.', 200
 
 
-# In[73]:
+# In[167]:
 
 
 # API 4 function
@@ -3490,7 +3620,7 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
 
 # # Actual Ven API endpoints
 
-# In[74]:
+# In[168]:
 
 
 # Creating a global progress dict to help with progress API
@@ -3509,7 +3639,7 @@ global progress_api_dict_generate_ideas
 progress_api_dict_generate_ideas = {}
 
 
-# In[75]:
+# In[169]:
 
 
 # Temp code to create progress class
@@ -3631,7 +3761,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[76]:
+# In[170]:
 
 
 ##
@@ -3664,7 +3794,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_user_id,self.p_task_id,self.progress)
 
 
-# In[77]:
+# In[171]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3673,7 +3803,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[78]:
+# In[172]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3777,7 +3907,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. prepare stylings external API
 
-# In[79]:
+# In[173]:
 
 
 ##
@@ -3811,7 +3941,7 @@ class prepare_stylings_threaded_task(threading.Thread):
 
 
 
-# In[80]:
+# In[174]:
 
 
 # Creating a Main global dictionary to track progress of prepare stylings task
@@ -3820,7 +3950,7 @@ global prepare_stylings_threads
 prepare_stylings_threads = {}
 
 
-# In[81]:
+# In[175]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -3928,7 +4058,7 @@ class externalAPI_prepare_stylings(Resource):
 
 # ### 3. create new texture external API
 
-# In[82]:
+# In[176]:
 
 
 ##
@@ -3962,7 +4092,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[83]:
+# In[177]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -3971,7 +4101,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[84]:
+# In[178]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -4094,7 +4224,7 @@ class externalAPI_create_textures(Resource):
 
 # ### 4. generate ideas external API
 
-# In[85]:
+# In[179]:
 
 
 ##
@@ -4132,7 +4262,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[86]:
+# In[180]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -4141,7 +4271,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[87]:
+# In[181]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4284,7 +4414,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[88]:
+# In[182]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -4366,7 +4496,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 
 
-# In[89]:
+# In[183]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -4516,7 +4646,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[90]:
+# In[184]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -4619,7 +4749,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[91]:
+# In[185]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4692,7 +4822,7 @@ class externalAPI_send_range(Resource):
 
 
 
-# In[92]:
+# In[186]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4778,7 +4908,91 @@ class externalAPI_get_range_url(Resource):
 
 
 
-# In[93]:
+# In[195]:
+
+
+## MAIN function TO BE CALLED for download pdf
+# --------------------------------------------
+
+class externalAPI_get_taskfilesboard_url(Resource):
+
+    def post(self):
+
+        ## Authenticating request
+        ## ----------------------
+        try:
+
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
+                    parser.add_argument('task_id')
+                    args = parser.parse_args()
+
+                    # Getting params
+                    # --------------
+                    p_task_id = args['task_id']
+                    p_user_id = args['user_id']
+
+                    # Master URL
+                    # ----------
+                    master_url = p_user_id + '/' + p_task_id + '/downloadable_task_files.pdf'
+
+                    print('API get taskfiles PDF public URL firing: ' + str(master_url))
+
+                    # Returning file
+                    # --------------
+                    try:
+
+                        # 1. Initialising bucket details
+                        # ------------------------------
+                        bucket_name = 'ven-ml-project.appspot.com'
+                        storage_client = storage.Client()
+                        bucket = storage_client.get_bucket(bucket_name)
+                        destination_blob_name = master_url
+                        blobs = bucket.list_blobs(prefix=destination_blob_name, delimiter='/')
+
+                        for b in blobs:
+                            #b.make_public() # Not required
+                            pdf_public_url = b.public_url
+
+                        return pdf_public_url
+
+                    except:
+                        return 'Invalid URL', 500
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+
+        except:
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
+
+
+
+# In[187]:
 
 
 ## MAIN function TO BE CALLED for getting range PDF URL
@@ -4859,7 +5073,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
 
 
-# In[94]:
+# In[188]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4950,7 +5164,7 @@ class externalAPI_get_all_stylings_url(Resource):
 
 
 
-# In[95]:
+# In[189]:
 
 
 ## MAIN function code to get in an incoming wix image URL and save it in themes
@@ -5068,7 +5282,7 @@ class externalAPI_save_wix_image(Resource):
 
 
 
-# In[96]:
+# In[190]:
 
 
 ## MAIN function TO BE CALLED for getting themes URL
@@ -5157,7 +5371,7 @@ class externalAPI_get_all_themes_url(Resource):
 
 
 
-# In[97]:
+# In[191]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -5235,7 +5449,7 @@ class externalAPI_get_task_ids(Resource):
 
 
 
-# In[98]:
+# In[192]:
 
 
 ## MAIN function code to get all rangeboard pdf URLS associated with a userid,task
@@ -5317,7 +5531,7 @@ class externalAPI_get_all_rangeboard_urls(Resource):
 
 # # running the external api functions
 
-# In[99]:
+# In[196]:
 
 
 app = Flask(__name__)
@@ -5340,9 +5554,10 @@ api.add_resource(externalAPI_get_task_ids, '/gettaskids') # Route
 api.add_resource(externalAPI_get_range_url, '/getrangepdfurl') # Route
 api.add_resource(externalAPI_get_all_themes_url, '/getthemesurl') # Route
 api.add_resource(externalAPI_get_all_rangeboard_urls, '/getallrangeboardsurls') # Route
+api.add_resource(externalAPI_get_taskfilesboard_url, '/gettaskfilesboardurl') # Route
 
 
-# In[100]:
+# In[197]:
 
 
 global vm_or_local
