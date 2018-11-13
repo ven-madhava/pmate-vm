@@ -5728,6 +5728,8 @@ class externalAPI_get_everything_fortasks(Resource):
                                 # 1.4 Task files URL
                                 # ------------------
                                 master_url_tasks = p_user_id + '/' + curr_taskid + '/downloadable_task_files.pdf'
+                                task_counter = 0
+                                tasks_purl = None
 
                                 # Returning file
                                 # --------------
@@ -5736,11 +5738,15 @@ class externalAPI_get_everything_fortasks(Resource):
                                     # ------------------------------
                                     blobs_tasks = bucket.list_blobs(prefix=master_url_tasks, delimiter='/')
                                     for task_b in blobs_tasks:
-                                        main_tasks_dict[curr_taskid]['taskfiles_url'] = task_b.public_url
-
+                                        task_counter += 1
+                                        tasks_purl = task_b.public_url
                                 except:
-                                     main_tasks_dict[curr_taskid]['taskfiles_url'] = 'Invalid URL'
+                                     'do nothing'
 
+                                if task_counter > 0 and tasks_purl != None:
+                                    main_tasks_dict[curr_taskid]['taskfiles_url'] = tasks_purl
+                                else:
+                                    main_tasks_dict[curr_taskid]['taskfiles_url'] = 'Invalid URL'
 
                             return jsonify(main_tasks_dict)
 
