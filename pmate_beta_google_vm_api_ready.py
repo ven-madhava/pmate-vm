@@ -1,7 +1,6 @@
-# 10 Nov
-# Added code for task files boards and its API
-# -------------------------------------------
-
+# 13 Nov
+# Added styling details CSV access
+# --------------------------------
 
 # Imports
 # -------
@@ -27,6 +26,7 @@ from PIL import Image,ImageFont,ImageDraw
 import datetime
 import string
 import requests
+import csv
 
 
 # Necessary Flask imports
@@ -39,7 +39,7 @@ from flask_jsonpify import jsonify
 
 # # GCS functions
 
-# In[135]:
+# In[24]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -53,7 +53,7 @@ else:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json"
 
 
-# In[136]:
+# In[25]:
 
 
 
@@ -105,7 +105,7 @@ def get_rangeboard_urls(user_id,task_id):
         return "NO TASKS FOUND", 500
 
 
-# In[137]:
+# In[26]:
 
 
 # Getting task ids from GCS for a given user id
@@ -165,7 +165,7 @@ def get_task_ids(user_id):
         return "NO TASKS FOUND", 500
 
 
-# In[138]:
+# In[27]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -226,7 +226,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[139]:
+# In[28]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -333,7 +333,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[140]:
+# In[29]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -409,7 +409,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate supportive functions
 
-# In[141]:
+# In[30]:
 
 
 # protomate functions to get  progress eta
@@ -463,8 +463,40 @@ def get_api_key():
 
     return key
 
+# ----------------------------------------
 
-# In[142]:
+# Getting styling CSV dictionary from storage
+# -------------------------------------
+def get_styling_csv():
+
+    # 0. Initialising output list
+    # ---------------------------
+    outdict = {}
+
+    # 1. Initialising bucket details
+    # ------------------------------
+    bucket_name = 'ven-ml-project.appspot.com'
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    destination_blob_name = 'admin/styling_details.csv'
+    blob = bucket.blob(destination_blob_name)
+
+    # 2. Downloading to tempfile
+    # --------------------------
+    with tempfile.NamedTemporaryFile() as temp:
+        blob.download_to_filename(temp.name)
+        csvfile = open(temp.name)
+        readCSV = csv.reader(csvfile, delimiter=',')
+        for rows in readCSV:
+            outdict[rows[0]] = rows
+
+    # 3. Returning outlist
+    # --------------------
+    return outdict
+
+
+
+# In[31]:
 
 
 # protomate function to get block images
@@ -504,7 +536,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[143]:
+# In[32]:
 
 
 # protomate kmeans function
@@ -564,7 +596,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[144]:
+# In[33]:
 
 
 # protomate recurring kmeans function
@@ -590,9 +622,18 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
     return curr_im,cen,datavec,labels
 
 
+# In[34]:
+
+
+'LOADINg GLOBAL STYLING DICTIONARY FOR API USES'
+
+global style_dict_global
+style_dict_global = get_styling_csv()
+
+
 # # Protomate main functions
 
-# In[145]:
+# In[35]:
 
 
 # 1
@@ -670,7 +711,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[146]:
+# In[36]:
 
 
 # 2
@@ -771,7 +812,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[147]:
+# In[37]:
 
 
 # 2.1
@@ -863,7 +904,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[148]:
+# In[38]:
 
 
 # 3
@@ -962,7 +1003,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[149]:
+# In[39]:
 
 
 # 3.1
@@ -1012,7 +1053,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[150]:
+# In[40]:
 
 
 # 4
@@ -1086,7 +1127,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[151]:
+# In[41]:
 
 
 # 4.1
@@ -1158,7 +1199,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[152]:
+# In[42]:
 
 
 # 4.2
@@ -1239,7 +1280,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[153]:
+# In[43]:
 
 
 # 5
@@ -1365,7 +1406,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[154]:
+# In[44]:
 
 
 # 5.1
@@ -1454,7 +1495,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[155]:
+# In[45]:
 
 
 # 5.2
@@ -1554,7 +1595,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[156]:
+# In[46]:
 
 
 # 5.3
@@ -1665,7 +1706,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[157]:
+# In[47]:
 
 
 # 6
@@ -1789,7 +1830,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[158]:
+# In[48]:
 
 
 # 6.1
@@ -1853,7 +1894,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[159]:
+# In[49]:
 
 
 # 7
@@ -2075,7 +2116,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[160]:
+# In[50]:
 
 
 # 7.1
@@ -2510,7 +2551,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[161]:
+# In[51]:
 
 
 # 8
@@ -2519,7 +2560,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
 # ----------------------------------
 
 
-def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,no_ideas_per_row=8,no_total_rows=4):
+def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,style_name_list,no_ideas_per_row=8,no_total_rows=4):
 
     global vm_or_local
 
@@ -2670,7 +2711,7 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
             all_counter += 1
             curr_styling_prefix = styling_prefix + ' ' + sty_dict[c]
 
-            curr_board_out = build_single_range_board(curr_xin_for_single_range,user_id,task_id,gen_id,board_name,curr_styling_prefix,cat_dict[c],i+1,no_pages,no_ideas_per_row,no_total_rows)
+            curr_board_out = build_single_range_board(curr_xin_for_single_range,user_id,task_id,gen_id,board_name,curr_styling_prefix,cat_dict[c],i+1,no_pages,no_ideas_per_row,no_total_rows,style_name_list)
             if all_counter == 1:
                 boardout = curr_board_out
             else:
@@ -2687,7 +2728,7 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
 
 
 
-# In[162]:
+# In[54]:
 
 
 # 8.1
@@ -2696,9 +2737,10 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
 # -------------------------------------
 
 
-def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefix,board_header,curr_page_number,total_page_numbers,no_ideas_per_row,no_total_rows):
+def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefix,board_header,curr_page_number,total_page_numbers,no_ideas_per_row,no_total_rows,style_name_list):
 
     global vm_or_local
+    global style_dict_global
 
     # Initialising a fixed board size based on input image dimensions
     # ---------------------------------------------------------------
@@ -2813,8 +2855,18 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 
             # Attaching label
             # ---------------
-            curr_label = naming_prefix + str((curr_page_number-1) * no_ideas_per_row * no_total_rows + i+1)
-            curr_label_w = font.getsize(curr_label)[0]
+            # Checking if the current is a styling
+            # ------------------------------------
+            if board_header == "STYLINGS":
+                curr_index_for_name_retreival = (curr_page_number-1) * no_ideas_per_row * no_total_rows + i
+                curr_styling_image_name = style_name_list[curr_index_for_name_retreival]
+                curr_label =  style_dict_global[curr_styling_image_name][1]
+                curr_label_w = font.getsize(curr_label)[0]
+
+            else:
+
+                curr_label = naming_prefix + str((curr_page_number-1) * no_ideas_per_row * no_total_rows + i+1)
+                curr_label_w = font.getsize(curr_label)[0]
 
             # Working out centers
             # -------------------
@@ -2871,7 +2923,7 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 
 
 
-# In[163]:
+# In[55]:
 
 
 # 8.2
@@ -2934,7 +2986,7 @@ def save_patterns_textures_stylings_as_singlepdf(user_id,task_id,picked_patterns
 
 # # Ven_API functions
 
-# In[164]:
+# In[56]:
 
 
 # API 1 Function
@@ -3099,7 +3151,7 @@ def api_create_new_patterns(user_id,task_id,progress):
     return 'All good.', 200
 
 
-# In[165]:
+# In[57]:
 
 
 # API 2 Function
@@ -3135,7 +3187,7 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
         # ----------------------------------------------------------------------------
         x_lines,x_segs,cats = get_stylings_from_storage(selected_style_names,True,progress)
         # 9.1. Correcting incoming lines and segments
-        # -----------------------------------------
+        # -------------------------------------------
         xl_corr,xs_corr = protomatebeta_correct_segments_linemarkings(x_lines,x_segs)
         # 10. Saving lines, segs and categories under /task_id/numpy for generation
         # -------------------------------------------------------------------------
@@ -3152,6 +3204,12 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
         categories_np = np.array(cats).reshape(len(cats), 1)
         storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_categories.npy'
         np.save(file_io.FileIO(storage_address, 'w'), categories_np)
+        # Saving imagename for retrieval in dict
+        # --------------------------------------
+        style_name_array_curr_task = np.array(selected_style_names.split(','))
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_styling_names.npy'
+        np.save(file_io.FileIO(storage_address, 'w'), style_name_array_curr_task)
+
     except Exception as ex:
         error_str = type(ex).__name__ + ': ' + ex.args[0]
         progress.runnning_status = 'ERROR! ' + error_str
@@ -3191,7 +3249,7 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
 
 
 
-# In[166]:
+# In[58]:
 
 
 # API 3 function
@@ -3298,6 +3356,12 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
         f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
         picked_colors = np.load(f)
 
+        # 2. Collecting  styling names list
+        # ---------------------------------
+        storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_styling_names.npy'
+        f = BytesIO(file_io.read_file_to_string(storage_address, binary_mode=True))
+        styling_names_for_dict = list(np.load(f))
+
         # 2. Running function
         # -------------------
         task_pats,task_cats = save_patterns_textures_stylings_as_singlepdf(user_id,task_id,picked_patterns,picked_stripes,picked_checks,picked_melange,picked_colors)
@@ -3307,7 +3371,7 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
         task_board_name = "TASK FILES"
         task_board_sp = "TPF"
         task_genid = "N/A"
-        task_files_board = feed_to_build_range(task_pats,task_cats,user_id,task_id,task_genid,task_board_name,task_board_sp,no_ideas_per_row=8,no_total_rows=4)
+        task_files_board = feed_to_build_range(task_pats,task_cats,user_id,task_id,task_genid,task_board_name,task_board_sp,styling_names_for_dict)
 
         # 4. Building PDF for download
         # ----------------------------
@@ -3374,7 +3438,7 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
     return 'All good.', 200
 
 
-# In[167]:
+# In[59]:
 
 
 # API 4 function
@@ -3558,7 +3622,7 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
         progress.process_percent = None
         # 5. Building and saving range boards under /task_id/rangeboards/gen_id/
         # ----------------------------------------------------------------------
-        range_built = feed_to_build_range(ideas,cats,user_id,task_id,gen_id,task_board_name,task_styling_name_prefix)
+        range_built = feed_to_build_range(ideas,cats,user_id,task_id,gen_id,task_board_name,task_styling_name_prefix,None)
         storage_dir = master_task_url + '/rangeboards/' + str(gen_id)
         image_prefix = str(task_id) + '_' + str(gen_id) + '_rangeboards'
         save_to_storage_from_array_list(range_built,storage_dir,image_prefix,True,progress,master_task_url)
@@ -3620,7 +3684,7 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
 
 # # Actual Ven API endpoints
 
-# In[168]:
+# In[60]:
 
 
 # Creating a global progress dict to help with progress API
@@ -3639,7 +3703,7 @@ global progress_api_dict_generate_ideas
 progress_api_dict_generate_ideas = {}
 
 
-# In[169]:
+# In[61]:
 
 
 # Temp code to create progress class
@@ -3761,7 +3825,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[170]:
+# In[62]:
 
 
 ##
@@ -3794,7 +3858,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_user_id,self.p_task_id,self.progress)
 
 
-# In[171]:
+# In[63]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3803,7 +3867,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[172]:
+# In[64]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -3907,7 +3971,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. prepare stylings external API
 
-# In[173]:
+# In[65]:
 
 
 ##
@@ -3941,7 +4005,7 @@ class prepare_stylings_threaded_task(threading.Thread):
 
 
 
-# In[174]:
+# In[66]:
 
 
 # Creating a Main global dictionary to track progress of prepare stylings task
@@ -3950,7 +4014,7 @@ global prepare_stylings_threads
 prepare_stylings_threads = {}
 
 
-# In[175]:
+# In[67]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -4058,7 +4122,7 @@ class externalAPI_prepare_stylings(Resource):
 
 # ### 3. create new texture external API
 
-# In[176]:
+# In[68]:
 
 
 ##
@@ -4092,7 +4156,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[177]:
+# In[69]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -4101,7 +4165,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[178]:
+# In[70]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -4224,7 +4288,7 @@ class externalAPI_create_textures(Resource):
 
 # ### 4. generate ideas external API
 
-# In[179]:
+# In[71]:
 
 
 ##
@@ -4262,7 +4326,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[180]:
+# In[72]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -4271,7 +4335,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[181]:
+# In[73]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4414,7 +4478,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[182]:
+# In[74]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -4496,7 +4560,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 
 
-# In[183]:
+# In[75]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -4646,7 +4710,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[184]:
+# In[76]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -4749,7 +4813,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[185]:
+# In[77]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4822,7 +4886,7 @@ class externalAPI_send_range(Resource):
 
 
 
-# In[186]:
+# In[78]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4908,7 +4972,7 @@ class externalAPI_get_range_url(Resource):
 
 
 
-# In[195]:
+# In[79]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4992,7 +5056,7 @@ class externalAPI_get_taskfilesboard_url(Resource):
 
 
 
-# In[187]:
+# In[80]:
 
 
 ## MAIN function TO BE CALLED for getting range PDF URL
@@ -5073,7 +5137,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
 
 
-# In[188]:
+# In[81]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5110,6 +5174,8 @@ class externalAPI_get_all_stylings_url(Resource):
                     # --------------
                     p_cat_id = args['cat_id']
 
+
+
                     print('API get all stylings public URL firing: ' + str(p_cat_id))
 
 
@@ -5124,6 +5190,9 @@ class externalAPI_get_all_stylings_url(Resource):
                     # Returning JSON
                     # --------------
                     try:
+                        # Getting styling details CSV dict
+                        # ---------------------------------
+                        global style_dict_global
                         counter = 0
                         d = {}
                         for b in blobs:
@@ -5138,6 +5207,8 @@ class externalAPI_get_all_stylings_url(Resource):
                                     d[counter] = {}
                                     d[counter]['img_name'] = stripped_name
                                     d[counter]['img_url'] = str(b.public_url)
+                                    d[counter]['img_header'] = style_dict_global[stripped_name][1]
+                                    d[counter]['img_desc'] = style_dict_global[stripped_name][2]
 
                         return jsonify(d)
 
@@ -5164,7 +5235,7 @@ class externalAPI_get_all_stylings_url(Resource):
 
 
 
-# In[189]:
+# In[82]:
 
 
 ## MAIN function code to get in an incoming wix image URL and save it in themes
@@ -5282,7 +5353,7 @@ class externalAPI_save_wix_image(Resource):
 
 
 
-# In[190]:
+# In[83]:
 
 
 ## MAIN function TO BE CALLED for getting themes URL
@@ -5371,7 +5442,7 @@ class externalAPI_get_all_themes_url(Resource):
 
 
 
-# In[191]:
+# In[84]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -5449,7 +5520,7 @@ class externalAPI_get_task_ids(Resource):
 
 
 
-# In[192]:
+# In[85]:
 
 
 ## MAIN function code to get all rangeboard pdf URLS associated with a userid,task
@@ -5531,7 +5602,7 @@ class externalAPI_get_all_rangeboard_urls(Resource):
 
 # # running the external api functions
 
-# In[196]:
+# In[86]:
 
 
 app = Flask(__name__)
@@ -5557,7 +5628,7 @@ api.add_resource(externalAPI_get_all_rangeboard_urls, '/getallrangeboardsurls') 
 api.add_resource(externalAPI_get_taskfilesboard_url, '/gettaskfilesboardurl') # Route
 
 
-# In[197]:
+# In[87]:
 
 
 global vm_or_local
