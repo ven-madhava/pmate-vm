@@ -2762,7 +2762,7 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
     # VM
     # --
     else:
-        font_file_path_header = '/home/venkateshmadhava/pmate-vm/Kodchasan-Bold.ttf'
+        font_file_path_header = '/home/venkateshmadhava/pmate-vm/RobotoCondensed-Bold.ttf'
         font_file_path_labels = '/home/venkateshmadhava/pmate-vm/RobotoCondensed-Bold.ttf'
         font_file_path_footer = '/home/venkateshmadhava/pmate-vm/RobotoMono-Light.ttf'
 
@@ -3727,11 +3727,11 @@ class progress_classobj():
             # Initialising progress updates
             # -----------------------------
             self.all_progress_updates = [
-                'Loading theme images..',
-                'Initialising AI learning. This may take a while (around 15 seconds per image)..',
-                'Building patterns based on learnt objects from theme images..',
-                'Saving built patterns for user selection..',
-                'Saving internal files for generation..',
+                'Loading inspiration images to AI..',
+                'Initialising AI. This may take a few minutes..',
+                'Building swatches based on learnt objects from inspiration images..',
+                'Saving built swatches for user selection..',
+                'Saving internal files for range board creation..',
                 'Done.']
 
         elif self.at_step == 2: # Prepare Stylings
@@ -3739,7 +3739,7 @@ class progress_classobj():
             # Initialising progress updates
             # -----------------------------
             self.all_progress_updates = [
-                'Preparing selected stylings for generations..',
+                'Preparing selected styling blocks for range boards..',
                 'Done']
 
         elif self.at_step == 3: # Create textures
@@ -3747,9 +3747,9 @@ class progress_classobj():
             # Initialising progress updates
             # -----------------------------
             self.all_progress_updates = [
-                'Loading learnt patterns..',
-                'Building textures..',
-                'Saving textures..',
+                'Loading swatches..',
+                'Building patterns..',
+                'Saving patterns..',
                 'Done.']
 
         elif self.at_step == 4: # Generate ideas
@@ -3757,12 +3757,12 @@ class progress_classobj():
             # Initialising progress updates
             # -----------------------------
             self.all_progress_updates = [
-                'Loading stylings..',
-                'Loading patterns..',
+                'Loading styling blocks..',
+                'Loading prints..',
                 'Loading colors..',
-                'Loading textures..',
-                'Generating ideas..',
-                'Building and saving rangeboards..',
+                'Loading patterns..',
+                'Creating product ideas..',
+                'Building and saving range boards..',
                 'Done.']
 
         # External message params initialisations
