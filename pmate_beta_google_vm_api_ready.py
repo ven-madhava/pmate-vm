@@ -819,8 +819,8 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
     global vm_or_local
     fullon_blocks_main = []
     fullon_blocks_map = []
-    start_k_c = 150
-    end_k_c = 150
+    start_k_c = 175
+    end_k_c = 175
     source_image = 'orig'
     localisation_factor = True
 
