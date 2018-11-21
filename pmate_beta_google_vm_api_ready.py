@@ -2953,8 +2953,12 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
             if board_header == "STYLINGS":
                 curr_index_for_name_retreival = (curr_page_number-1) * no_ideas_per_row * no_total_rows + i
                 curr_styling_image_name = style_name_list[curr_index_for_name_retreival]
-                curr_label =  style_dict_global[curr_styling_image_name][1]
-                curr_label_w = font.getsize(curr_label)[0]
+                try:
+                    curr_label =  style_dict_global[curr_styling_image_name][1]
+                    curr_label_w = font.getsize(curr_label)[0]
+                except:
+                    curr_label =  "Styling Block"
+                    curr_label_w = font.getsize(curr_label)[0]
 
             else:
 
