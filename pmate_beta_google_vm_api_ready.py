@@ -743,7 +743,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     xcurr = None
     xout = []
     new_h = 350
-    thresh_max_w = 1000
+    thresh_max_w = 1500
     thresh_min_w = 400
 
     for i in range(len(inlist)):
