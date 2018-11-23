@@ -527,16 +527,22 @@ def upload_csv_gcs(csvurl):
 
 def update_main_csv(dictin):
 
+    print('Inside function....Dictin -- ')
+    print(dictin)
     # 1. Some initialisations
     # -----------------------
     counter = 0
     ## Getting list of images to be updated with new info
     images_to_be_updated = list(dictin.keys())
+    print('Images to be updated..')
+    print(images_to_be_updated)
 
     ## Getting list of fields
     for k in dictin:
         fields = list(dictin[k].keys())
         break
+    print('Feilds -- ')
+    print(fields)
 
     # 2. Filename and Temp file
     # -------------------------
@@ -5916,6 +5922,9 @@ class externalAPI_update_styling_csv_admin(Resource):
                     # --------------
                     p_dictin = ast.literal_eval(args['updated_records'])
                     print('API update main styliny CSV firing: ')
+                    print('Inside API..')
+                    print(type(p_dictin))
+                    print(p_dictin)
 
                     try:
                         # Using udpate main csv function
