@@ -538,9 +538,7 @@ def update_main_csv(dictin):
     print(images_to_be_updated)
 
     ## Getting list of fields
-    for k in dictin:
-        fields = list(dictin[k].keys())
-        break
+    fields = ['name', 'header', 'description', 'timestamp']
     print('Feilds -- ')
     print(fields)
 
@@ -5920,9 +5918,15 @@ class externalAPI_update_styling_csv_admin(Resource):
 
                     # Getting params
                     # --------------
-                    p_dictin = ast.literal_eval(args['updated_records'])
                     print('API update main styliny CSV firing: ')
                     print('Inside API..')
+                    print('Before AST parsing..')
+                    print(type(args['updated_records']))
+                    print(args['updated_records'])
+
+                    p_dictin = ast.literal_eval(args['updated_records'])
+
+                    print("After AST parsing..")
                     print(type(p_dictin))
                     print(p_dictin)
 
