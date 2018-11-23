@@ -1,5 +1,6 @@
-# Included timestamp in global styling dict and get stylings API
-# --------------------------------------------------------------
+# 23 Nov -- sort of corrected styling dict loading after an update on the go
+# -------
+
 
 # Imports
 # -------
@@ -28,6 +29,7 @@ import requests
 import csv
 import json
 import ast
+import collections
 
 
 # Necessary Flask imports
@@ -40,7 +42,7 @@ from flask_jsonpify import jsonify
 
 # # GCS functions
 
-# In[2]:
+# In[316]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -54,7 +56,7 @@ else:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json"
 
 
-# In[3]:
+# In[317]:
 
 
 
@@ -106,7 +108,7 @@ def get_rangeboard_urls(user_id,task_id):
         return "NO TASKS FOUND", 500
 
 
-# In[4]:
+# In[318]:
 
 
 # Getting task ids from GCS for a given user id
@@ -166,7 +168,7 @@ def get_task_ids(user_id):
         return "NO TASKS FOUND", 500
 
 
-# In[5]:
+# In[319]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -227,7 +229,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[6]:
+# In[320]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -334,7 +336,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[7]:
+# In[321]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -410,7 +412,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate smaller supportive functions
 
-# In[8]:
+# In[322]:
 
 
 # protomate functions to get  progress eta
@@ -517,7 +519,7 @@ def upload_csv_gcs(csvurl):
 # # Protomate larger supportive functions
 #
 
-# In[9]:
+# In[323]:
 
 
 
@@ -527,20 +529,14 @@ def upload_csv_gcs(csvurl):
 
 def update_main_csv(dictin):
 
-    print('Inside function....Dictin -- ')
-    print(dictin)
     # 1. Some initialisations
     # -----------------------
     counter = 0
     ## Getting list of images to be updated with new info
     images_to_be_updated = list(dictin.keys())
-    print('Images to be updated..')
-    print(images_to_be_updated)
 
     ## Getting list of fields
     fields = ['name', 'header', 'description', 'timestamp']
-    print('Feilds -- ')
-    print(fields)
 
     # 2. Filename and Temp file
     # -------------------------
@@ -582,7 +578,7 @@ def update_main_csv(dictin):
         # ---------------------------------------------------------------------------------
         if len(images_to_be_updated) > 0:
             for i in images_to_be_updated:
-                writer.writerow(dictin[i])
+                writer.writerow(collections.OrderedDict(dictin[i]))
                 counter += 1
 
 
@@ -593,7 +589,7 @@ def update_main_csv(dictin):
     return 'Updated ' + str(counter) + ' styles.', 200
 
 
-# In[10]:
+# In[324]:
 
 
 # protomate function to get block images
@@ -633,7 +629,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[11]:
+# In[325]:
 
 
 # protomate kmeans function
@@ -693,7 +689,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[12]:
+# In[326]:
 
 
 # protomate recurring kmeans function
@@ -719,7 +715,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
     return curr_im,cen,datavec,labels
 
 
-# In[13]:
+# In[327]:
 
 
 'LOADINg GLOBAL STYLING DICTIONARY FOR API USES'
@@ -730,7 +726,7 @@ style_dict_global = get_styling_csv()
 
 # # Protomate main functions
 
-# In[14]:
+# In[328]:
 
 
 # 1
@@ -808,7 +804,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[15]:
+# In[329]:
 
 
 # 2
@@ -909,7 +905,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[16]:
+# In[330]:
 
 
 # 2.1
@@ -1001,7 +997,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[17]:
+# In[331]:
 
 
 # 3
@@ -1100,7 +1096,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[18]:
+# In[332]:
 
 
 # 3.1
@@ -1150,7 +1146,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[19]:
+# In[333]:
 
 
 # 4
@@ -1224,7 +1220,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[20]:
+# In[334]:
 
 
 # 4.1
@@ -1296,7 +1292,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[21]:
+# In[335]:
 
 
 # 4.2
@@ -1377,7 +1373,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[22]:
+# In[336]:
 
 
 # 5
@@ -1503,7 +1499,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[23]:
+# In[337]:
 
 
 # 5.1
@@ -1592,7 +1588,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[24]:
+# In[338]:
 
 
 # 5.2
@@ -1692,7 +1688,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[25]:
+# In[339]:
 
 
 # 5.3
@@ -1803,7 +1799,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[26]:
+# In[340]:
 
 
 # 6
@@ -1927,7 +1923,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[27]:
+# In[341]:
 
 
 # 6.1
@@ -1991,7 +1987,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[28]:
+# In[342]:
 
 
 # 7
@@ -2213,7 +2209,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[29]:
+# In[343]:
 
 
 # 7.1
@@ -2648,7 +2644,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[30]:
+# In[344]:
 
 
 # 8
@@ -2825,7 +2821,7 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
 
 
 
-# In[31]:
+# In[345]:
 
 
 # 8.1
@@ -3025,7 +3021,7 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 
 
 
-# In[32]:
+# In[346]:
 
 
 # 8.2
@@ -3088,7 +3084,7 @@ def save_patterns_textures_stylings_as_singlepdf(user_id,task_id,picked_patterns
 
 # # Ven_API functions
 
-# In[33]:
+# In[347]:
 
 
 # API 1 Function
@@ -3253,7 +3249,7 @@ def api_create_new_patterns(user_id,task_id,progress):
     return 'All good.', 200
 
 
-# In[34]:
+# In[348]:
 
 
 # API 2 Function
@@ -3351,7 +3347,7 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
 
 
 
-# In[35]:
+# In[349]:
 
 
 # API 3 function
@@ -3540,7 +3536,7 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
     return 'All good.', 200
 
 
-# In[36]:
+# In[350]:
 
 
 # API 4 function
@@ -3786,7 +3782,7 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
 
 # # Actual Ven API endpoints
 
-# In[37]:
+# In[351]:
 
 
 # Creating a global progress dict to help with progress API
@@ -3805,7 +3801,7 @@ global progress_api_dict_generate_ideas
 progress_api_dict_generate_ideas = {}
 
 
-# In[38]:
+# In[352]:
 
 
 # Temp code to create progress class
@@ -3927,7 +3923,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[39]:
+# In[353]:
 
 
 ##
@@ -3960,7 +3956,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_user_id,self.p_task_id,self.progress)
 
 
-# In[40]:
+# In[354]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -3969,7 +3965,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[41]:
+# In[355]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4073,7 +4069,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. prepare stylings external API
 
-# In[42]:
+# In[356]:
 
 
 ##
@@ -4107,7 +4103,7 @@ class prepare_stylings_threaded_task(threading.Thread):
 
 
 
-# In[43]:
+# In[357]:
 
 
 # Creating a Main global dictionary to track progress of prepare stylings task
@@ -4116,7 +4112,7 @@ global prepare_stylings_threads
 prepare_stylings_threads = {}
 
 
-# In[44]:
+# In[358]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -4224,7 +4220,7 @@ class externalAPI_prepare_stylings(Resource):
 
 # ### 3. create new texture external API
 
-# In[45]:
+# In[359]:
 
 
 ##
@@ -4258,7 +4254,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[46]:
+# In[360]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -4267,7 +4263,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[47]:
+# In[361]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -4390,7 +4386,7 @@ class externalAPI_create_textures(Resource):
 
 # ### 4. generate ideas external API
 
-# In[48]:
+# In[362]:
 
 
 ##
@@ -4428,7 +4424,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[49]:
+# In[363]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -4437,7 +4433,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[50]:
+# In[364]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4580,7 +4576,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[51]:
+# In[365]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -4662,7 +4658,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 
 
-# In[52]:
+# In[366]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -4812,7 +4808,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[53]:
+# In[367]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -4915,7 +4911,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[54]:
+# In[368]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -4988,7 +4984,7 @@ class externalAPI_send_range(Resource):
 
 
 
-# In[55]:
+# In[369]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5074,7 +5070,7 @@ class externalAPI_get_range_url(Resource):
 
 
 
-# In[56]:
+# In[370]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5158,7 +5154,7 @@ class externalAPI_get_taskfilesboard_url(Resource):
 
 
 
-# In[57]:
+# In[371]:
 
 
 ## MAIN function TO BE CALLED for getting range PDF URL
@@ -5239,7 +5235,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
 
 
-# In[58]:
+# In[372]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5341,7 +5337,7 @@ class externalAPI_get_all_stylings_url(Resource):
 
 
 
-# In[59]:
+# In[373]:
 
 
 ## MAIN function code to get in an incoming wix image URL and save it in themes
@@ -5459,7 +5455,7 @@ class externalAPI_save_wix_image(Resource):
 
 
 
-# In[60]:
+# In[374]:
 
 
 ## MAIN function TO BE CALLED for getting themes URL
@@ -5548,7 +5544,7 @@ class externalAPI_get_all_themes_url(Resource):
 
 
 
-# In[61]:
+# In[375]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -5626,7 +5622,7 @@ class externalAPI_get_task_ids(Resource):
 
 
 
-# In[62]:
+# In[376]:
 
 
 ## MAIN function code to get all rangeboard pdf URLS associated with a userid,task
@@ -5706,7 +5702,7 @@ class externalAPI_get_all_rangeboard_urls(Resource):
 
 
 
-# In[63]:
+# In[377]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -5883,7 +5879,7 @@ class externalAPI_get_everything_fortasks(Resource):
 
 
 
-# In[64]:
+# In[378]:
 
 
 ## MAIN function code update styling details CSV from admin interface
@@ -5918,22 +5914,19 @@ class externalAPI_update_styling_csv_admin(Resource):
 
                     # Getting params
                     # --------------
-                    print('API update main styliny CSV firing: ')
-                    print('Inside API..')
-                    print('Before AST parsing..')
-                    print(type(args['updated_records']))
-                    print(args['updated_records'])
-
                     p_dictin = ast.literal_eval(args['updated_records'])
-
-                    print("After AST parsing..")
-                    print(type(p_dictin))
-                    print(p_dictin)
+                    print('API update main styliny CSV firing: ')
 
                     try:
                         # Using udpate main csv function
                         # ------------------------------
                         message,status = update_main_csv(p_dictin)
+
+                        # Updating dict
+                        # -------------
+                        global style_dict_global
+                        style_dict_global = get_styling_csv()
+
                         return message, status
 
                     except:
@@ -5961,7 +5954,7 @@ class externalAPI_update_styling_csv_admin(Resource):
 
 # # running the external api functions
 
-# In[65]:
+# In[379]:
 
 
 app = Flask(__name__)
@@ -5990,7 +5983,7 @@ api.add_resource(externalAPI_update_styling_csv_admin, '/updatemainstylingcsv') 
 #
 
 
-# In[66]:
+# In[380]:
 
 
 global vm_or_local
