@@ -1,5 +1,5 @@
-# Updated linemarking and segment storage with category sub folders
-# ----------------------------------------------------------------
+# Included timestamp in global styling dict and get stylings API
+# --------------------------------------------------------------
 
 # Imports
 # -------
@@ -5306,9 +5306,11 @@ class externalAPI_get_all_stylings_url(Resource):
                                 try:
                                     d[counter]['img_header'] = style_dict_global[stripped_name][1]
                                     d[counter]['img_desc'] = style_dict_global[stripped_name][2]
+                                    d[counter]['img_timestamp'] = style_dict_global[stripped_name][3]
                                 except:
                                     d[counter]['img_header'] = "NA"
                                     d[counter]['img_desc'] = "NA"
+                                    d[counter]['img_timestamp'] = "NA"
 
                         return jsonify(d)
 
