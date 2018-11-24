@@ -1,5 +1,5 @@
-# 23 Nov -- sort of corrected styling dict loading after an update on the go
-# -------
+# 24 Nov - included returncombo for denim
+##
 
 
 # Imports
@@ -2467,8 +2467,8 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
             else:
                 choice_b = int(np.random.choice(choice_choices, p = choice_probs))
 
-    ### Woven pants, jeans - BOYS and MENS
-    elif category == 15 or category == 35 or category == 16 or category == 36:
+    ### Woven pants - BOYS and MENS
+    elif category == 16 or category == 36:
 
         # Setting choice probabilities
         # ----------------------------
@@ -2502,6 +2502,44 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
             # -------------------------------------
             if choice_g == 0 or choice_g == 2:
                 choice_b = 5
+            else:
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+    ### Woven jeans - BOYS and MENS, Girls and Women
+    elif category == 15 or category == 35 or category == 20 or category == 40:
+
+        # Setting choice probabilities
+        # ----------------------------
+        ch_0 = 0.0 # print
+        ch_1 = 0.0 # stripes
+        ch_2 = 0.0 # checks
+        ch_3 = 0.0 # melange
+        ch_4 = 1.0 # grainy
+        ch_5 = 0.0 # colors
+        choice_probs = [ch_0,ch_1,ch_2,ch_3,ch_4,ch_5]
+
+        # Single segment check
+        # --------------------
+        if single_segment == True:
+            choice_single = int(np.random.choice(choice_choices, p = choice_probs))
+            choice_g = choice_single
+            choice_b = choice_single
+
+        elif minor_segment == True:
+            if minor_segment_seg == 'black':
+                choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+                choice_b = int(random.choice([0,2,5]))
+            else:
+                choice_g = int(random.choice([0,2,5]))
+                choice_b = int(np.random.choice(choice_choices, p = choice_probs))
+
+        else:
+            choice_g = int(np.random.choice(choice_choices, p = choice_probs))
+
+            # Setting bblock based on gblock choice
+            # -------------------------------------
+            if choice_g == 4:
+                choice_b = int(random.choice([0,2,5]))
             else:
                 choice_b = int(np.random.choice(choice_choices, p = choice_probs))
 
