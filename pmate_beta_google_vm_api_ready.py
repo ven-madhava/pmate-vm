@@ -1,6 +1,5 @@
-# 24 Nov - included returncombo for denim
-##
-
+# 27 nov - added geteverthing using CSV API
+# -----------------------------------------
 
 # Imports
 # -------
@@ -42,7 +41,7 @@ from flask_jsonpify import jsonify
 
 # # GCS functions
 
-# In[316]:
+# In[128]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -56,7 +55,7 @@ else:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json"
 
 
-# In[317]:
+# In[129]:
 
 
 
@@ -108,7 +107,67 @@ def get_rangeboard_urls(user_id,task_id):
         return "NO TASKS FOUND", 500
 
 
-# In[318]:
+# In[130]:
+
+
+# A function that would read a CSV and output a dict for everything API
+# API Ready
+# ---------------------------------------------------------------------
+
+def return_all_tasks_data(user_id):
+
+    # Some initialisations
+    # --------------------
+    outdict = {}
+    fields = ["task_id", "newpat_status", "prepsty_status", "crttex_status", "rangeboards_any", "task_files_url", "themes_url_1", "themes_url_2", "themes_url_3", "themes_url_4", "themes_url_5"]
+
+    # 1. Initialising bucket
+    # -----------------------
+    bucket_name = 'ven-ml-project.appspot.com'
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    destination_blob_name = user_id + '/all_tasks_status.csv'
+    blob = bucket.blob(destination_blob_name)
+
+
+    # 3. Downloading to tempfile
+    # --------------------------
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as gcs_tempfile:
+        blob.download_to_filename(gcs_tempfile.name)
+
+
+    # 4. opening file
+    # ---------------
+    with open(gcs_tempfile.name, 'r') as csvfile:
+        reader = csv.DictReader(csvfile, fieldnames=fields)
+
+        # Buildng outdict
+        # ---------------
+        for row in reader:
+            curr_task_id = row['task_id']
+            outdict[curr_task_id] = {}
+
+            outdict[curr_task_id]['task_status_new_patterns'] = row['newpat_status']
+            outdict[curr_task_id]['task_status_prepare_stylings'] = row['prepsty_status']
+            outdict[curr_task_id]['task_status_create_textures'] = row['crttex_status']
+
+            outdict[curr_task_id]['ranges_url'] = row['rangeboards_any']
+            outdict[curr_task_id]['taskfiles_url'] = row['task_files_url']
+
+            outdict[curr_task_id]['themes_url'] = {}
+            outdict[curr_task_id]['themes_url'][1] = row['themes_url_1']
+            outdict[curr_task_id]['themes_url'][2] = row['themes_url_2']
+            outdict[curr_task_id]['themes_url'][3] = row['themes_url_3']
+            outdict[curr_task_id]['themes_url'][4] = row['themes_url_4']
+            outdict[curr_task_id]['themes_url'][5] = row['themes_url_5']
+
+
+    # Returning dictionary
+    # ---------------------
+    return outdict
+
+
+# In[131]:
 
 
 # Getting task ids from GCS for a given user id
@@ -168,7 +227,7 @@ def get_task_ids(user_id):
         return "NO TASKS FOUND", 500
 
 
-# In[319]:
+# In[132]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -229,7 +288,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[320]:
+# In[133]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -336,7 +395,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[321]:
+# In[134]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -412,7 +471,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate smaller supportive functions
 
-# In[322]:
+# In[135]:
 
 
 # protomate functions to get  progress eta
@@ -519,7 +578,7 @@ def upload_csv_gcs(csvurl):
 # # Protomate larger supportive functions
 #
 
-# In[323]:
+# In[136]:
 
 
 
@@ -589,7 +648,7 @@ def update_main_csv(dictin):
     return 'Updated ' + str(counter) + ' styles.', 200
 
 
-# In[324]:
+# In[137]:
 
 
 # protomate function to get block images
@@ -629,7 +688,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[325]:
+# In[138]:
 
 
 # protomate kmeans function
@@ -689,7 +748,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[326]:
+# In[139]:
 
 
 # protomate recurring kmeans function
@@ -715,7 +774,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
     return curr_im,cen,datavec,labels
 
 
-# In[327]:
+# In[140]:
 
 
 'LOADINg GLOBAL STYLING DICTIONARY FOR API USES'
@@ -726,7 +785,7 @@ style_dict_global = get_styling_csv()
 
 # # Protomate main functions
 
-# In[328]:
+# In[141]:
 
 
 # 1
@@ -804,7 +863,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[329]:
+# In[142]:
 
 
 # 2
@@ -905,7 +964,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[330]:
+# In[143]:
 
 
 # 2.1
@@ -997,7 +1056,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[331]:
+# In[144]:
 
 
 # 3
@@ -1096,7 +1155,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[332]:
+# In[145]:
 
 
 # 3.1
@@ -1146,7 +1205,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[333]:
+# In[146]:
 
 
 # 4
@@ -1220,7 +1279,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[334]:
+# In[147]:
 
 
 # 4.1
@@ -1292,7 +1351,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[335]:
+# In[148]:
 
 
 # 4.2
@@ -1373,7 +1432,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[336]:
+# In[149]:
 
 
 # 5
@@ -1499,7 +1558,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[337]:
+# In[150]:
 
 
 # 5.1
@@ -1588,7 +1647,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[338]:
+# In[151]:
 
 
 # 5.2
@@ -1688,7 +1747,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[339]:
+# In[152]:
 
 
 # 5.3
@@ -1799,7 +1858,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[340]:
+# In[153]:
 
 
 # 6
@@ -1923,7 +1982,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[341]:
+# In[154]:
 
 
 # 6.1
@@ -1987,7 +2046,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[342]:
+# In[155]:
 
 
 # 7
@@ -2209,7 +2268,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[343]:
+# In[156]:
 
 
 # 7.1
@@ -2682,7 +2741,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[344]:
+# In[157]:
 
 
 # 8
@@ -2859,7 +2918,7 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
 
 
 
-# In[345]:
+# In[158]:
 
 
 # 8.1
@@ -3059,7 +3118,7 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 
 
 
-# In[346]:
+# In[159]:
 
 
 # 8.2
@@ -3118,11 +3177,198 @@ def save_patterns_textures_stylings_as_singlepdf(user_id,task_id,picked_patterns
 
 
 
+# In[160]:
+
+
+# 9
+# API Ready
+# Function to create/update task details CSV per user
+# ---------------------------------------------------
+
+def update_task_csv(user_id,task_id,update_position,value):
+
+    # 1. Some initialisations
+    # -----------------------
+    counter = 0
+    found_task = 0
+    fields = ["task_id", "newpat_status", "prepsty_status", "crttex_status", "rangeboards_any", "task_files_url", "themes_url_1", "themes_url_2", "themes_url_3", "themes_url_4", "themes_url_5"]
+    temp_task_dict = {}
+
+    # 2. Initialising bucket details
+    # --------------------------------
+    bucket_name = 'ven-ml-project.appspot.com'
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    destination_blob_name = user_id + '/all_tasks_status.csv'
+    blob = bucket.blob(destination_blob_name)
+
+    # 3. Downloading to tempfile
+    # --------------------------
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as gcs_tempfile:
+            blob.download_to_filename(gcs_tempfile.name)
+
+    except:
+
+        # New user creating first range - creating a copy
+        # -----------------------------------------------
+        source_blob = bucket.blob('admin/all_tasks_status.csv')
+        destination_blob = bucket.copy_blob(source_blob, bucket, destination_blob_name)
+        blob = bucket.blob(destination_blob_name)
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as gcs_tempfile:
+            blob.download_to_filename(gcs_tempfile.name)
+
+
+
+    # 3.1 Initialising another temp file for saving new rows
+    # -----------------------------------------------------
+    tempfile_local = tempfile.NamedTemporaryFile(mode='w', delete=False)
+
+
+    # 4. Iteration
+    # -------------
+    with open(gcs_tempfile.name, 'r') as csvfile, tempfile_local:
+        reader = csv.DictReader(csvfile, fieldnames=fields)
+        writer = csv.DictWriter(tempfile_local, fieldnames=fields)
+        for row in reader:
+
+            if str(row['task_id']) == str(task_id):
+
+                # Task_id in the CSV, just update that row
+                # ----------------------------------------
+                found_task = 1
+
+                # 4.1 Create new dict and copying values of current row
+                # -----------------------------------------------------
+                for keys in fields:
+                    temp_task_dict[keys] = row[keys]
+
+                # 4.2 Updating this tasks temp dict based on inputs
+                # -------------------------------------------------
+                temp_task_dict = update_task_dict_position(user_id,task_id,bucket,temp_task_dict,fields,update_position,value)
+
+                # 4.3 Update output CSV
+                # ---------------------
+                writer.writerow(temp_task_dict)
+
+            else:
+
+                # Writing row of another task to update file
+                # ------------------------------------------
+                writer.writerow(row)
+
+
+        if found_task == 0:
+
+            # Meaning this is a new task
+            # --------------------------
+            temp_task_dict['task_id'] = task_id
+            for k in range(1,len(fields)):
+                temp_task_dict[fields[k]] = 0
+
+            # 4.2 Updating this tasks temp dict based on inputs
+            # -------------------------------------------------
+            temp_task_dict = update_task_dict_position(user_id,task_id,bucket,temp_task_dict,fields,update_position,value)
+
+            # 4.3 Update output CSV
+            # ---------------------
+            writer.writerow(temp_task_dict)
+
+
+
+    # Updating GCS CSV
+    # ----------------
+    blob.upload_from_filename(tempfile_local.name,content_type='text/csv')
+
+
+
+# In[161]:
+
+
+# 9.1 API ready
+# A sub function to update incoming dict based on position
+# --------------------------------------------------------
+
+# position, value pairs for updation legend
+# ------------------------------------------
+# new_patterns, 1 (update themes fields as well)
+# new_patterns, 2
+# prep_styling, 1
+# prep_styling, 2
+# create_texture, 1
+# create_texture, 2 (update task file as well)
+# generate_idea to update range_boards_any
+
+# fields = ["task_id", "newpat_status", "prepsty_status", "crttex_status", "rangeboards_any", "task_files_url", "themes_url_1", "themes_url_2", "themes_url_3", "themes_url_4", "themes_url_5"]
+
+def update_task_dict_position(user_id,task_id,bucket,dictxin,fields,position,value):
+
+    # Setting up copy
+    # ---------------
+    dictin = copy.deepcopy(dictxin)
+
+    # Actuals conditions
+    # ------------------
+    if position == 'new_patterns' and value == 1:
+
+        # Update dict
+        # -----------
+        dictin[fields[1]] = 1
+
+        # Update themes URL
+        # -----------------
+        master_url = user_id + '/' + task_id + '/themes/'
+        themes_counter = 0
+        blobs = bucket.list_blobs(prefix=master_url, delimiter='/')
+        for b in blobs:
+            dictin[fields[6 + themes_counter]] = str(b.public_url)
+            themes_counter += 1
+            if themes_counter == 5:
+                break
+
+    elif position == 'new_patterns' and value == 2:
+
+        # Update dict
+        # -----------
+        dictin[fields[1]] = 2
+
+    elif position == 'prep_styling':
+
+        # Update dict
+        # -----------
+        dictin[fields[2]] = value
+
+    elif position == 'create_texture' and value == 1:
+
+        # Update dict
+        # -----------
+        dictin[fields[3]] = value
+
+    elif position == 'create_texture' and value == 2:
+
+        # Update dict
+        # -----------
+        dictin[fields[3]] = value
+
+        # Update taskfile URL
+        # -------------------
+        master_url = user_id + '/' + task_id + '/downloadable_task_files.pdf'
+        blobs = bucket.list_blobs(prefix=master_url, delimiter='/')
+        for b in blobs:
+            pdf_public_url = b.public_url
+        dictin[fields[5]] = pdf_public_url
+
+    elif position == 'generate_idea':
+
+        dictin[fields[4]] = 1
+
+    return dictin
+
 
 
 # # Ven_API functions
 
-# In[347]:
+# In[162]:
 
 
 # API 1 Function
@@ -3133,6 +3379,17 @@ def save_patterns_textures_stylings_as_singlepdf(user_id,task_id,picked_patterns
 # Creates segments, linemarkings, categories from input selected styling names and saves as numpy
 # at /task_id/numpy for easy generation
 # Returns OK, NOT OK
+
+# position, value pairs for updation legend
+# ------------------------------------------
+# new_patterns, 1 (update themes fields as well)
+# new_patterns, 2
+# prep_styling, 1
+# prep_styling, 2
+# create_texture, 1
+# create_texture, 2 (update task file as well)
+# generate_idea to update range_boards_any
+# update_task_csv(user_id,task_id,'new_patterns',1)
 
 
 def api_create_new_patterns(user_id,task_id,progress):
@@ -3161,6 +3418,10 @@ def api_create_new_patterns(user_id,task_id,progress):
     np_status = np.array([1]).reshape(1,1)
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_newpatterns.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
+
+    # Updating CSV status
+    # -------------------
+    update_task_csv(user_id,task_id,'new_patterns',1)
 
     try:
         # 1. Getting theme images from storage
@@ -3262,6 +3523,10 @@ def api_create_new_patterns(user_id,task_id,progress):
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_newpatterns.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
+    # Updating CSV status
+    # -------------------
+    update_task_csv(user_id,task_id,'new_patterns',2)
+
     # Updating progress
     # -----------------
     progress.set_status(5) # Done
@@ -3287,7 +3552,7 @@ def api_create_new_patterns(user_id,task_id,progress):
     return 'All good.', 200
 
 
-# In[348]:
+# In[163]:
 
 
 # API 2 Function
@@ -3295,6 +3560,17 @@ def api_create_new_patterns(user_id,task_id,progress):
 # Accepts a list of image names along with user id and taskid
 # prepares the stylings and svaes them as numpy array
 # Returns OK, NOT OK
+
+# position, value pairs for updation legend
+# ------------------------------------------
+# new_patterns, 1 (update themes fields as well)
+# new_patterns, 2
+# prep_styling, 1
+# prep_styling, 2
+# create_texture, 1
+# create_texture, 2 (update task file as well)
+# generate_idea to update range_boards_any
+# update_task_csv(user_id,task_id,'new_patterns',1)
 
 
 def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
@@ -3312,6 +3588,10 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
     np_status = np.array([1]).reshape(1,1)
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_preparestylings.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
+
+    # Updating CSV status
+    # -------------------
+    update_task_csv(user_id,task_id,'prep_styling',1)
 
     try:
         progress.set_status(0) # 0  'Preparing selected stylings for generations..',
@@ -3361,6 +3641,10 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_preparestylings.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
+    # Updating CSV status
+    # --------------------
+    update_task_csv(user_id,task_id,'prep_styling',2)
+
     progress.set_status(1) # Done
     progress.process_start_time = None
     progress.process_eta_end_time = None
@@ -3385,7 +3669,7 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
 
 
 
-# In[349]:
+# In[164]:
 
 
 # API 3 function
@@ -3394,6 +3678,17 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
 # saving them under /task_id/numpy/ And also saved picked indices as numpy array
 # At same location
 # Returns OK, NOT OK
+
+# position, value pairs for updation legend
+# ------------------------------------------
+# new_patterns, 1 (update themes fields as well)
+# new_patterns, 2
+# prep_styling, 1
+# prep_styling, 2
+# create_texture, 1
+# create_texture, 2 (update task file as well)
+# generate_idea to update range_boards_any
+# update_task_csv(user_id,task_id,'new_patterns',1)
 
 
 def api_create_textures(user_id,task_id,picked_ind_string,progress):
@@ -3414,6 +3709,10 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
     np_status = np.array([1]).reshape(1,1)
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_createtextures.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
+
+    # Updating CSV status
+    # --------------------
+    update_task_csv(user_id,task_id,'create_texture',1)
 
     try:
         progress.set_status(0) # 0 'Loading learnt patterns..'
@@ -3552,6 +3851,10 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
     storage_address = 'gs://ven-ml-project.appspot.com/' + str(master_task_url) + '/numpy/np_status_createtextures.npy'
     np.save(file_io.FileIO(storage_address, 'w'), np_status)
 
+    # Updating CSV status
+    # --------------------
+    update_task_csv(user_id,task_id,'create_texture',2)
+
     progress.set_status(3) # Done
     progress.process_start_time = None
     progress.process_eta_end_time = None
@@ -3574,7 +3877,7 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
     return 'All good.', 200
 
 
-# In[350]:
+# In[165]:
 
 
 # API 4 function
@@ -3582,6 +3885,17 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
 # Takes in task_id, gen_id as inputs
 # Generates new ideas and saves them under /task_id/ideas/gen_id/
 # Returns OK, NOT OK
+
+# position, value pairs for updation legend
+# ------------------------------------------
+# new_patterns, 1 (update themes fields as well)
+# new_patterns, 2
+# prep_styling, 1
+# prep_styling, 2
+# create_texture, 1
+# create_texture, 2 (update task file as well)
+# generate_idea to update range_boards_any
+# update_task_csv(user_id,task_id,'new_patterns',1)
 
 
 def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix,progress,no_options):
@@ -3794,6 +4108,11 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
         return error_str, 500
 
 
+    # Updating CSV status
+    # --------------------
+    update_task_csv(user_id,task_id,'generate_idea',None)
+
+
     progress.set_status(6) # Done
     progress.process_start_time = None
     progress.process_eta_end_time = None
@@ -3820,7 +4139,7 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
 
 # # Actual Ven API endpoints
 
-# In[351]:
+# In[166]:
 
 
 # Creating a global progress dict to help with progress API
@@ -3839,7 +4158,7 @@ global progress_api_dict_generate_ideas
 progress_api_dict_generate_ideas = {}
 
 
-# In[352]:
+# In[167]:
 
 
 # Temp code to create progress class
@@ -3961,7 +4280,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[353]:
+# In[168]:
 
 
 ##
@@ -3994,7 +4313,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_user_id,self.p_task_id,self.progress)
 
 
-# In[354]:
+# In[169]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -4003,7 +4322,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[355]:
+# In[170]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4107,7 +4426,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. prepare stylings external API
 
-# In[356]:
+# In[171]:
 
 
 ##
@@ -4141,7 +4460,7 @@ class prepare_stylings_threaded_task(threading.Thread):
 
 
 
-# In[357]:
+# In[172]:
 
 
 # Creating a Main global dictionary to track progress of prepare stylings task
@@ -4150,7 +4469,7 @@ global prepare_stylings_threads
 prepare_stylings_threads = {}
 
 
-# In[358]:
+# In[173]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -4258,7 +4577,7 @@ class externalAPI_prepare_stylings(Resource):
 
 # ### 3. create new texture external API
 
-# In[359]:
+# In[174]:
 
 
 ##
@@ -4292,7 +4611,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[360]:
+# In[175]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -4301,7 +4620,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[361]:
+# In[176]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -4424,7 +4743,7 @@ class externalAPI_create_textures(Resource):
 
 # ### 4. generate ideas external API
 
-# In[362]:
+# In[48]:
 
 
 ##
@@ -4462,7 +4781,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[363]:
+# In[49]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -4471,7 +4790,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[364]:
+# In[50]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4614,7 +4933,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[365]:
+# In[51]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -4696,7 +5015,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 
 
-# In[366]:
+# In[52]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -4846,7 +5165,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[367]:
+# In[53]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -4949,7 +5268,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[368]:
+# In[54]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5022,7 +5341,7 @@ class externalAPI_send_range(Resource):
 
 
 
-# In[369]:
+# In[55]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5108,7 +5427,7 @@ class externalAPI_get_range_url(Resource):
 
 
 
-# In[370]:
+# In[56]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5166,7 +5485,7 @@ class externalAPI_get_taskfilesboard_url(Resource):
                         blobs = bucket.list_blobs(prefix=destination_blob_name, delimiter='/')
 
                         for b in blobs:
-                            #b.make_public() # Not required
+
                             pdf_public_url = b.public_url
 
                         return pdf_public_url
@@ -5192,7 +5511,7 @@ class externalAPI_get_taskfilesboard_url(Resource):
 
 
 
-# In[371]:
+# In[57]:
 
 
 ## MAIN function TO BE CALLED for getting range PDF URL
@@ -5273,7 +5592,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
 
 
-# In[372]:
+# In[58]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5375,7 +5694,7 @@ class externalAPI_get_all_stylings_url(Resource):
 
 
 
-# In[373]:
+# In[59]:
 
 
 ## MAIN function code to get in an incoming wix image URL and save it in themes
@@ -5493,7 +5812,7 @@ class externalAPI_save_wix_image(Resource):
 
 
 
-# In[374]:
+# In[60]:
 
 
 ## MAIN function TO BE CALLED for getting themes URL
@@ -5582,7 +5901,7 @@ class externalAPI_get_all_themes_url(Resource):
 
 
 
-# In[375]:
+# In[61]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -5660,7 +5979,7 @@ class externalAPI_get_task_ids(Resource):
 
 
 
-# In[376]:
+# In[62]:
 
 
 ## MAIN function code to get all rangeboard pdf URLS associated with a userid,task
@@ -5740,7 +6059,7 @@ class externalAPI_get_all_rangeboard_urls(Resource):
 
 
 
-# In[377]:
+# In[63]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -5917,7 +6236,7 @@ class externalAPI_get_everything_fortasks(Resource):
 
 
 
-# In[378]:
+# In[64]:
 
 
 ## MAIN function code update styling details CSV from admin interface
@@ -5990,9 +6309,79 @@ class externalAPI_update_styling_csv_admin(Resource):
 
 
 
+# In[125]:
+
+
+## MAIN function code to get taskids associated with user
+# -------------------------------------------------------
+
+class externalAPI_geteverythingfortasks_from_csv(Resource):
+
+    def post(self):
+
+        ## Authenticating request
+        ## ----------------------
+        try:
+
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('user_id')
+
+                    args = parser.parse_args()
+
+                    # Getting params
+                    # --------------
+                    p_user_id = args['user_id']
+
+                    print('API get everything for tasks from CSV firing: ' + str(p_user_id))
+
+
+                    try:
+                        # Using get task id function
+                        # --------------------------
+                        d = return_all_tasks_data(p_user_id)
+                        return jsonify(d)
+
+                    except:
+
+                        return "NO TASKS FOUND", 500
+
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+
+        except:
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
+
+
+
 # # running the external api functions
 
-# In[379]:
+# In[177]:
 
 
 app = Flask(__name__)
@@ -6018,10 +6407,10 @@ api.add_resource(externalAPI_get_all_rangeboard_urls, '/getallrangeboardsurls') 
 api.add_resource(externalAPI_get_taskfilesboard_url, '/gettaskfilesboardurl') # Route
 api.add_resource(externalAPI_get_everything_fortasks, '/geteverythingfortasks') # Route
 api.add_resource(externalAPI_update_styling_csv_admin, '/updatemainstylingcsv') # Route
-#
+api.add_resource(externalAPI_geteverythingfortasks_from_csv, '/geteverythingfortaskscsv') # Route
 
 
-# In[380]:
+# In[178]:
 
 
 global vm_or_local
