@@ -2413,7 +2413,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
 
 
     ### Knit shorts, pants, leggings - GIRLS and WOMENS | Knit shorts and pant - BOYS and MENS
-    elif category == 8 or category == 28 or category == 9 or category == 29 or category == 11 or category == 31 or category == 17 or category == 37 or category == 19 or category == 39:
+    elif category == 41 or category == 61 or category == 8 or category == 28 or category == 9 or category == 29 or category == 11 or category == 31 or category == 17 or category == 37 or category == 19 or category == 39:
 
         # Setting choice probabilities
         # ----------------------------
