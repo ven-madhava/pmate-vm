@@ -2565,7 +2565,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
                 choice_b = int(np.random.choice(choice_choices, p = choice_probs))
 
     ### Woven jeans - BOYS and MENS, Girls and Women
-elif category == 15 or category == 35 or category == 40 or category == 60:
+    elif category == 15 or category == 35 or category == 40 or category == 60:
 
         # Setting choice probabilities
         # ----------------------------
