@@ -2801,6 +2801,10 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
     cat_dict[37] = 'MENS KNIT PANTS'
     cat_dict[38] = 'MENS WOVEN SHORTS'
     cat_dict[39] = 'MENS KNIT SHORTS'
+    cat_dict[40] = 'GIRLS JEANS'
+    cat_dict[60] = 'WOMENS JEANS'
+    cat_dict[41] = 'GIRLS KNIT SKIRTS'
+    cat_dict[61] = 'WOMENS KNIT SKIRTS'
 
     # For prints and textures
     # -----------------------
@@ -2853,6 +2857,10 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
     sty_dict[37] = 'MKP'
     sty_dict[38] = 'MWST'
     sty_dict[39] = 'MKST'
+    sty_dict[40] = 'GLJ'
+    sty_dict[60] = 'WMJ'
+    sty_dict[41] = 'GKSK'
+    sty_dict[61] = 'WKSK'
 
     # For prints and textures
     # -----------------------
