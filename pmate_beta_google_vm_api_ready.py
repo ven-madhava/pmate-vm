@@ -1,5 +1,5 @@
-# 27 nov - added geteverthing using CSV API
-# -----------------------------------------
+# 13 dec added api logging
+
 
 # Imports
 # -------
@@ -41,7 +41,7 @@ from flask_jsonpify import jsonify
 
 # # GCS functions
 
-# In[128]:
+# In[2]:
 
 
 'SWITCH BETWEEN LOCAL AND VM HERE'
@@ -55,7 +55,146 @@ else:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/venkateshmadhava/ven-ml-project-387fdf3f596f.json"
 
 
-# In[129]:
+# In[3]:
+
+
+
+# Function that takes in values in the form if dictionary(JSON from API) for image descriptions and updates CSV
+# API ready ##
+# --------------------------------------------------
+
+def update_apilogs(dictin):
+
+    # dictin in form { session_id: { values } }
+    ##
+
+    # 1. Some initialisations
+    # -----------------------
+    counter = 0
+    sessions_to_be_updated = list(dictin.keys())
+
+    # Setting list of fields in CSV
+    # -----------------------------
+    fields = ['duration', 'user_id', 'task_id', 'userdevice', 'pmate_userid', 'pmate_sessionid', 'api_called', 'user_type']
+
+    # 2. Filename and Temp file
+    # -------------------------
+    # 2.1. Initialising bucket details
+    # --------------------------------
+    bucket_name = 'ven-ml-project.appspot.com'
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    destination_blob_name = 'admin/api_logs.csv'
+    blob = bucket.blob(destination_blob_name)
+
+    # 2. Downloading to tempfile
+    # --------------------------
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as gcs_tempfile:
+        blob.download_to_filename(gcs_tempfile.name)
+
+    # 3. Initialising another temp file for saving new rows
+    # -----------------------------------------------------
+    tempfile_local = tempfile.NamedTemporaryFile(mode='w', delete=False)
+
+    # 4. Iteration
+    # -------------
+    with open(gcs_tempfile.name, 'r') as csvfile, tempfile_local:
+        reader = csv.DictReader(csvfile, fieldnames=fields)
+        writer = csv.DictWriter(tempfile_local, fieldnames=fields)
+        for row in reader:
+
+            # 4.1 Checking condition
+            # -----------------------
+            if row['pmate_sessionid'] in sessions_to_be_updated:
+                writer.writerow(dictin[row['pmate_sessionid']])
+                counter += 1
+                sessions_to_be_updated.pop(sessions_to_be_updated.index(row['pmate_sessionid']))
+
+            else:
+                writer.writerow(row)
+
+        # 4.2. one more check to see if any new records have been added + adding them to CSV
+        # ---------------------------------------------------------------------------------
+        if len(sessions_to_be_updated) > 0:
+            for i in sessions_to_be_updated:
+                writer.writerow(dictin[i])
+                counter += 1
+
+
+    # 5. Final upload of files to GCS replacing old one
+    # --------------------------------------------------
+    blob.upload_from_filename(tempfile_local.name,content_type='text/csv')
+
+    return 'Updated ' + str(counter) + ' sessions.', 200
+
+
+# In[4]:
+
+
+# A function that would read a CSV and output a dict for everything API
+# API Ready
+# ---------------------------------------------------------------------
+
+def return_session_data(start_timestamp,end_timestamp):
+
+    # Some initialisations
+    # --------------------
+    outdict = {}
+    fields = ['duration', 'user_id', 'task_id', 'userdevice', 'pmate_userid', 'pmate_sessionid', 'api_called', 'user_type']
+
+    # 1. Initialising bucket
+    # -----------------------
+    bucket_name = 'ven-ml-project.appspot.com'
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    destination_blob_name = 'admin/api_logs.csv'
+    blob = bucket.blob(destination_blob_name)
+
+
+    # 3. Downloading to tempfile
+    # --------------------------
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as gcs_tempfile:
+        blob.download_to_filename(gcs_tempfile.name)
+
+
+    # 4. opening file
+    # ---------------
+    with open(gcs_tempfile.name, 'r') as csvfile:
+        reader = csv.DictReader(csvfile, fieldnames=fields)
+
+        # Buildng outdict
+        # ---------------
+        for row in reader:
+
+            # Extracting the timestamp
+            # ------------------------
+            curr_ts = int(row['pmate_sessionid'].replace('pmatesession_',''))
+
+            # Checking condition
+            # ------------------
+            if curr_ts >= int(start_timestamp) and curr_ts <= int(end_timestamp):
+
+                # This means current record can be included for output
+                # ----------------------------------------------------
+                curr_sessionid = row['pmate_sessionid']
+                outdict[curr_sessionid] = {}
+
+                outdict[curr_sessionid]['duration'] = row['duration']
+                outdict[curr_sessionid]['user_id'] = row['user_id']
+                outdict[curr_sessionid]['task_id'] = row['task_id']
+                outdict[curr_sessionid]['userdevice'] = row['userdevice']
+                outdict[curr_sessionid]['pmate_userid'] = row['pmate_userid']
+                outdict[curr_sessionid]['pmate_sessionid'] = row['pmate_sessionid']
+                outdict[curr_sessionid]['api_called'] = row['api_called']
+                outdict[curr_sessionid]['user_type'] = row['user_type']
+
+
+    # Returning dictionary
+    # ---------------------
+    return outdict
+
+
+# In[5]:
 
 
 
@@ -107,7 +246,7 @@ def get_rangeboard_urls(user_id,task_id):
         return "NO TASKS FOUND", 500
 
 
-# In[130]:
+# In[6]:
 
 
 # A function that would read a CSV and output a dict for everything API
@@ -167,7 +306,7 @@ def return_all_tasks_data(user_id):
     return outdict
 
 
-# In[131]:
+# In[7]:
 
 
 # Getting task ids from GCS for a given user id
@@ -227,7 +366,7 @@ def get_task_ids(user_id):
         return "NO TASKS FOUND", 500
 
 
-# In[132]:
+# In[8]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -288,7 +427,7 @@ def get_images_from_storage(parent_dir,output_mode):
     return xout
 
 
-# In[133]:
+# In[9]:
 
 
 # Function to saving a list or numpy array of images to storage folder
@@ -395,7 +534,7 @@ def save_to_storage_from_array_list(x,storage_dir,image_prefix,update_progress,p
 
 
 
-# In[134]:
+# In[10]:
 
 
 # Getting images from a "folder" in storage and returning that as a numpy array
@@ -471,7 +610,7 @@ def get_images_from_storage_by_names(parent_dir,output_mode,in_names):
 
 # # Protomate smaller supportive functions
 
-# In[135]:
+# In[11]:
 
 
 # protomate functions to get  progress eta
@@ -578,7 +717,7 @@ def upload_csv_gcs(csvurl):
 # # Protomate larger supportive functions
 #
 
-# In[136]:
+# In[12]:
 
 
 
@@ -648,7 +787,7 @@ def update_main_csv(dictin):
     return 'Updated ' + str(counter) + ' styles.', 200
 
 
-# In[137]:
+# In[13]:
 
 
 # protomate function to get block images
@@ -688,7 +827,7 @@ def protomatebeta_getfillimage_v1(datavec,labels,main_image,k,mode):
     return newim.astype('uint8'), h_indices, w_indices, newim_map
 
 
-# In[138]:
+# In[14]:
 
 
 # protomate kmeans function
@@ -748,7 +887,7 @@ def protomatebeta_cvkmeans_v1(imn,K,iters,mode,centers):
 
 
 
-# In[139]:
+# In[15]:
 
 
 # protomate recurring kmeans function
@@ -774,7 +913,7 @@ def protomatebeta_recurr_kmeans_v1(img,start_k,end_k,cluster_by_location):
     return curr_im,cen,datavec,labels
 
 
-# In[140]:
+# In[16]:
 
 
 'LOADINg GLOBAL STYLING DICTIONARY FOR API USES'
@@ -785,7 +924,7 @@ style_dict_global = get_styling_csv()
 
 # # Protomate main functions
 
-# In[141]:
+# In[17]:
 
 
 # 1
@@ -863,7 +1002,7 @@ def protomatebeta_stitch_incoming_images_v1(inlist):
     return xout
 
 
-# In[142]:
+# In[18]:
 
 
 # 2
@@ -964,7 +1103,7 @@ def protomatebeta_extract_blocks_for_aop_v1(inlist,progress,ht,wd,similarity_dis
 
 
 
-# In[143]:
+# In[19]:
 
 
 # 2.1
@@ -1056,7 +1195,7 @@ def protomatebeta_cutout_blocks_v1(datavec,labels,image,cen,image_mode):
 
 
 
-# In[144]:
+# In[20]:
 
 
 # 3
@@ -1155,7 +1294,7 @@ def protomate_build_aop_patterns_v1(blocks,h,w,repeat_w):
     return xout
 
 
-# In[145]:
+# In[21]:
 
 
 # 3.1
@@ -1205,7 +1344,7 @@ def protomate_build_std_aop_pattern_repeat_v1(x,h,w):
     return mout[:,0:h,0:w,:]
 
 
-# In[146]:
+# In[22]:
 
 
 # 4
@@ -1279,7 +1418,7 @@ def protomatebeta_pickcolors_v1(progress,inlist,ht,wd,similarity_distance=0.1):
 
 
 
-# In[147]:
+# In[23]:
 
 
 # 4.1
@@ -1351,7 +1490,7 @@ def protomatebeta_cluster_colors_v1(raw_colors,similarity_distance,print_colors)
 
 
 
-# In[148]:
+# In[24]:
 
 
 # 4.2
@@ -1432,7 +1571,7 @@ def protomatebeta_getfinalcolors_v1(color_dict,cen,labels,print_colors,ht,wd):
     return xout
 
 
-# In[149]:
+# In[25]:
 
 
 # 5
@@ -1558,7 +1697,7 @@ def protomatebeta_build_textures_v1(x,hin,win,print_colorscale,progress,task_id,
 
 
 
-# In[150]:
+# In[26]:
 
 
 # 5.1
@@ -1647,7 +1786,7 @@ def protomatebeta_cluster_colors_products_v1(tu,similarity_distance,hout,wout):
     return outimage_stripes,outimage_checks,outimage_mel,outimage_grain
 
 
-# In[151]:
+# In[27]:
 
 
 # 5.2
@@ -1747,7 +1886,7 @@ def protomatebeta_create_textures_v1(tokd,wkd,repeat_h,hout,wout):
 
 
 
-# In[152]:
+# In[28]:
 
 
 # 5.3
@@ -1858,7 +1997,7 @@ def protomatebeta_create_mel_grainy_v1(inlist,h,w):
     return melout.astype('uint8'), spotout.astype('uint8')
 
 
-# In[153]:
+# In[29]:
 
 
 # 6
@@ -1982,7 +2121,7 @@ def get_stylings_from_storage(in_names,update_progress,progress):
     return xout_lines,xout_seg,categories
 
 
-# In[154]:
+# In[30]:
 
 
 # 6.1
@@ -2046,7 +2185,7 @@ def protomatebeta_correct_segments_linemarkings(lines,seg):
     return xout_lines,xout_seg
 
 
-# In[155]:
+# In[31]:
 
 
 # 7
@@ -2268,7 +2407,7 @@ def protomatebeta_create_ideas_v2(segments_in,linemarkings_in,categories_in,patt
     return genout , cats_out
 
 
-# In[156]:
+# In[32]:
 
 
 # 7.1
@@ -2741,7 +2880,7 @@ def returncombo(single_segment,minor_segment,minor_segment_seg,category,s_index,
     return gblock, bblock, tup
 
 
-# In[157]:
+# In[33]:
 
 
 # 8
@@ -2926,7 +3065,7 @@ def feed_to_build_range(x,cats,user_id,task_id,gen_id,board_name,styling_prefix,
 
 
 
-# In[158]:
+# In[34]:
 
 
 # 8.1
@@ -3126,7 +3265,7 @@ def build_single_range_board(xin,user_id,task_id,gen_id,board_name,styling_prefi
 
 
 
-# In[159]:
+# In[35]:
 
 
 # 8.2
@@ -3185,7 +3324,7 @@ def save_patterns_textures_stylings_as_singlepdf(user_id,task_id,picked_patterns
 
 
 
-# In[160]:
+# In[36]:
 
 
 # 9
@@ -3290,7 +3429,7 @@ def update_task_csv(user_id,task_id,update_position,value):
 
 
 
-# In[161]:
+# In[37]:
 
 
 # 9.1 API ready
@@ -3376,7 +3515,7 @@ def update_task_dict_position(user_id,task_id,bucket,dictxin,fields,position,val
 
 # # Ven_API functions
 
-# In[162]:
+# In[38]:
 
 
 # API 1 Function
@@ -3560,7 +3699,7 @@ def api_create_new_patterns(user_id,task_id,progress):
     return 'All good.', 200
 
 
-# In[163]:
+# In[39]:
 
 
 # API 2 Function
@@ -3677,7 +3816,7 @@ def api_prepare_stylings(user_id,task_id,selected_style_names,progress):
 
 
 
-# In[164]:
+# In[40]:
 
 
 # API 3 function
@@ -3885,7 +4024,7 @@ def api_create_textures(user_id,task_id,picked_ind_string,progress):
     return 'All good.', 200
 
 
-# In[165]:
+# In[41]:
 
 
 # API 4 function
@@ -4147,7 +4286,7 @@ def api_generate(user_id,task_id,gen_id,task_board_name,task_styling_name_prefix
 
 # # Actual Ven API endpoints
 
-# In[166]:
+# In[42]:
 
 
 # Creating a global progress dict to help with progress API
@@ -4166,7 +4305,7 @@ global progress_api_dict_generate_ideas
 progress_api_dict_generate_ideas = {}
 
 
-# In[167]:
+# In[43]:
 
 
 # Temp code to create progress class
@@ -4288,7 +4427,7 @@ class progress_classobj():
 
 # ### 1. create new patterns external API
 
-# In[168]:
+# In[44]:
 
 
 ##
@@ -4321,7 +4460,7 @@ class create_new_patterns_threaded_task(threading.Thread):
         api_create_new_patterns(self.p_user_id,self.p_task_id,self.progress)
 
 
-# In[169]:
+# In[45]:
 
 
 # Creating a Main global dictionary to track progress of create new pattern task
@@ -4330,7 +4469,7 @@ global new_pattern_threads
 new_pattern_threads = {}
 
 
-# In[170]:
+# In[46]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4364,10 +4503,24 @@ class externalAPI_create_new_patterns(Resource):
                     parser = reqparse.RequestParser()
                     parser.add_argument('user_id')
                     parser.add_argument('task_id')
+                    parser.add_argument('userdevice')
+                    parser.add_argument('pmate_userid')
+                    parser.add_argument('pmate_sessionid')
+                    parser.add_argument('timeelapsed')
+                    parser.add_argument('pmate_usertype')
+
                     args = parser.parse_args()
 
                     p_user_id = args['user_id']
                     p_task_id = args['task_id']
+
+                    # Getting api log info as well
+                    # ----------------------------
+                    p_userdevice = args['userdevice']
+                    p_pmate_userid = args['pmate_userid']
+                    p_pmate_sessionid = args['pmate_sessionid']
+                    p_timeelapsed = args['timeelapsed']
+                    p_usertype = args['pmate_usertype']
 
                     # Building master task url
                     # --------------------------
@@ -4410,6 +4563,33 @@ class externalAPI_create_new_patterns(Resource):
 
                             new_pattern_threads[p_task_id] = create_new_patterns_threaded_task(p_user_id,p_task_id)
                             new_pattern_threads[p_task_id].start()
+
+                            # Code to log this api success
+                            # ----------------------------
+                            try:
+
+                                # creating dict
+                                # -------------
+                                apidict = {}
+                                apidict[p_pmate_sessionid] = {}
+                                apidict[p_pmate_sessionid]['duration'] = p_timeelapsed
+                                apidict[p_pmate_sessionid]['user_id'] = p_user_id
+                                apidict[p_pmate_sessionid]['task_id'] = p_task_id
+                                apidict[p_pmate_sessionid]['userdevice'] = p_userdevice
+                                apidict[p_pmate_sessionid]['pmate_userid'] = p_pmate_userid
+                                apidict[p_pmate_sessionid]['pmate_sessionid'] = p_pmate_sessionid
+                                apidict[p_pmate_sessionid]['api_called'] = 'create_new_patterns'
+                                apidict[p_pmate_sessionid]['user_type'] = p_usertype
+
+                                # Calling function
+                                # ----------------
+                                update_apilogs(apidict)
+
+                            except Exception as ex:
+
+                                error_str = type(ex).__name__ + ': ' + ex.args[0]
+                                print('Error with create new patterns api logging: ' + error_str)
+
                             return 'Thread started', 200 #### Checked
 
                 else:
@@ -4434,7 +4614,7 @@ class externalAPI_create_new_patterns(Resource):
 
 # ### 2. prepare stylings external API
 
-# In[171]:
+# In[47]:
 
 
 ##
@@ -4468,7 +4648,7 @@ class prepare_stylings_threaded_task(threading.Thread):
 
 
 
-# In[172]:
+# In[48]:
 
 
 # Creating a Main global dictionary to track progress of prepare stylings task
@@ -4477,7 +4657,7 @@ global prepare_stylings_threads
 prepare_stylings_threads = {}
 
 
-# In[173]:
+# In[49]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -4512,11 +4692,25 @@ class externalAPI_prepare_stylings(Resource):
                     parser.add_argument('user_id')
                     parser.add_argument('task_id')
                     parser.add_argument('picked_ind_string')
+                    parser.add_argument('userdevice')
+                    parser.add_argument('pmate_userid')
+                    parser.add_argument('pmate_sessionid')
+                    parser.add_argument('timeelapsed')
+                    parser.add_argument('pmate_usertype')
+
                     args = parser.parse_args()
 
                     p_task_id = args['task_id']
                     p_user_id = args['user_id']
                     p_picked_ind_string = args['picked_ind_string']
+
+                    # Getting api log info as well
+                    # ----------------------------
+                    p_userdevice = args['userdevice']
+                    p_pmate_userid = args['pmate_userid']
+                    p_pmate_sessionid = args['pmate_sessionid']
+                    p_timeelapsed = args['timeelapsed']
+                    p_usertype = args['pmate_usertype']
 
                     # Building master task url
                     # --------------------------
@@ -4561,6 +4755,34 @@ class externalAPI_prepare_stylings(Resource):
                                 'do nothing'
                             prepare_stylings_threads[p_task_id] = prepare_stylings_threaded_task(p_user_id,p_task_id,p_picked_ind_string)
                             prepare_stylings_threads[p_task_id].start()
+
+                            # Code to log this api success
+                            # ----------------------------
+                            try:
+
+                                # creating dict
+                                # -------------
+                                apidict = {}
+                                apidict[p_pmate_sessionid] = {}
+                                apidict[p_pmate_sessionid]['duration'] = p_timeelapsed
+                                apidict[p_pmate_sessionid]['user_id'] = p_user_id
+                                apidict[p_pmate_sessionid]['task_id'] = p_task_id
+                                apidict[p_pmate_sessionid]['userdevice'] = p_userdevice
+                                apidict[p_pmate_sessionid]['pmate_userid'] = p_pmate_userid
+                                apidict[p_pmate_sessionid]['pmate_sessionid'] = p_pmate_sessionid
+                                apidict[p_pmate_sessionid]['api_called'] = 'prepare_stylings'
+                                apidict[p_pmate_sessionid]['user_type'] = p_usertype
+
+                                # Calling function
+                                # ----------------
+                                update_apilogs(apidict)
+
+                            except Exception as ex:
+
+                                error_str = type(ex).__name__ + ': ' + ex.args[0]
+                                print('Error with prepare stylings api logging: ' + error_str)
+
+
                             return 'Thread started', 200
 
 
@@ -4585,7 +4807,7 @@ class externalAPI_prepare_stylings(Resource):
 
 # ### 3. create new texture external API
 
-# In[174]:
+# In[50]:
 
 
 ##
@@ -4619,7 +4841,7 @@ class create_textures_threaded_task(threading.Thread):
 
 
 
-# In[175]:
+# In[51]:
 
 
 # Creating a Main global dictionary to track progress of create textures task
@@ -4628,7 +4850,7 @@ global create_texture_threads
 create_texture_threads = {}
 
 
-# In[176]:
+# In[52]:
 
 
 ## MAIN function TO BE CALLED ON API for creating texture
@@ -4663,11 +4885,26 @@ class externalAPI_create_textures(Resource):
                     parser.add_argument('user_id')
                     parser.add_argument('task_id')
                     parser.add_argument('picked_ind_string')
+                    parser.add_argument('userdevice')
+                    parser.add_argument('pmate_userid')
+                    parser.add_argument('pmate_sessionid')
+                    parser.add_argument('timeelapsed')
+                    parser.add_argument('pmate_usertype')
+
                     args = parser.parse_args()
 
                     p_task_id = args['task_id']
                     p_user_id = args['user_id']
                     p_picked_ind_string = args['picked_ind_string']
+
+                    # Getting api log info as well
+                    # ----------------------------
+                    p_userdevice = args['userdevice']
+                    p_pmate_userid = args['pmate_userid']
+                    p_pmate_sessionid = args['pmate_sessionid']
+                    p_timeelapsed = args['timeelapsed']
+                    p_usertype = args['pmate_usertype']
+
 
                     # Building master task url
                     # --------------------------
@@ -4728,6 +4965,34 @@ class externalAPI_create_textures(Resource):
 
                             create_texture_threads[p_task_id] = create_textures_threaded_task(p_user_id,p_task_id,p_picked_ind_string)
                             create_texture_threads[p_task_id].start()
+
+                            # Code to log this api success
+                            # ----------------------------
+                            try:
+
+                                # creating dict
+                                # -------------
+                                apidict = {}
+                                apidict[p_pmate_sessionid] = {}
+                                apidict[p_pmate_sessionid]['duration'] = p_timeelapsed
+                                apidict[p_pmate_sessionid]['user_id'] = p_user_id
+                                apidict[p_pmate_sessionid]['task_id'] = p_task_id
+                                apidict[p_pmate_sessionid]['userdevice'] = p_userdevice
+                                apidict[p_pmate_sessionid]['pmate_userid'] = p_pmate_userid
+                                apidict[p_pmate_sessionid]['pmate_sessionid'] = p_pmate_sessionid
+                                apidict[p_pmate_sessionid]['api_called'] = 'create_textures'
+                                apidict[p_pmate_sessionid]['user_type'] = p_usertype
+
+                                # Calling function
+                                # ----------------
+                                update_apilogs(apidict)
+
+                            except Exception as ex:
+
+                                error_str = type(ex).__name__ + ': ' + ex.args[0]
+                                print('Error with create textures api logging: ' + error_str)
+
+
                             return 'Thread started', 200
 
                 else:
@@ -4751,7 +5016,7 @@ class externalAPI_create_textures(Resource):
 
 # ### 4. generate ideas external API
 
-# In[48]:
+# In[53]:
 
 
 ##
@@ -4789,7 +5054,7 @@ class generate_ideas_threaded_task(threading.Thread):
 
 
 
-# In[49]:
+# In[54]:
 
 
 # Creating a Main global dictionary to track progress of generate ideas
@@ -4798,7 +5063,7 @@ global generate_ideas_threads
 generate_ideas_threads = {}
 
 
-# In[50]:
+# In[55]:
 
 
 ## MAIN function TO BE CALLED ON API
@@ -4836,6 +5101,13 @@ class externalAPI_generate_ideas(Resource):
                     parser.add_argument('task_board_name')
                     parser.add_argument('task_styling_name_prefix')
                     parser.add_argument('no_options')
+
+                    parser.add_argument('userdevice')
+                    parser.add_argument('pmate_userid')
+                    parser.add_argument('pmate_sessionid')
+                    parser.add_argument('timeelapsed')
+                    parser.add_argument('pmate_usertype')
+
                     args = parser.parse_args()
 
                     p_user_id = args['user_id']
@@ -4844,6 +5116,15 @@ class externalAPI_generate_ideas(Resource):
                     p_task_board_name = args['task_board_name']
                     p_task_styling_name_prefix = args['task_styling_name_prefix']
                     p_no_options = args['no_options']
+
+                    # Getting api log info as well
+                    # ----------------------------
+                    p_userdevice = args['userdevice']
+                    p_pmate_userid = args['pmate_userid']
+                    p_pmate_sessionid = args['pmate_sessionid']
+                    p_timeelapsed = args['timeelapsed']
+                    p_usertype = args['pmate_usertype']
+
 
                     # Building master task url
                     # --------------------------
@@ -4915,6 +5196,34 @@ class externalAPI_generate_ideas(Resource):
                                 'do nothing'
                             generate_ideas_threads[p_task_id] = generate_ideas_threaded_task(p_user_id,p_task_id,p_gen_id,p_task_board_name,p_task_styling_name_prefix,p_no_options)
                             generate_ideas_threads[p_task_id].start()
+
+                            # Code to log this api success
+                            # ----------------------------
+                            try:
+
+                                # creating dict
+                                # -------------
+                                apidict = {}
+                                apidict[p_pmate_sessionid] = {}
+                                apidict[p_pmate_sessionid]['duration'] = p_timeelapsed
+                                apidict[p_pmate_sessionid]['user_id'] = p_user_id
+                                apidict[p_pmate_sessionid]['task_id'] = p_task_id
+                                apidict[p_pmate_sessionid]['userdevice'] = p_userdevice
+                                apidict[p_pmate_sessionid]['pmate_userid'] = p_pmate_userid
+                                apidict[p_pmate_sessionid]['pmate_sessionid'] = p_pmate_sessionid
+                                apidict[p_pmate_sessionid]['api_called'] = 'generate_ideas'
+                                apidict[p_pmate_sessionid]['user_type'] = p_usertype
+
+                                # Calling function
+                                # ----------------
+                                update_apilogs(apidict)
+
+                            except Exception as ex:
+
+                                error_str = type(ex).__name__ + ': ' + ex.args[0]
+                                print('Error with generate ideas api logging: ' + error_str)
+
+
                             return 'Thread started', 200
                     else:
 
@@ -4941,7 +5250,7 @@ class externalAPI_generate_ideas(Resource):
 
 # ### 4. progress and status APIs
 
-# In[51]:
+# In[56]:
 
 
 ## MAIN function TO BE CALLED for all progress status updates associated with progress of a task
@@ -5023,7 +5332,7 @@ class externalAPI_get_all_progress_updates(Resource):
 
 
 
-# In[52]:
+# In[57]:
 
 
 ## MAIN function TO BE CALLED for progress
@@ -5173,7 +5482,7 @@ class externalAPI_get_progress(Resource):
 
 
 
-# In[53]:
+# In[58]:
 
 
 ## MAIN function TO BE CALLED for task status
@@ -5276,7 +5585,7 @@ class externalAPI_get_task_status(Resource):
 
 
 
-# In[54]:
+# In[59]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5349,7 +5658,7 @@ class externalAPI_send_range(Resource):
 
 
 
-# In[55]:
+# In[60]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5435,7 +5744,7 @@ class externalAPI_get_range_url(Resource):
 
 
 
-# In[56]:
+# In[61]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5519,7 +5828,7 @@ class externalAPI_get_taskfilesboard_url(Resource):
 
 
 
-# In[57]:
+# In[62]:
 
 
 ## MAIN function TO BE CALLED for getting range PDF URL
@@ -5600,7 +5909,7 @@ class externalAPI_get_all_patterns_url(Resource):
 
 
 
-# In[58]:
+# In[63]:
 
 
 ## MAIN function TO BE CALLED for download pdf
@@ -5702,7 +6011,7 @@ class externalAPI_get_all_stylings_url(Resource):
 
 
 
-# In[59]:
+# In[64]:
 
 
 ## MAIN function code to get in an incoming wix image URL and save it in themes
@@ -5820,7 +6129,7 @@ class externalAPI_save_wix_image(Resource):
 
 
 
-# In[60]:
+# In[65]:
 
 
 ## MAIN function TO BE CALLED for getting themes URL
@@ -5909,7 +6218,7 @@ class externalAPI_get_all_themes_url(Resource):
 
 
 
-# In[61]:
+# In[66]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -5987,7 +6296,7 @@ class externalAPI_get_task_ids(Resource):
 
 
 
-# In[62]:
+# In[67]:
 
 
 ## MAIN function code to get all rangeboard pdf URLS associated with a userid,task
@@ -6067,7 +6376,7 @@ class externalAPI_get_all_rangeboard_urls(Resource):
 
 
 
-# In[63]:
+# In[68]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -6244,7 +6553,7 @@ class externalAPI_get_everything_fortasks(Resource):
 
 
 
-# In[64]:
+# In[69]:
 
 
 ## MAIN function code update styling details CSV from admin interface
@@ -6317,7 +6626,7 @@ class externalAPI_update_styling_csv_admin(Resource):
 
 
 
-# In[125]:
+# In[70]:
 
 
 ## MAIN function code to get taskids associated with user
@@ -6387,9 +6696,82 @@ class externalAPI_geteverythingfortasks_from_csv(Resource):
 
 
 
+# In[71]:
+
+
+## MAIN function code to get taskids associated with user
+# -------------------------------------------------------
+
+class externalAPI_getapilogs_fromcsv(Resource):
+
+    def post(self):
+
+        ## Authenticating request
+        ## ----------------------
+        try:
+
+            # Get stored key
+            # --------------
+            vm_api_key = get_api_key()
+
+            try:
+
+                api_key = request.args['api_key']
+
+                if api_key == vm_api_key:
+
+                    # Authorized request
+                    # ------------------
+
+                    # Setting up key values to accept
+                    # -------------------------------
+                    parser = reqparse.RequestParser()
+                    parser.add_argument('start_timestamp')
+                    parser.add_argument('end_timestamp')
+
+                    args = parser.parse_args()
+
+                    # Getting params
+                    # --------------
+                    p_start_ts = args['start_timestamp']
+                    p_end_ts = args['end_timestamp']
+
+                    print('API to get api logs from CSV firing..')
+
+
+
+                    try:
+                        # Using get task id function
+                        # --------------------------
+                        d = return_session_data(p_start_ts,p_end_ts)
+                        return jsonify(d)
+
+                    except:
+
+                        return "NO SESSIONS FOUND", 500
+
+                else:
+
+                    # Incorrect credentials
+                    # ---------------------
+                    return 'Incorrect credentials', 401
+            except:
+
+                # Invalid headers
+                # ---------------
+                return 'Invalid credentails', 400
+
+        except:
+
+            # Secret key not set in storage
+            # -----------------------------
+            return 'API keys not initialsed', 401
+
+
+
 # # running the external api functions
 
-# In[177]:
+# In[72]:
 
 
 app = Flask(__name__)
@@ -6416,9 +6798,10 @@ api.add_resource(externalAPI_get_taskfilesboard_url, '/gettaskfilesboardurl') # 
 api.add_resource(externalAPI_get_everything_fortasks, '/geteverythingfortasks') # Route
 api.add_resource(externalAPI_update_styling_csv_admin, '/updatemainstylingcsv') # Route
 api.add_resource(externalAPI_geteverythingfortasks_from_csv, '/geteverythingfortaskscsv') # Route
+api.add_resource(externalAPI_getapilogs_fromcsv, '/getapilogs') # Route
 
 
-# In[178]:
+# In[73]:
 
 
 global vm_or_local
